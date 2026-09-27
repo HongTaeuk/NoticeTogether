@@ -41,11 +41,7 @@ export default function NoticeListScreen({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function load() {
+  const load = useCallback(async () => {
     setError(null);
     try {
       const res = await authFetch(session.accessToken, "/api/notices");
@@ -58,7 +54,11 @@ export default function NoticeListScreen({
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [session.accessToken]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <View style={styles.container}>
