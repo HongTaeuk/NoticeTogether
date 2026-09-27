@@ -46,6 +46,7 @@ export default function NoticeInputScreen({
   const [showOriginal, setShowOriginal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [summarizeFailCount, setSummarizeFailCount] = useState(0);
   const role = session.role;
 
   function resetToCompose() {
