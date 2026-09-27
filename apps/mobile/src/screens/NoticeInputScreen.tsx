@@ -205,10 +205,9 @@ export default function NoticeInputScreen({
     const note = (noteDrafts[item.id] ?? "").trim();
     if (!note) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/checklist/${item.id}`, {
+      const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note, as: role }),
+        body: JSON.stringify({ note }),
       });
       if (!res.ok) {
         throw new Error("한마디 남기기에 실패했습니다.");
