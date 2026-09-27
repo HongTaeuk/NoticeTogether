@@ -47,6 +47,8 @@ export default function NoticeInputScreen({
   const [tab, setTab] = useState<"today" | "compose" | "history" | "unread">("today");
   const [rawText, setRawText] = useState("");
   const [notice, setNotice] = useState<{ raw_text: string; ai_summary: string | null } | null>(null);
+  const [easyExplanations, setEasyExplanations] = useState<{ term: string; explanation: string }[]>([]);
+  const [easyExplanationsExpanded, setEasyExplanationsExpanded] = useState(false);
   const [noticeId, setNoticeId] = useState<string | null>(null);
   const [items, setItems] = useState<PersistedItem[]>([]);
   const [actions, setActions] = useState<ItemAction[]>([]);
@@ -87,6 +89,8 @@ export default function NoticeInputScreen({
   function resetToCompose() {
     setNoticeId(null);
     setNotice(null);
+    setEasyExplanations([]);
+    setEasyExplanationsExpanded(false);
     setItems([]);
     setActions([]);
     setPartnerNotViewed(null);
@@ -249,6 +253,11 @@ export default function NoticeInputScreen({
       throw new Error(data?.error ?? "동기화에 실패했습니다.");
     }
     setNotice(data.notice as { raw_text: string; ai_summary: string | null });
+    setEasyExplanations(
+      (data.notice as { easy_explanations?: { term: string; explanation: string }[] | null })
+        ?.easy_explanations ?? [],
+    );
+    setEasyExplanationsExpanded(false);
     setItems(data.items as PersistedItem[]);
     setActions(data.actions as ItemAction[]);
     const roleMap: Record<string, Role> = {};
@@ -669,6 +678,31 @@ export default function NoticeInputScreen({
                 );
               })}
 
+              {/*
+                PRD 4-4: 장애 자녀로 등록된 가정에게만 조건부로 존재하는 섹션.
+                별도 최상위 메뉴가 아니라 "핵심만 정리하면" 화면 안에서만, 접힌 상태로
+                시작한다(가이드라인 5: 기본값으로 펼쳐 보이지 않는다).
+              */}
+              {easyExplanations.length > 0 && (
+                <View style={styles.easyExplanationBox}>
+                  <TouchableOpacity
+                    onPress={() => setEasyExplanationsExpanded((v) => !v)}
+                    style={styles.easyExplanationHeader}
+                  >
+                    <Text style={styles.easyExplanationHeaderText}>
+                      {easyExplanationsExpanded ? "쉬운 설명 접기" : "이게 무슨 뜻인지 쉽게 설명"}
+                    </Text>
+                  </TouchableOpacity>
+                  {easyExplanationsExpanded &&
+                    easyExplanations.map((e) => (
+                      <View key={e.term} style={styles.easyExplanationItem}>
+                        <Text style={styles.easyExplanationTerm}>{e.term}</Text>
+                        <Text style={styles.easyExplanationText}>{e.explanation}</Text>
+                      </View>
+                    ))}
+                </View>
+              )}
+
               <TouchableOpacity onPress={refreshFromServer} style={styles.refreshButton}>
                 <Text style={styles.refreshButtonText}>
                   같이 확인하기 (상대방이 체크한 내용 새로고침)
@@ -1009,5 +1043,32 @@ const styles = StyleSheet.create({
     color: "#1B64F2",
     fontSize: 13,
     fontWeight: "600",
+  },
+  easyExplanationBox: {
+    marginTop: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFF3E6",
+    padding: 14,
+  },
+  easyExplanationHeader: {
+    alignItems: "center",
+  },
+  easyExplanationHeaderText: {
+    color: "#B85C00",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  easyExplanationItem: {
+    marginTop: 10,
+  },
+  easyExplanationTerm: {
+    color: "#B85C00",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  easyExplanationText: {
+    color: "#0B1F4D",
+    fontSize: 13,
+    marginTop: 2,
   },
 });

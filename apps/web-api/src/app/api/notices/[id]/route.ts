@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data: notice, error: noticeError } = await supabase
     .from("notices")
-    .select("id, raw_text, ai_summary, created_at, household_id")
+    .select("id, raw_text, ai_summary, easy_explanations, created_at, household_id")
     .eq("id", id)
     .single();
   if (noticeError) {

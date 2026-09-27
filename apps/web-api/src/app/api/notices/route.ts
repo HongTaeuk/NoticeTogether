@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/client";
 import type { DevRole } from "@/lib/supabase/devSeed";
 import { resolveUser, AuthError } from "@/lib/auth/session";
 import type { ChecklistItemDraft } from "@/lib/ai/summarize";
+import { explainJargonTerms } from "@/lib/ai/explainJargon";
 
 type CreateNoticeBody = {
   rawText: string;
@@ -33,12 +34,32 @@ export async function POST(req: NextRequest) {
   const { householdId, userId: createdBy } = resolved;
   const supabase = getSupabaseServerClient();
 
+  // PRD 4-4: 장애 자녀로 등록된 가정에게만 "쉬운 설명" 섹션을 조건부로 만든다.
+  // 해당 없는 가정(대다수)은 이 AI 호출 자체를 하지 않는다(불필요한 40 RPM 소모 방지).
+  const { data: disabilityChildren } = await supabase
+    .from("children")
+    .select("id")
+    .eq("household_id", householdId)
+    .not("disability_type", "is", null)
+    .limit(1);
+
+  let easyExplanations: Awaited<ReturnType<typeof explainJargonTerms>> | null = null;
+  if (disabilityChildren && disabilityChildren.length > 0) {
+    try {
+      const terms = await explainJargonTerms(body.rawText);
+      if (terms.length > 0) easyExplanations = terms;
+    } catch {
+      // AI 실패는 이 부가 기능만 비우고 넘어간다 — 알림 저장 자체를 막지 않는다.
+    }
+  }
+
   const { data: notice, error: noticeError } = await supabase
     .from("notices")
     .insert({
       household_id: householdId,
       raw_text: body.rawText,
       ai_summary: body.summary ?? null,
+      easy_explanations: easyExplanations,
       created_by: createdBy,
     })
     .select("id, created_at")
@@ -69,7 +90,7 @@ export async function POST(req: NextRequest) {
   // POST /api/notices/[id]/open 을 명시적으로 호출해서 기록한다(PRD 5단계: 배너 미리보기와
   // 진짜 열람을 구분하기 위해 열람 이벤트의 발생 시점을 한 곳으로 모아둔다).
 
-  return NextResponse.json({ noticeId: notice.id, items: checklistItems });
+  return NextResponse.json({ noticeId: notice.id, items: checklistItems, easyExplanations });
 }
 
 // PRD 정보구조(docs/06_prd.md Part 4)의 "오늘 할 일"/"지난 기록" 화면이 쓸 목록 조회.
