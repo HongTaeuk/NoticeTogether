@@ -577,15 +577,23 @@ export default function NoticeInputScreen({
                           {item.detail && <Text style={styles.itemDetail}>{item.detail}</Text>}
                           {item.due_date && <Text style={styles.itemDue}>기한: {item.due_date}</Text>}
                           <View style={styles.itemFooterRow}>
-                            {!item.is_edited_by_user && (
-                              <Text
-                                style={[
-                                  styles.confidenceText,
-                                  item.ai_confidence < 0.7 && styles.confidenceTextLow,
-                                ]}
+                            {!item.is_edited_by_user && item.ai_confidence < 0.7 && (
+                              // PRD 5-1 분기3: 확신도 낮은 항목의 표시를 누르면 원문으로 이동해서
+                              // 직접 대조해볼 수 있어야 한다(신뢰 > 속도 원칙의 직접 구현).
+                              <TouchableOpacity
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  setShowOriginal(true);
+                                }}
                               >
+                                <Text style={[styles.confidenceText, styles.confidenceTextLow]}>
+                                  ❓ AI 확신도 {Math.round(item.ai_confidence * 100)}% · 원문과 비교해보기
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                            {!item.is_edited_by_user && item.ai_confidence >= 0.7 && (
+                              <Text style={styles.confidenceText}>
                                 AI 확신도 {Math.round(item.ai_confidence * 100)}%
-                                {item.ai_confidence < 0.7 ? " · 원문과 비교해보세요" : ""}
                               </Text>
                             )}
                             {item.is_edited_by_user && (
