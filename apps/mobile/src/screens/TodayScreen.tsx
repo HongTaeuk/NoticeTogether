@@ -187,7 +187,7 @@ export default function TodayScreen({
                   style={[styles.checkbox, item.is_done && styles.checkboxChecked]}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+                  {item.is_done && <AnimatedCheckMark style={styles.checkboxMark} />}
                 </TouchableOpacity>
                 <View
                   style={[styles.categoryBadge, { backgroundColor: CATEGORY_COLOR[item.category] }]}
@@ -234,7 +234,7 @@ export default function TodayScreen({
                     style={[styles.checkbox, item.is_done && styles.checkboxChecked]}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+                    {item.is_done && <AnimatedCheckMark style={styles.checkboxMark} />}
                   </TouchableOpacity>
                   <View
                     style={[styles.categoryBadge, { backgroundColor: CATEGORY_COLOR[item.category] }]}
