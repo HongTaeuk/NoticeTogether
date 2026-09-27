@@ -54,5 +54,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     ? await supabase.from("users").select("id, role, display_name").in("id", userIds)
     : { data: [] };
 
-  return NextResponse.json({ notice, items, actions: actions ?? [], users: users ?? [] });
+  // PRD 5-2 분기7: "배우자가 초대는 됐지만 아직 이 알림을 한 번도 안 열어봤을 때"를
+  // 구분하려면 가구 구성원 전체와, 그중 누가 실제로 이 알림을 열었는지가 필요하다.
+  const { data: householdMembers } = await supabase
+    .from("users")
+    .select("id, role, display_name")
+    .eq("household_id", resolved.householdId);
+
+  const { data: viewEvents } = await supabase
+    .from("notice_events")
+    .select("user_id")
+    .eq("notice_id", id)
+    .in("event_type", ["notice_opened", "partner_view_confirmed"]);
+  const viewedUserIds = [...new Set((viewEvents ?? []).map((e) => e.user_id as string))];
+
+  return NextResponse.json({
+    notice,
+    items,
+    actions: actions ?? [],
+    users: users ?? [],
+    householdMembers: householdMembers ?? [],
+    viewedUserIds,
+  });
 }
