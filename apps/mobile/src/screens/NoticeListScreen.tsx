@@ -29,7 +29,6 @@ type Mode = "all" | "unread";
  * 백엔드 GET /api/notices는 이미 있었지만 지금까지 모바일에서 한 번도 쓰이지 않았다.
  */
 export default function NoticeListScreen({
-  session,
   mode,
   onSelectNotice,
   onComposeNew,
@@ -37,7 +36,6 @@ export default function NoticeListScreen({
   onManageHousehold,
   onViewToday,
 }: {
-  session: Session;
   mode: Mode;
   onSelectNotice: (id: string) => void;
   onComposeNew: () => void;
