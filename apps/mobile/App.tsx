@@ -86,6 +86,9 @@ function App() {
           </View>
         )}
         {screen === 'auth' && <AuthScreen onAuthed={handleAuthed} />}
+        {screen === 'onboarding-intro' && session && (
+          <OnboardingIntroScreen onNext={() => refreshHouseholdState(session)} />
+        )}
         {screen === 'household-setup' && session && (
           <HouseholdSetupScreen
             session={session}
