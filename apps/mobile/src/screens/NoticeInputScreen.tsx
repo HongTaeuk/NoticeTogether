@@ -358,8 +358,13 @@ export default function NoticeInputScreen({
       if (!res.ok) {
         throw new Error(data?.error ?? "수정에 실패했습니다.");
       }
-      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, ...data.item } : i)));
+      const updatedItem = { ...item, ...data.item };
+      setItems((prev) => prev.map((i) => (i.id === item.id ? updatedItem : i)));
       setEditingItemId(null);
+      // 제목/기한이 바뀌었을 수 있으니 예약된 알림을 취소하고 새 값으로 다시 잡는다.
+      await cancelReminderForItem(item.id);
+      const hour = await getPersonalizedHour();
+      await scheduleReminderForItem(updatedItem, hour);
     } catch (err) {
       setError(err instanceof Error ? err.message : "수정에 실패했습니다.");
     }
