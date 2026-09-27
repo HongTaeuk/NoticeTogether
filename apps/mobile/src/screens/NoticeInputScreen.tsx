@@ -507,7 +507,7 @@ export default function NoticeInputScreen({
                 <Text style={styles.summaryText}>{notice.ai_summary}</Text>
               ) : (
                 <TouchableOpacity onPress={() => setShowSummaryText(true)}>
-                  <Text style={styles.toggleText}>설명 더 보기</Text>
+                  <Text style={styles.summaryToggleText}>설명 더 보기</Text>
                 </TouchableOpacity>
               )}
               {items.map((item) => {
