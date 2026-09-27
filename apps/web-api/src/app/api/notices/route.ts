@@ -94,6 +94,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // PRD "새로 온 알림"(이거 봤나, 안 봤나?): 내가 이 알림을 한 번이라도 연 적이 있는지.
+  const noticeIds = (notices ?? []).map((n) => n.id as string);
+  const { data: myOpens } = noticeIds.length
+    ? await supabase
+        .from("notice_events")
+        .select("notice_id")
+        .eq("user_id", resolved.userId)
+        .in("notice_id", noticeIds)
+        .in("event_type", ["notice_opened", "partner_view_confirmed"])
+    : { data: [] };
+  const openedByMe = new Set((myOpens ?? []).map((e) => e.notice_id as string));
+
   const summarized = (notices ?? []).map((n) => {
     const items = (n.checklist_items ?? []) as { id: string; is_done: boolean; due_date: string | null }[];
     return {
@@ -103,6 +115,7 @@ export async function GET(req: NextRequest) {
       totalItems: items.length,
       doneItems: items.filter((i) => i.is_done).length,
       nearestDueDate: items.map((i) => i.due_date).filter(Boolean).sort()[0] ?? null,
+      hasOpened: openedByMe.has(n.id as string),
     };
   });
 
