@@ -10,11 +10,12 @@ import { ActivityIndicator, StatusBar, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import NoticeInputScreen from './src/screens/NoticeInputScreen';
 import AuthScreen from './src/screens/AuthScreen';
+import OnboardingIntroScreen from './src/screens/OnboardingIntroScreen';
 import HouseholdSetupScreen from './src/screens/HouseholdSetupScreen';
 import { authFetch } from './src/lib/apiClient';
 import { clearSession, loadSession, saveSession, type Session } from './src/lib/authStorage';
 
-type Screen = 'loading' | 'auth' | 'household-setup' | 'main';
+type Screen = 'loading' | 'auth' | 'onboarding-intro' | 'household-setup' | 'main';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('loading');
