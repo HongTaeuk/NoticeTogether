@@ -222,20 +222,10 @@ export default function NoticeInputScreen({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.roleSwitchRow}>
-        <Text style={styles.roleLabel}>지금 보고 있는 사람</Text>
-        <View style={styles.roleButtons}>
-          {(["primary", "secondary"] as Role[]).map((r) => (
-            <TouchableOpacity
-              key={r}
-              style={[styles.roleButton, role === r && styles.roleButtonActive]}
-              onPress={() => setRole(r)}
-            >
-              <Text style={[styles.roleButtonText, role === r && styles.roleButtonTextActive]}>
-                {r === "primary" ? "보호자 1" : "보호자 2"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={styles.roleLabel}>{ROLE_LABEL[role]}(으)로 로그인됨</Text>
+        <TouchableOpacity onPress={onLogout}>
+          <Text style={styles.logoutText}>로그아웃</Text>
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.title}>알림 붙여넣기</Text>
