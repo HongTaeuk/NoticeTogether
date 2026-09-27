@@ -46,6 +46,7 @@ export default function NoticeInputScreen({
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState({ title: "", detail: "", dueDate: "" });
   const [showOriginal, setShowOriginal] = useState(false);
+  const [showSummaryText, setShowSummaryText] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summarizeFailCount, setSummarizeFailCount] = useState(0);
