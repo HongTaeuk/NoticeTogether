@@ -88,6 +88,14 @@ function validateSummarizeResult(value: unknown): SummarizeResult {
   return { summary, items };
 }
 
+// 프롬프트가 YYYY-MM-DD를 지시해도 LLM이 가끔 다른 형식("9월 5일" 등)을 내보낼 수 있다.
+// checklist_items.due_date는 Postgres date 컬럼이라, 형식이 안 맞으면 이 항목 하나 때문에
+// 알림 저장 전체가 실패한다 — 차라리 null로 떨어뜨려서(기한 없음) 나머지는 살린다.
+function normalizeDueDate(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
 function normalizeCategory(value: unknown): ChecklistCategory {
   if (value === "준비물" || value === "제출서류" || value === "기한") {
     return value;
