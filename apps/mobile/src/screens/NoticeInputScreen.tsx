@@ -216,6 +216,13 @@ export default function NoticeInputScreen({
       if (!res.ok) {
         throw new Error("체크 상태 저장에 실패했습니다.");
       }
+      // 체크하면 더 알릴 필요가 없으니 취소하고, 취소하면 다시 예약한다.
+      if (nextDone) {
+        await cancelReminderForItem(item.id);
+      } else {
+        const hour = await getPersonalizedHour();
+        await scheduleReminderForItem({ ...item, is_done: false }, hour);
+      }
     } catch (err) {
       // 실패하면 원상복구
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_done: item.is_done } : i)));
