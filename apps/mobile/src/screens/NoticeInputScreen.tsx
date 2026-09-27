@@ -322,6 +322,12 @@ export default function NoticeInputScreen({
             </TouchableOpacity>
           </View>
 
+          {partnerNotViewed && (
+            <Text style={styles.partnerNotViewedText}>
+              {partnerNotViewed}님은 아직 이 알림을 못 본 것 같아요
+            </Text>
+          )}
+
           {showOriginal ? (
             <Text style={styles.originalText}>{notice.raw_text}</Text>
           ) : (
