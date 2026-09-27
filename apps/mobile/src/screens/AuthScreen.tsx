@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { API_BASE_URL } from "../config/api";
 import type { Session } from "../lib/authStorage";
