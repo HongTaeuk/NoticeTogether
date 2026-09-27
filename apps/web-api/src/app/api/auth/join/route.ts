@@ -70,12 +70,34 @@ export async function POST(req: NextRequest) {
   const takenRoles = new Set((members ?? []).map((m) => m.role));
   const newRole = takenRoles.has("primary") ? "secondary" : "primary";
 
+  // 가입 전에는 각자 "혼자만의 가정"으로 시작하므로(이 세션의 아키텍처 전환 핵심),
+  // 초대 코드로 연결되기 전에 이미 만들어둔 알림/체크리스트/자녀 정보가 있을 수 있다.
+  // 계정만 새 가정으로 옮기고 이 데이터를 그대로 두면 "합쳤는데 예전 기록이 사라졌다"는
+  // 데이터 유실처럼 보이므로, 원래 가정(옛 solo household)의 데이터를 새 가정으로 함께 옮긴다.
+  const oldHouseholdId = resolved.householdId;
+
   const { error: updateError } = await supabase
     .from("users")
     .update({ household_id: targetHousehold.id, role: newRole })
     .eq("id", resolved.userId);
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  const { error: noticesMigrateError } = await supabase
+    .from("notices")
+    .update({ household_id: targetHousehold.id })
+    .eq("household_id", oldHouseholdId);
+  if (noticesMigrateError) {
+    return NextResponse.json({ error: noticesMigrateError.message }, { status: 500 });
+  }
+
+  const { error: childrenMigrateError } = await supabase
+    .from("children")
+    .update({ household_id: targetHousehold.id })
+    .eq("household_id", oldHouseholdId);
+  if (childrenMigrateError) {
+    return NextResponse.json({ error: childrenMigrateError.message }, { status: 500 });
   }
 
   return NextResponse.json({

@@ -23,8 +23,8 @@ class MainActivity : ReactActivity() {
     }
   }
 
-  // 개발 중 adb로 화면을 계속 조작/확인하기 위한 편의 설정(잠금화면 위에 표시 + 화면 켜기).
-  // TODO: 실제 배포 전에는 제거하거나 사용자 설정으로 뺄 것.
+  // 잠금화면 위에 표시 + 화면 켜기 — 사용자 확인 결과 실사용에서도 유지하기로 함
+  // (마감 임박 알림을 탭했을 때 잠금 해제 없이 바로 볼 수 있게 하려는 의도).
   override fun onCreate(savedInstanceState: Bundle?) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
       setShowWhenLocked(true)
