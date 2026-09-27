@@ -31,6 +31,17 @@ export default function ChildConsentSection({ session }: { session: Session }) {
       .then((res) => res.json())
       .then((data) => setChildren(data.children ?? []))
       .catch(() => {});
+
+    // 이전에 이미 동의했으면 자녀를 추가할 때마다 체크박스를 다시 누르게 하지 않는다.
+    authFetch(session.accessToken, "/api/consents")
+      .then((res) => res.json())
+      .then((data) => {
+        const consents = data.consents ?? {};
+        if (consents.child_info) setAgreeChildInfo(true);
+        if (consents.ai_processing) setAgreeAiProcessing(true);
+        if (consents.disability_info) setAgreeDisabilityInfo(true);
+      })
+      .catch(() => {});
   }, [session.accessToken]);
 
   const needsDisabilityConsent = disabilityType.trim().length > 0;
