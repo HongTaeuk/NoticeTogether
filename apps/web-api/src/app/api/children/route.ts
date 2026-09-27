@@ -27,8 +27,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "name이 필요합니다." }, { status: 400 });
   }
 
-  const { householdId, userIds } = await ensureDevHousehold();
-  const userId = userIds[body.as ?? "primary"];
+  let resolved;
+  try {
+    resolved = await resolveUser(req, body.as);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { householdId, userId } = resolved;
   const supabase = getSupabaseServerClient();
 
   const { data: consentRows, error: consentError } = await supabase
