@@ -78,7 +78,7 @@ function validateSummarizeResult(value: unknown): SummarizeResult {
       category: normalizeCategory(item.category),
       title: typeof item.title === "string" ? item.title : "제목 없음",
       detail: typeof item.detail === "string" ? item.detail : null,
-      dueDate: typeof item.dueDate === "string" ? item.dueDate : null,
+      dueDate: normalizeDueDate(item.dueDate),
       confidence:
         typeof item.confidence === "number" && item.confidence >= 0 && item.confidence <= 1
           ? item.confidence
