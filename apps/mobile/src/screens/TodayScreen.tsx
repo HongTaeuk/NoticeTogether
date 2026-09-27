@@ -162,7 +162,10 @@ export default function TodayScreen({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {loading ? (
-        <ActivityIndicator style={styles.loadingIndicator} color="#1B64F2" />
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color="#1B64F2" />
+          <Text style={styles.loadingText}>오늘 할 일을 정리하는 중이에요</Text>
+        </View>
       ) : (
         <>
           <Text style={styles.sectionTitle}>지금 해야 할 것</Text>
