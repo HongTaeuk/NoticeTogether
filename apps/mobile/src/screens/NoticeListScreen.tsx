@@ -222,11 +222,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 8,
   },
+  // PRD 6-1: "미열람" 상태는 색상표에서 명시적으로 "경고색 금지, 중립 톤만" 대상이다.
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#F23B3B",
+    backgroundColor: "#1B64F2",
     marginRight: 8,
     marginTop: 6,
   },
