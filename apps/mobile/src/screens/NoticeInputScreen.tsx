@@ -180,10 +180,8 @@ export default function NoticeInputScreen({
     // PRD 5단계: 배너 미리보기가 아니라 실제로 화면에 펼쳐본 이 시점에만 열람을 기록한다.
     // (다른 보호자가 먼저 열었다면 서버가 자동으로 partner_view_confirmed로 기록한다.)
     try {
-      await fetch(`${API_BASE_URL}/api/notices/${id}/open`, {
+      await authFetch(session.accessToken, `/api/notices/${id}/open`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ as: role }),
       });
     } catch {
       // 열람 이벤트 기록 실패는 화면 표시 자체를 막을 이유가 없으므로 조용히 넘어간다.
