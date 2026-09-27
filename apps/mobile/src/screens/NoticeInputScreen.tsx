@@ -379,7 +379,7 @@ export default function NoticeInputScreen({
         </View>
       )}
 
-      <ChildConsentSection session={session} />
+      {!noticeId && <ChildConsentSection session={session} />}
     </ScrollView>
   );
 }
