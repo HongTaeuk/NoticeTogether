@@ -109,7 +109,7 @@ export default function NoticeListScreen({
         </View>
       ) : (
         <FlatList
-          data={notices}
+          data={visibleNotices}
           keyExtractor={(item) => item.id}
           refreshControl={
             <RefreshControl
