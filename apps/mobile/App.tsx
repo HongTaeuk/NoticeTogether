@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StatusBar, View } from 'react-native';
+import { ActivityIndicator, StatusBar, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import NoticeInputScreen from './src/screens/NoticeInputScreen';
 import AuthScreen from './src/screens/AuthScreen';
