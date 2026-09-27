@@ -44,3 +44,6 @@
   - `apps/mobile/src/config/api.ts`를 로컬(`adb reverse`) 대신 위 프로덕션 도메인을 기본값으로 사용하도록 변경.
 - PRD 3~4단계 모바일 연결: `NoticeInputScreen.tsx`가 이제 AI 요약 후 자동으로 `/api/notices`에 저장하고, 체크박스 UI로 `/api/checklist/[id]`를 호출해 완료 상태를 토글(낙관적 업데이트 + 실패 시 롤백)한다. PRD가 요구하는 "임시 계정 2개로 동기화 검증"을 위해 화면 상단에 보호자1/보호자2 역할 전환 버튼을 추가했고, "같이 확인하기" 버튼으로 `/api/notices/[id]`를 다시 불러와 상대방이 체크한 내용을 Pull 방식으로 동기화한다.
 - 안드로이드 기기가 adb에서 다시 안 보임(재연결 필요) — 기기 확인 후 새 화면으로 재빌드/설치 예정.
+- 기기 연결 케이블 분실로 당분간 실기기 테스트 불가 — 기기 없이 이어서 개발 진행하기로 함.
+- **버그 발견 및 수정**: Vercel이 GitHub push마다 자동 재배포를 시도했는데 전부 실패(빌드 에러 이메일 반복 수신)하고 있었음. 원인은 모노레포 구조 — Vercel 프로젝트의 `rootDirectory`가 비어있어 저장소 루트에서 Next.js 앱을 찾으려 했으나 실제 앱은 `apps/web-api`에 있음(CLI 배포는 그 폴더 안에서 직접 실행해서 문제없이 성공했던 것). Vercel API로 `rootDirectory`를 `apps/web-api`로 설정해 해결. 과거 git 연동 배포 6개는 전부 ERROR, CLI 배포 2개는 READY였음을 확인해 진단 검증.
+- PRD 6단계(액션노트 공유) 백엔드 확장: `PATCH /api/checklist/[id]`가 이제 `isDone` 없이 `note`만 보내면 체크 상태는 유지한 채 "note" 액션만 기록하도록 수정(한마디만 남기는 경우 지원).
