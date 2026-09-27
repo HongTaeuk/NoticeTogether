@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import AnimatedCheckMark from "../components/AnimatedCheckMark";
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
 import {
