@@ -223,6 +223,17 @@ export default function NoticeInputScreen({
     }
   }
 
+  if (tab === "history") {
+    return (
+      <NoticeListScreen
+        session={session}
+        onSelectNotice={openExistingNotice}
+        onComposeNew={resetToCompose}
+        onLogout={onLogout}
+      />
+    );
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.roleSwitchRow}>
@@ -232,8 +243,20 @@ export default function NoticeInputScreen({
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>알림 붙여넣기</Text>
-      {__DEV__ && (
+      <View style={styles.tabRow}>
+        <Text style={styles.title}>{noticeId ? "알림 상세" : "알림 붙여넣기"}</Text>
+        <TouchableOpacity onPress={() => setTab("history")}>
+          <Text style={styles.historyLinkText}>지난 기록 보기</Text>
+        </TouchableOpacity>
+      </View>
+
+      {noticeId && (
+        <TouchableOpacity onPress={resetToCompose} style={styles.newComposeButton}>
+          <Text style={styles.newComposeButtonText}>+ 새 알림 작성하기</Text>
+        </TouchableOpacity>
+      )}
+
+      {!noticeId && __DEV__ && (
         <TouchableOpacity
           onPress={() =>
             setRawText(
