@@ -32,8 +32,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { userIds } = await ensureDevHousehold();
-  const userId = userIds[body.as ?? "primary"];
+  let resolved;
+  try {
+    resolved = await resolveUser(req, body.as);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { userId } = resolved;
   const supabase = getSupabaseServerClient();
 
   const { error } = await supabase.from("consents").insert({
