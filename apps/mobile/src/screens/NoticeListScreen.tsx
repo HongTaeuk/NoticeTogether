@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
-import type { Session } from "../lib/authStorage";
 
 type NoticeSummary = {
   id: string;
