@@ -10,6 +10,7 @@ export type Session = {
   displayName: string | null;
   householdId: string;
   inviteCode: string;
+  isAnonymous?: boolean;
 };
 
 const STORAGE_KEY = "noticetogether:session";
