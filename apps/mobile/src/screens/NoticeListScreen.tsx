@@ -99,7 +99,9 @@ export default function NoticeListScreen({
       {loading ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator color="#1B64F2" />
-          <Text style={styles.loadingText}>지난 알림을 불러오는 중이에요</Text>
+          <Text style={styles.loadingText}>
+            {mode === "unread" ? "새로 온 알림을 불러오는 중이에요" : "지난 알림을 불러오는 중이에요"}
+          </Text>
         </View>
       ) : visibleNotices.length === 0 ? (
         <View style={styles.emptyBox}>
