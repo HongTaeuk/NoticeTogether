@@ -133,10 +133,35 @@ export default function NoticeInputScreen() {
         throw new Error(data?.error ?? "동기화에 실패했습니다.");
       }
       setItems(data.items as PersistedItem[]);
+      setActions(data.actions as ItemAction[]);
+      const roleMap: Record<string, Role> = {};
+      for (const u of data.users as { id: string; role: Role }[]) {
+        roleMap[u.id] = u.role;
+      }
+      setUserRoleById(roleMap);
     } catch (err) {
       setError(err instanceof Error ? err.message : "동기화에 실패했습니다.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function sendNote(item: PersistedItem) {
+    const note = (noteDrafts[item.id] ?? "").trim();
+    if (!note) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/checklist/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note, as: role }),
+      });
+      if (!res.ok) {
+        throw new Error("한마디 남기기에 실패했습니다.");
+      }
+      setNoteDrafts((prev) => ({ ...prev, [item.id]: "" }));
+      await refreshFromServer();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "한마디 남기기에 실패했습니다.");
     }
   }
 
