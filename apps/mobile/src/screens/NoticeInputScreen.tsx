@@ -48,6 +48,7 @@ export default function NoticeInputScreen({
     setNotice(null);
     setItems([]);
     setActions([]);
+    setPartnerNotViewed(null);
     setRawText("");
     setShowOriginal(false);
     setError(null);
