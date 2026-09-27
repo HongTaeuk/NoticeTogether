@@ -164,7 +164,7 @@ export default function NoticeInputScreen({
   }
 
   async function loadNoticeDetail(id: string) {
-    const res = await fetch(`${API_BASE_URL}/api/notices/${id}`);
+    const res = await authFetch(session.accessToken, `/api/notices/${id}`);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data?.error ?? "동기화에 실패했습니다.");
