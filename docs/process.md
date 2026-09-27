@@ -19,3 +19,6 @@
 - `apps/web-api`에 Next.js(App Router, TypeScript) 프로젝트 스캐폴딩.
 - Android SDK 커맨드라인 도구(cmdline-tools) 설치 진행 — 빌드도구/플랫폼 37 설치 및 실기기 빌드 테스트 예정.
 - `docs/07_design_reference.md` 추가 — 토스미니 TDS(Toss Design System) Mobile 문서 전체(사이드바 기준 약 55개 하위 페이지)를 조사해 색상/타이포그래피/컴포넌트 32종/컴포넌트 그룹/훅/마이그레이션 가이드 정리. 향후 앱인토스(tossmini) 입점을 대비한 디자인 참고 자료. **NoticeTogether는 회색(grey)을 사용하지 않기로 결정**하여 이 점을 문서에 명시함.
+- `apps/web-api`에 AI 요약 파이프라인 뼈대 작성: `src/lib/ai/client.ts`(OpenAI 호환 채팅완성 호출, NVIDIA NIM 기본), `src/lib/ai/summarize.ts`(준비물/제출서류/기한 추출 프롬프트+파싱), `src/app/api/summarize/route.ts`(POST 엔드포인트), `src/lib/supabase/client.ts`(서버 전용 Supabase 클라이언트), `.env.local.example` 추가.
+- `supabase/migrations/0001_init.sql` 추가 — PRD/기술검토 기준 초기 스키마(households, users, children, notices, checklist_items, item_actions, notice_events, consents, ai_summary_logs) 및 RLS 활성화.
+- 참고 프로젝트 Wolharang/moa(develop 브랜치, TempClassifierService)의 NVIDIA 연동 방식을 실제 코드까지 확인 후 반영: `lib/ai/client.ts`에 **모델 체인(콤마 구분 다중 모델 폴백) + 연속 실패 시 일시 중단(cool-down)** 구조 추가. NVIDIA NIM 40 RPM 제한 위험에 대한 구체적 대응책.
