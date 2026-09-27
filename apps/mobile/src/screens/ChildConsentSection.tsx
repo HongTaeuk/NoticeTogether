@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { API_BASE_URL } from "../config/api";
-
-type Role = "primary" | "secondary";
+import { authFetch } from "../lib/apiClient";
+import type { Session } from "../lib/authStorage";
 
 type Child = {
   id: string;
