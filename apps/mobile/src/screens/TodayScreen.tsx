@@ -21,15 +21,19 @@ type TodayItem = {
   is_done: boolean;
 };
 
-type RecentPartnerAction = {
+type PartnerActionType = "checked" | "unchecked" | "note" | "edited";
+
+type PartnerAction = {
   displayName: string;
-  action: "checked" | "unchecked" | "note" | "edited";
+  action: PartnerActionType;
   note: string | null;
   itemTitle: string | null;
   createdAt: string;
-} | null;
+};
 
-const ACTION_LABEL: Record<RecentPartnerAction extends null ? never : RecentPartnerAction["action"], string> = {
+type RecentPartnerAction = PartnerAction | null;
+
+const ACTION_LABEL: Record<PartnerActionType, string> = {
   checked: "다 했다고 체크했어요",
   unchecked: "체크를 취소했어요",
   note: "한마디를 남겼어요",
