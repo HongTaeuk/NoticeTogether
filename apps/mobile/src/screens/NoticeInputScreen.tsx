@@ -373,7 +373,7 @@ export default function NoticeInputScreen({
             </Text>
             <TouchableOpacity onPress={toggleShowOriginal}>
               <Text style={styles.toggleText}>
-                {showOriginal ? "요약 보기" : "원문 보기"}
+                {showOriginal ? "핵심만 보기" : "학교에서 온 그대로 보기"}
               </Text>
             </TouchableOpacity>
           </View>
