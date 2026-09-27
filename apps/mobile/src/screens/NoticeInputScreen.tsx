@@ -648,7 +648,13 @@ export default function NoticeInputScreen({
                         onSubmitEditing={() => sendNote(item)}
                       />
                       <TouchableOpacity onPress={() => sendNote(item)}>
-                        <Text style={styles.noteSendText}>남기기</Text>
+                        <Text style={styles.noteSendText}>
+                          {noteSaveStatus[item.id] === "saving"
+                            ? "저장 중..."
+                            : noteSaveStatus[item.id] === "saved"
+                              ? "남겼어요"
+                              : "남기기"}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
