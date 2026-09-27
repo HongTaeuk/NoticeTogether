@@ -21,4 +21,7 @@
 - `docs/07_design_reference.md` 추가 — 토스미니 TDS(Toss Design System) Mobile 문서 전체(사이드바 기준 약 55개 하위 페이지)를 조사해 색상/타이포그래피/컴포넌트 32종/컴포넌트 그룹/훅/마이그레이션 가이드 정리. 향후 앱인토스(tossmini) 입점을 대비한 디자인 참고 자료. **NoticeTogether는 회색(grey)을 사용하지 않기로 결정**하여 이 점을 문서에 명시함.
 - `apps/web-api`에 AI 요약 파이프라인 뼈대 작성: `src/lib/ai/client.ts`(OpenAI 호환 채팅완성 호출, NVIDIA NIM 기본), `src/lib/ai/summarize.ts`(준비물/제출서류/기한 추출 프롬프트+파싱), `src/app/api/summarize/route.ts`(POST 엔드포인트), `src/lib/supabase/client.ts`(서버 전용 Supabase 클라이언트), `.env.local.example` 추가.
 - `supabase/migrations/0001_init.sql` 추가 — PRD/기술검토 기준 초기 스키마(households, users, children, notices, checklist_items, item_actions, notice_events, consents, ai_summary_logs) 및 RLS 활성화.
-- 참고 프로젝트 Wolharang/moa(develop 브랜치, TempClassifierService)의 NVIDIA 연동 방식을 실제 코드까지 확인 후 반영: `lib/ai/client.ts`에 **모델 체인(콤마 구분 다중 모델 폴백) + 연속 실패 시 일시 중단(cool-down)** 구조 추가. NVIDIA NIM 40 RPM 제한 위험에 대한 구체적 대응책.
+- 참고 프로젝트 Wolharang/moa(develop 브랜치, TempClassifierService)의 NVIDIA 연동 방식을 실제 코드까지 확인 후 반영: `lib/ai/client.ts`에 **모델 체인(콤마 구분 다중 모델 폴백) + 연속 실패 시 일시 중단(cool-down)** 구조 추가. NVIDIA NIM 40 RPM 제한 위험에 대한 구체적 대응책. 모델 네이밍 컨벤션(제공사/모델명) 확인 결과 moa와 동일한 NVIDIA NIM API 계열로 확인됨.
+- Android SDK 커맨드라인 도구 설치 완료(플랫폼 36/37.0, 빌드도구 36.0.0/37.0.0), JAVA_HOME/ANDROID_HOME 영구 환경변수 등록. `apps/mobile/android`에서 `gradlew assembleDebug` 실기기 빌드 시작.
+- `apps/mobile`에 PRD 1~2단계 화면 구현: `src/screens/NoticeInputScreen.tsx`(텍스트 붙여넣기 → `/api/summarize` 호출 → 카테고리별 체크리스트 표시 + 원문 보기 토글), `src/types/notice.ts`(백엔드와 타입 공유), `src/config/api.ts`(`adb reverse`로 로컬 백엔드 연결). `App.tsx`를 이 화면으로 교체. 회색 미사용 원칙에 맞춰 blue/orange/red 팔레트로 카테고리 색상 구성.
+- NVIDIA NIM API 키, Supabase 프로젝트 키는 아직 발급 전 — 사용자에게 발급 방법 안내함(둘 다 준비되면 `.env.local` 연결 예정). 목표를 "실제 기기에서 바로 테스트 가능한 완성된 MVP"로 재확인함.
