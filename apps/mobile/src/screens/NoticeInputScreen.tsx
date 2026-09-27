@@ -358,6 +358,8 @@ export default function NoticeInputScreen() {
           )}
         </View>
       )}
+
+      <ChildConsentSection role={role} />
     </ScrollView>
   );
 }
