@@ -75,8 +75,8 @@ export default function NoticeListScreen({
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>{mode === "unread" ? "새로 온 알림" : "지난 기록"}</Text>
-        <TouchableOpacity onPress={onLogout}>
-          <Text style={styles.logoutText}>로그아웃</Text>
+        <TouchableOpacity onPress={onAccountPress}>
+          <Text style={styles.logoutText}>{accountLabel}</Text>
         </TouchableOpacity>
       </View>
 
