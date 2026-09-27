@@ -198,8 +198,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 10,
   },
-  loadingIndicator: {
+  loadingBox: {
     marginTop: 40,
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 13,
+    color: "#3D5A9C",
   },
   emptyBox: {
     marginTop: 60,
