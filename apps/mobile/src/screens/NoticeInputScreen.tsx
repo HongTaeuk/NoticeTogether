@@ -11,6 +11,7 @@ import {
 import { API_BASE_URL } from "../config/api";
 import type { ChecklistCategory, SummarizeResult } from "../types/notice";
 import { scheduleReminder } from "../native/alarmScheduler";
+import ChildConsentSection from "./ChildConsentSection";
 
 const CATEGORY_COLOR: Record<ChecklistCategory, string> = {
   준비물: "#1B64F2", // blue
