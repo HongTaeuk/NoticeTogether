@@ -95,3 +95,10 @@ function normalizeCategory(value: unknown): ChecklistCategory {
   }
   return "준비물";
 }
+
+// Gemini 등 일부 모델은 response_format=json_object여도 ```json ... ``` 코드펜스로 감싸서 보낸다.
+function stripMarkdownJsonFence(text: string): string {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fenced ? fenced[1] : trimmed;
+}
