@@ -87,8 +87,15 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ child });
 }
 
-export async function GET() {
-  const { householdId } = await ensureDevHousehold();
+export async function GET(req: NextRequest) {
+  let resolved;
+  try {
+    resolved = await resolveUser(req, req.nextUrl.searchParams.get("as") as DevRole | null);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { householdId } = resolved;
   const supabase = getSupabaseServerClient();
 
   const { data: children, error } = await supabase
