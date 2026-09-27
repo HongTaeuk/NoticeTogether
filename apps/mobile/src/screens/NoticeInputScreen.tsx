@@ -17,12 +17,30 @@ const CATEGORY_COLOR: Record<ChecklistCategory, string> = {
   기한: "#F23B3B", // red
 };
 
+type Role = "primary" | "secondary";
+
+type PersistedItem = {
+  id: string;
+  category: ChecklistCategory;
+  title: string;
+  detail: string | null;
+  due_date: string | null;
+  ai_confidence: number;
+  is_edited_by_user: boolean;
+  is_done: boolean;
+};
+
 export default function NoticeInputScreen() {
   const [rawText, setRawText] = useState("");
-  const [result, setResult] = useState<SummarizeResult | null>(null);
+  const [aiResult, setAiResult] = useState<SummarizeResult | null>(null);
+  const [noticeId, setNoticeId] = useState<string | null>(null);
+  const [items, setItems] = useState<PersistedItem[]>([]);
   const [showOriginal, setShowOriginal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // PRD 4단계: 실제 로그인 붙이기 전까지, 임시 계정 2개(보호자 1/2)를 전환해가며
+  // 체크/동기화가 상대방 화면에도 반영되는지 검증하기 위한 역할 전환.
+  const [role, setRole] = useState<Role>("primary");
 
   async function handleSummarize() {
     if (!rawText.trim()) {
@@ -30,19 +48,39 @@ export default function NoticeInputScreen() {
     }
     setLoading(true);
     setError(null);
-    setResult(null);
+    setAiResult(null);
+    setNoticeId(null);
+    setItems([]);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/summarize`, {
+      const summarizeRes = await fetch(`${API_BASE_URL}/api/summarize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rawText }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error ?? "요약에 실패했습니다.");
+      const summarizeData = await summarizeRes.json();
+      if (!summarizeRes.ok) {
+        throw new Error(summarizeData?.error ?? "요약에 실패했습니다.");
       }
-      setResult(data as SummarizeResult);
+      const summary = summarizeData as SummarizeResult;
+      setAiResult(summary);
       setShowOriginal(false);
+
+      const noticeRes = await fetch(`${API_BASE_URL}/api/notices`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawText,
+          summary: summary.summary,
+          items: summary.items,
+          createdBy: role,
+        }),
+      });
+      const noticeData = await noticeRes.json();
+      if (!noticeRes.ok) {
+        throw new Error(noticeData?.error ?? "체크리스트 저장에 실패했습니다.");
+      }
+      setNoticeId(noticeData.noticeId as string);
+      setItems(noticeData.items as PersistedItem[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
@@ -50,8 +88,63 @@ export default function NoticeInputScreen() {
     }
   }
 
+  async function toggleItem(item: PersistedItem) {
+    const nextDone = !item.is_done;
+    // 낙관적 업데이트: 서버 응답을 기다리지 않고 먼저 화면에 반영한다.
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_done: nextDone } : i)));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/checklist/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDone: nextDone, as: role }),
+      });
+      if (!res.ok) {
+        throw new Error("체크 상태 저장에 실패했습니다.");
+      }
+    } catch (err) {
+      // 실패하면 원상복구
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_done: item.is_done } : i)));
+      setError(err instanceof Error ? err.message : "체크 상태 저장에 실패했습니다.");
+    }
+  }
+
+  async function refreshFromServer() {
+    if (!noticeId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/notices/${noticeId}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error ?? "동기화에 실패했습니다.");
+      }
+      setItems(data.items as PersistedItem[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "동기화에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.roleSwitchRow}>
+        <Text style={styles.roleLabel}>지금 보고 있는 사람</Text>
+        <View style={styles.roleButtons}>
+          {(["primary", "secondary"] as Role[]).map((r) => (
+            <TouchableOpacity
+              key={r}
+              style={[styles.roleButton, role === r && styles.roleButtonActive]}
+              onPress={() => setRole(r)}
+            >
+              <Text style={[styles.roleButtonText, role === r && styles.roleButtonTextActive]}>
+                {r === "primary" ? "보호자 1" : "보호자 2"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
       <Text style={styles.title}>알림 붙여넣기</Text>
       <TextInput
         style={styles.input}
@@ -76,7 +169,7 @@ export default function NoticeInputScreen() {
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {result && (
+      {aiResult && (
         <View style={styles.resultBox}>
           <View style={styles.resultHeader}>
             <Text style={styles.resultTitle}>
@@ -93,9 +186,17 @@ export default function NoticeInputScreen() {
             <Text style={styles.originalText}>{rawText}</Text>
           ) : (
             <>
-              <Text style={styles.summaryText}>{result.summary}</Text>
-              {result.items.map((item, idx) => (
-                <View key={idx} style={styles.itemRow}>
+              <Text style={styles.summaryText}>{aiResult.summary}</Text>
+              {items.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.itemRow}
+                  onPress={() => toggleItem(item)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkbox, item.is_done && styles.checkboxChecked]}>
+                    {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+                  </View>
                   <View
                     style={[
                       styles.categoryBadge,
@@ -105,12 +206,20 @@ export default function NoticeInputScreen() {
                     <Text style={styles.categoryBadgeText}>{item.category}</Text>
                   </View>
                   <View style={styles.itemTextBox}>
-                    <Text style={styles.itemTitle}>{item.title}</Text>
+                    <Text style={[styles.itemTitle, item.is_done && styles.itemTitleDone]}>
+                      {item.title}
+                    </Text>
                     {item.detail && <Text style={styles.itemDetail}>{item.detail}</Text>}
-                    {item.dueDate && <Text style={styles.itemDue}>기한: {item.dueDate}</Text>}
+                    {item.due_date && <Text style={styles.itemDue}>기한: {item.due_date}</Text>}
                   </View>
-                </View>
+                </TouchableOpacity>
               ))}
+
+              <TouchableOpacity onPress={refreshFromServer} style={styles.refreshButton}>
+                <Text style={styles.refreshButtonText}>
+                  같이 확인하기 (상대방이 체크한 내용 새로고침)
+                </Text>
+              </TouchableOpacity>
             </>
           )}
         </View>
@@ -126,6 +235,38 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  roleSwitchRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  roleLabel: {
+    fontSize: 12,
+    color: "#3D5A9C",
+  },
+  roleButtons: {
+    flexDirection: "row",
+  },
+  roleButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#1B64F2",
+    marginLeft: 8,
+  },
+  roleButtonActive: {
+    backgroundColor: "#1B64F2",
+  },
+  roleButtonText: {
+    fontSize: 12,
+    color: "#1B64F2",
+    fontWeight: "600",
+  },
+  roleButtonTextActive: {
+    color: "#FFFFFF",
   },
   title: {
     fontSize: 20,
@@ -200,7 +341,27 @@ const styles = StyleSheet.create({
   },
   itemRow: {
     flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 12,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#1B64F2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    marginTop: 1,
+  },
+  checkboxChecked: {
+    backgroundColor: "#1B64F2",
+  },
+  checkboxMark: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
   categoryBadge: {
     borderRadius: 8,
@@ -222,6 +383,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#0B1F4D",
   },
+  itemTitleDone: {
+    textDecorationLine: "line-through",
+    color: "#7FA8F5",
+  },
   itemDetail: {
     fontSize: 13,
     color: "#3D5A9C",
@@ -231,5 +396,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#F23B3B",
     marginTop: 2,
+  },
+  refreshButton: {
+    marginTop: 8,
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  refreshButtonText: {
+    color: "#1B64F2",
+    fontSize: 13,
+    fontWeight: "600",
   },
 });
