@@ -24,18 +24,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // 본문 없이 호출해도 기본값(primary)으로 처리
   }
 
-  const { userIds } = await ensureDevHousehold();
-  const userId = userIds[body.as ?? "primary"];
-  const role = body.as ?? "primary";
+  let resolved;
+  try {
+    resolved = await resolveUser(req, body.as);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { userId, role } = resolved;
   const supabase = getSupabaseServerClient();
 
   const { data: notice, error: noticeError } = await supabase
     .from("notices")
-    .select("id, created_by")
+    .select("id, created_by, household_id")
     .eq("id", id)
     .single();
   if (noticeError) {
     return NextResponse.json({ error: noticeError.message }, { status: 404 });
+  }
+  if (notice.household_id !== resolved.householdId) {
+    return NextResponse.json({ error: "이 알림에 접근할 권한이 없습니다." }, { status: 403 });
   }
 
   // 이미 이 알림에 notice_opened 이벤트가 있고, 지금 여는 사람이 그 최초 열람자와
