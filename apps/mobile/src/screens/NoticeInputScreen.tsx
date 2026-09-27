@@ -268,30 +268,34 @@ export default function NoticeInputScreen({
           <Text style={styles.devFillButtonText}>[개발용] 테스트 문장 채우기</Text>
         </TouchableOpacity>
       )}
-      <TextInput
-        style={styles.input}
-        placeholder="학교/복지관 알림 원문을 여기에 붙여넣으세요"
-        placeholderTextColor="#7FA8F5"
-        multiline
-        value={rawText}
-        onChangeText={setRawText}
-      />
+      {!noticeId && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="학교/복지관 알림 원문을 여기에 붙여넣으세요"
+            placeholderTextColor="#7FA8F5"
+            multiline
+            value={rawText}
+            onChangeText={setRawText}
+          />
 
-      <TouchableOpacity
-        style={[styles.button, (!rawText.trim() || loading) && styles.buttonDisabled]}
-        onPress={handleSummarize}
-        disabled={!rawText.trim() || loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.buttonText}>핵심만 정리하기</Text>
-        )}
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, (!rawText.trim() || loading) && styles.buttonDisabled]}
+            onPress={handleSummarize}
+            disabled={!rawText.trim() || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>핵심만 정리하기</Text>
+            )}
+          </TouchableOpacity>
+        </>
+      )}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {aiResult && (
+      {notice && (
         <View style={styles.resultBox}>
           <View style={styles.resultHeader}>
             <Text style={styles.resultTitle}>
@@ -305,7 +309,7 @@ export default function NoticeInputScreen({
           </View>
 
           {showOriginal ? (
-            <Text style={styles.originalText}>{rawText}</Text>
+            <Text style={styles.originalText}>{notice.raw_text}</Text>
           ) : (
             <>
               <Text style={styles.summaryText}>{aiResult.summary}</Text>
