@@ -12,7 +12,7 @@ import NoticeInputScreen from './src/screens/NoticeInputScreen';
 function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         <NoticeInputScreen />
       </SafeAreaView>
