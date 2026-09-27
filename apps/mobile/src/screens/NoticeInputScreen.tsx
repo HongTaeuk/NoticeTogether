@@ -386,7 +386,8 @@ export default function NoticeInputScreen({
         onComposeNew={resetToCompose}
         onViewHistory={() => setTab("history")}
         onViewUnread={() => setTab("unread")}
-        onLogout={onLogout}
+        accountLabel={accountLabel}
+        onAccountPress={onAccountPress}
         onManageHousehold={onManageHousehold}
       />
     );
@@ -398,7 +399,8 @@ export default function NoticeInputScreen({
         mode="unread"
         onSelectNotice={openExistingNotice}
         onComposeNew={resetToCompose}
-        onLogout={onLogout}
+        accountLabel={accountLabel}
+        onAccountPress={onAccountPress}
         onManageHousehold={onManageHousehold}
         onViewToday={() => setTab("today")}
       />
@@ -411,7 +413,8 @@ export default function NoticeInputScreen({
         mode="all"
         onSelectNotice={openExistingNotice}
         onComposeNew={resetToCompose}
-        onLogout={onLogout}
+        accountLabel={accountLabel}
+        onAccountPress={onAccountPress}
         onManageHousehold={onManageHousehold}
         onViewToday={() => setTab("today")}
       />
@@ -422,8 +425,8 @@ export default function NoticeInputScreen({
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.roleSwitchRow}>
         <Text style={styles.roleLabel}>{ROLE_LABEL[role]}(으)로 로그인됨</Text>
-        <TouchableOpacity onPress={onLogout}>
-          <Text style={styles.logoutText}>로그아웃</Text>
+        <TouchableOpacity onPress={onAccountPress}>
+          <Text style={styles.logoutText}>{accountLabel}</Text>
         </TouchableOpacity>
       </View>
 
