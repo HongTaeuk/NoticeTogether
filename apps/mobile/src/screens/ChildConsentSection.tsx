@@ -27,11 +27,11 @@ export default function ChildConsentSection({ session }: { session: Session }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/children`)
+    authFetch(session.accessToken, "/api/children")
       .then((res) => res.json())
       .then((data) => setChildren(data.children ?? []))
       .catch(() => {});
-  }, []);
+  }, [session.accessToken]);
 
   const needsDisabilityConsent = disabilityType.trim().length > 0;
   const canSubmit =
