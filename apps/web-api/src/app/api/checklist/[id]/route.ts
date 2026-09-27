@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
-import { ensureDevHousehold, type DevRole } from "@/lib/supabase/devSeed";
+import type { DevRole } from "@/lib/supabase/devSeed";
+import { resolveUser, AuthError } from "@/lib/auth/session";
 
 type ToggleBody = {
   // isDone을 생략하면 체크 상태는 그대로 두고 note만 남긴다("한마디" 전용 액션).
