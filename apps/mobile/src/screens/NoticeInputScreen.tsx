@@ -105,6 +105,31 @@ export default function NoticeInputScreen() {
     }
   }
 
+  /**
+   * PRD 7단계: 기한이 있는 항목은 전날 밤 21시에 "마감 임박" 알림을 예약한다.
+   * 이미 지난 시각이면(오늘/과거 기한) 건너뛴다. Android 전용 네이티브 모듈이라
+   * 실기기가 아닌 환경(개발 중 기기 미연결 등)에서는 실패해도 화면 흐름은 막지 않는다.
+   */
+  async function scheduleReminders(newItems: PersistedItem[]) {
+    for (const item of newItems) {
+      if (!item.due_date) continue;
+      const due = new Date(`${item.due_date}T21:00:00`);
+      due.setDate(due.getDate() - 1); // 기한 전날 21시
+      if (due.getTime() <= Date.now()) continue;
+      try {
+        await scheduleReminder(
+          item.id,
+          due,
+          "마감이 다가와요",
+          `${item.title} — 내일(${item.due_date})까지예요.`,
+        );
+      } catch (err) {
+        // 기기가 없거나(개발 중) 권한이 없는 경우 등 — 조용히 무시하고 계속 진행.
+        console.warn("알림 예약 실패:", err);
+      }
+    }
+  }
+
   async function toggleItem(item: PersistedItem) {
     const nextDone = !item.is_done;
     // 낙관적 업데이트: 서버 응답을 기다리지 않고 먼저 화면에 반영한다.
