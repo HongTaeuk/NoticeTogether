@@ -189,6 +189,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   switchModeButton: {
     marginTop: 18,
     alignItems: "center",
