@@ -50,15 +50,17 @@ export default function TodayScreen({
   onComposeNew,
   onViewHistory,
   onViewUnread,
-  onLogout,
   onManageHousehold,
+  accountLabel,
+  onAccountPress,
 }: {
   onOpenNotice: (noticeId: string) => void;
   onComposeNew: () => void;
   onViewHistory: () => void;
   onViewUnread: () => void;
-  onLogout: () => void;
   onManageHousehold: () => void;
+  accountLabel: string;
+  onAccountPress: () => void;
 }) {
   const [urgentItems, setUrgentItems] = useState<TodayItem[]>([]);
   const [allItems, setAllItems] = useState<TodayItem[]>([]);

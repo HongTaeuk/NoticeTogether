@@ -377,7 +377,6 @@ export default function NoticeInputScreen({
   if (tab === "today") {
     return (
       <TodayScreen
-        session={session}
         onOpenNotice={openExistingNotice}
         onComposeNew={resetToCompose}
         onViewHistory={() => setTab("history")}
@@ -392,7 +391,6 @@ export default function NoticeInputScreen({
     return (
       <NoticeListScreen
         mode="unread"
-        session={session}
         onSelectNotice={openExistingNotice}
         onComposeNew={resetToCompose}
         onLogout={onLogout}
@@ -406,7 +404,6 @@ export default function NoticeInputScreen({
     return (
       <NoticeListScreen
         mode="all"
-        session={session}
         onSelectNotice={openExistingNotice}
         onComposeNew={resetToCompose}
         onLogout={onLogout}
