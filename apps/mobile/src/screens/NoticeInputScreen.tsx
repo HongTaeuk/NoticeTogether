@@ -411,10 +411,40 @@ const styles = StyleSheet.create({
     color: "#0B1F4D",
     lineHeight: 21,
   },
+  itemCard: {
+    marginBottom: 16,
+  },
   itemRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 12,
+  },
+  noteText: {
+    fontSize: 12,
+    color: "#3D5A9C",
+    marginTop: 4,
+    marginLeft: 32,
+  },
+  noteInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    marginLeft: 32,
+  },
+  noteInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#C7DBFB",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 12,
+    color: "#0B1F4D",
+  },
+  noteSendText: {
+    color: "#1B64F2",
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 8,
   },
   checkbox: {
     width: 22,
