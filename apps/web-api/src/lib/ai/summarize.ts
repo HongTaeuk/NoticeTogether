@@ -49,6 +49,8 @@ export async function summarizeNotice(rawText: string): Promise<SummarizeResult>
       { role: "user", content: rawText },
     ],
     temperature: 0,
+    // NVIDIA NIM 폴백 모델들은 추론형이라 답변 전에 reasoning 토큰을 많이 쓴다.
+    maxTokens: 2000,
     responseFormat: "json_object",
   });
 
