@@ -75,6 +75,7 @@ export default function NoticeInputScreen({
     setActions([]);
     setPartnerNotViewed(null);
     setRawText("");
+    clearDraft();
     setShowOriginal(false);
     setError(null);
     setSummarizeFailCount(0);
