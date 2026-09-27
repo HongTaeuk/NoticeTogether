@@ -48,15 +48,18 @@ export default function AuthScreen({
       if (!res.ok) {
         throw new Error(data?.error ?? "요청에 실패했습니다.");
       }
-      onAuthed({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        userId: data.user.id,
-        role: data.user.role,
-        displayName: data.user.displayName ?? null,
-        householdId: data.household.id,
-        inviteCode: data.household.inviteCode,
-      });
+      onAuthed(
+        {
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          userId: data.user.id,
+          role: data.user.role,
+          displayName: data.user.displayName ?? null,
+          householdId: data.household.id,
+          inviteCode: data.household.inviteCode,
+        },
+        mode === "signup",
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "요청에 실패했습니다.");
     } finally {
