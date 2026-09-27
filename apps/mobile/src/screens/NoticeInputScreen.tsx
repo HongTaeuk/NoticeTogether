@@ -163,6 +163,7 @@ export default function NoticeInputScreen({
       setSummarizeFailCount(0);
       setNoticeId(noticeData.noticeId as string);
       setItems(noticeData.items as PersistedItem[]);
+      clearDraft();
       await loadNoticeDetail(noticeData.noticeId as string);
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장에 실패했습니다.");
