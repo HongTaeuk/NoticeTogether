@@ -217,6 +217,18 @@ export default function NoticeInputScreen() {
       </View>
 
       <Text style={styles.title}>알림 붙여넣기</Text>
+      {__DEV__ && (
+        <TouchableOpacity
+          onPress={() =>
+            setRawText(
+              "안녕하세요, 3학년 2반입니다. 다음주 화요일(10월 7일)까지 현장학습 동의서를 제출해주세요. 그리고 목요일 체육대회에는 체육복과 물통을 꼭 챙겨 보내주시기 바랍니다.",
+            )
+          }
+          style={styles.devFillButton}
+        >
+          <Text style={styles.devFillButtonText}>[개발용] 테스트 문장 채우기</Text>
+        </TouchableOpacity>
+      )}
       <TextInput
         style={styles.input}
         placeholder="학교/복지관 알림 원문을 여기에 붙여넣으세요"
