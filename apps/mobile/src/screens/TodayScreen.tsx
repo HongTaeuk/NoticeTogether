@@ -89,6 +89,9 @@ export default function TodayScreen({
       setRecentPartnerAction(data.recentPartnerAction ?? null);
       setTotalItems(data.totalItems ?? 0);
       setDoneItems(data.doneItems ?? 0);
+      // 앱을 열 때마다 서버 기준으로 알림을 다시 맞춘다 — 배우자 기기, 재부팅,
+      // 다른 기기에서의 체크/수정 전부 이 한 번의 재동기화로 반영된다.
+      resyncAllReminders(data.allItems ?? []).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "불러오지 못했습니다.");
     } finally {
