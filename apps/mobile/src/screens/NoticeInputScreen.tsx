@@ -283,6 +283,7 @@ export default function NoticeInputScreen({
         onSelectNotice={openExistingNotice}
         onComposeNew={resetToCompose}
         onLogout={onLogout}
+        onManageHousehold={onManageHousehold}
       />
     );
   }
