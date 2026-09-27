@@ -46,6 +46,9 @@ export default function NoticeInputScreen() {
   const [aiResult, setAiResult] = useState<SummarizeResult | null>(null);
   const [noticeId, setNoticeId] = useState<string | null>(null);
   const [items, setItems] = useState<PersistedItem[]>([]);
+  const [actions, setActions] = useState<ItemAction[]>([]);
+  const [userRoleById, setUserRoleById] = useState<Record<string, Role>>({});
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [showOriginal, setShowOriginal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
