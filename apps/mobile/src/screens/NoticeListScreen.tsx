@@ -71,6 +71,10 @@ export default function NoticeListScreen({
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity onPress={onManageHousehold} style={styles.householdLinkRow}>
+        <Text style={styles.householdLinkText}>배우자 초대 코드 관리 →</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.composeButton} onPress={onComposeNew}>
         <Text style={styles.composeButtonText}>+ 새 알림 작성하기</Text>
       </TouchableOpacity>
