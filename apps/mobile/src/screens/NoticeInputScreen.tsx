@@ -91,9 +91,11 @@ export default function NoticeInputScreen({
       });
       const summarizeData = await summarizeRes.json();
       if (!summarizeRes.ok) {
+        setSummarizeFailCount((c) => c + 1);
         throw new Error(summarizeData?.error ?? "요약에 실패했습니다.");
       }
       const summary = summarizeData as SummarizeResult;
+      setSummarizeFailCount(0);
       setShowOriginal(false);
 
       const noticeRes = await authFetch(session.accessToken, "/api/notices", {
@@ -114,6 +116,34 @@ export default function NoticeInputScreen({
       await scheduleReminders(noticeData.items as PersistedItem[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /**
+   * PRD 5-6: "에러(3회 초과, 원문만 저장 제안)" 상태. AI 요약이 계속 실패해도
+   * 사용자가 원문 자체를 못 챙기고 화면에 막혀 있으면 안 되므로, 체크리스트 없이
+   * 원문만이라도 저장해서 다음에 이어갈 수 있게 한다.
+   */
+  async function saveRawTextOnly() {
+    setLoading(true);
+    setError(null);
+    try {
+      const noticeRes = await authFetch(session.accessToken, "/api/notices", {
+        method: "POST",
+        body: JSON.stringify({ rawText, summary: null, items: [] }),
+      });
+      const noticeData = await noticeRes.json();
+      if (!noticeRes.ok) {
+        throw new Error(noticeData?.error ?? "저장에 실패했습니다.");
+      }
+      setSummarizeFailCount(0);
+      setNoticeId(noticeData.noticeId as string);
+      setItems(noticeData.items as PersistedItem[]);
+      await loadNoticeDetail(noticeData.noticeId as string);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
