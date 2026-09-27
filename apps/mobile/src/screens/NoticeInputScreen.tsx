@@ -54,6 +54,9 @@ export default function NoticeInputScreen({
   const [error, setError] = useState<string | null>(null);
   const [summarizeFailCount, setSummarizeFailCount] = useState(0);
   const role = session.role;
+  // 익명 계정은 "로그인 상태"라는 개념이 없으므로 로그아웃 대신 계정 만들기를 제안한다.
+  const accountLabel = session.isAnonymous ? "계정 만들기" : "로그아웃";
+  const onAccountPress = session.isAnonymous ? onManageAccount : onLogout;
 
   const DRAFT_KEY = "noticetogether:draftRawText";
 
