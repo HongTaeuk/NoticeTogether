@@ -15,3 +15,7 @@
 - `docs/` 전체 문서(01~06, RFP, 해결검토) 분석 완료 — 기술 스택(Bare React Native+TS, Kotlin 네이티브 모듈, Next.js/Vercel, Supabase, NVIDIA NIM), MVP 범위와 10단계 개발 순서 확정 내용 확인.
 - 개발 환경 구축 시작: Node.js LTS, Microsoft OpenJDK 17 설치.
 - `CLAUDE.md` 추가 — 모든 작업이 `docs/06_prd.md`(PRD)와 `docs/05_tech_review.md` 기준을 따르도록 작업 원칙, 확정 기술 스택, MVP 순서, 작업 규칙을 명시함.
+- `apps/mobile`에 Bare React Native + TypeScript 프로젝트 스캐폴딩 (Android 전용이므로 `ios/` 폴더는 제거), 의존성 설치 완료.
+- `apps/web-api`에 Next.js(App Router, TypeScript) 프로젝트 스캐폴딩.
+- Android SDK 커맨드라인 도구(cmdline-tools) 설치 진행 — 빌드도구/플랫폼 37 설치 및 실기기 빌드 테스트 예정.
+- `docs/07_design_reference.md` 추가 — 토스미니 TDS(Toss Design System) Mobile 문서 전체(사이드바 기준 약 55개 하위 페이지)를 조사해 색상/타이포그래피/컴포넌트 32종/컴포넌트 그룹/훅/마이그레이션 가이드 정리. 향후 앱인토스(tossmini) 입점을 대비한 디자인 참고 자료. **NoticeTogether는 회색(grey)을 사용하지 않기로 결정**하여 이 점을 문서에 명시함.
