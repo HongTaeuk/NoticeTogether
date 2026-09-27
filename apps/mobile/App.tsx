@@ -102,7 +102,11 @@ function App() {
           />
         )}
         {screen === 'main' && session && (
-          <NoticeInputScreen session={session} onLogout={handleLogout} />
+          <NoticeInputScreen
+            session={session}
+            onLogout={handleLogout}
+            onManageHousehold={() => setScreen('household-setup')}
+          />
         )}
       </SafeAreaView>
     </SafeAreaProvider>
