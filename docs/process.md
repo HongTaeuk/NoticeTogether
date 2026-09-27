@@ -9,4 +9,3 @@
 - 코드 변경 시 자동으로 git에 커밋/푸시(및 필요 시 pull)하도록 hook을 설정함.
 - 모든 변경 사항을 이 파일(`docs/process.md`)에 기록하도록 규칙을 정함.
 - 기존 조사 자료 추가: `docs/01_research.md`, `docs/02_customer_profile.md`, `docs/제안요청서(RFP).txt.txt`, `docs/해결검토.txt.txt`.
-test line

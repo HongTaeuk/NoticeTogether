@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{ cd \"C:/NoticeTogether\" && git add -A && (git diff --cached --quiet || git commit -m \"auto: update project files\" -q) && git pull --rebase origin main -q && git push origin main -q; } >/dev/null 2>&1 || true",
+            "timeout": 60,
+            "statusMessage": "Syncing with git..."
+          }
+        ]
+      }
+    ]
+  }
+}
