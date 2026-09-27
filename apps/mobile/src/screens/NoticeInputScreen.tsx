@@ -97,6 +97,7 @@ export default function NoticeInputScreen() {
       setNoticeId(noticeData.noticeId as string);
       setItems(noticeData.items as PersistedItem[]);
       await loadNoticeDetail(noticeData.noticeId as string);
+      await scheduleReminders(noticeData.items as PersistedItem[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
