@@ -97,7 +97,10 @@ export default function NoticeListScreen({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {loading ? (
-        <ActivityIndicator style={styles.loadingIndicator} color="#1B64F2" />
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color="#1B64F2" />
+          <Text style={styles.loadingText}>지난 알림을 불러오는 중이에요</Text>
+        </View>
       ) : visibleNotices.length === 0 ? (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>
