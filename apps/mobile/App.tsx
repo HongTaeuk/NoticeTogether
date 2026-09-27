@@ -85,6 +85,9 @@ function App() {
         {screen === 'loading' && (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <ActivityIndicator color="#1B64F2" size="large" />
+            <Text style={{ marginTop: 12, fontSize: 13, color: '#3D5A9C' }}>
+              불러오는 중이에요
+            </Text>
           </View>
         )}
         {screen === 'auth' && <AuthScreen onAuthed={handleAuthed} />}
