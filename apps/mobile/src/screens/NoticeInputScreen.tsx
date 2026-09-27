@@ -231,33 +231,61 @@ export default function NoticeInputScreen() {
           ) : (
             <>
               <Text style={styles.summaryText}>{aiResult.summary}</Text>
-              {items.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.itemRow}
-                  onPress={() => toggleItem(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.checkbox, item.is_done && styles.checkboxChecked]}>
-                    {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+              {items.map((item) => {
+                const itemActions = actions.filter((a) => a.checklist_item_id === item.id);
+                return (
+                  <View key={item.id} style={styles.itemCard}>
+                    <TouchableOpacity
+                      style={styles.itemRow}
+                      onPress={() => toggleItem(item)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.checkbox, item.is_done && styles.checkboxChecked]}>
+                        {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+                      </View>
+                      <View
+                        style={[
+                          styles.categoryBadge,
+                          { backgroundColor: CATEGORY_COLOR[item.category] },
+                        ]}
+                      >
+                        <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                      </View>
+                      <View style={styles.itemTextBox}>
+                        <Text style={[styles.itemTitle, item.is_done && styles.itemTitleDone]}>
+                          {item.title}
+                        </Text>
+                        {item.detail && <Text style={styles.itemDetail}>{item.detail}</Text>}
+                        {item.due_date && <Text style={styles.itemDue}>기한: {item.due_date}</Text>}
+                      </View>
+                    </TouchableOpacity>
+
+                    {itemActions
+                      .filter((a) => a.note)
+                      .map((a) => (
+                        <Text key={a.id} style={styles.noteText}>
+                          💬 {ROLE_LABEL[userRoleById[a.user_id] ?? "primary"]}: {a.note}
+                        </Text>
+                      ))}
+
+                    <View style={styles.noteInputRow}>
+                      <TextInput
+                        style={styles.noteInput}
+                        placeholder="한마디 남기기 (예: 다 챙겼어요)"
+                        placeholderTextColor="#9DBEF7"
+                        value={noteDrafts[item.id] ?? ""}
+                        onChangeText={(text) =>
+                          setNoteDrafts((prev) => ({ ...prev, [item.id]: text }))
+                        }
+                        onSubmitEditing={() => sendNote(item)}
+                      />
+                      <TouchableOpacity onPress={() => sendNote(item)}>
+                        <Text style={styles.noteSendText}>남기기</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View
-                    style={[
-                      styles.categoryBadge,
-                      { backgroundColor: CATEGORY_COLOR[item.category] },
-                    ]}
-                  >
-                    <Text style={styles.categoryBadgeText}>{item.category}</Text>
-                  </View>
-                  <View style={styles.itemTextBox}>
-                    <Text style={[styles.itemTitle, item.is_done && styles.itemTitleDone]}>
-                      {item.title}
-                    </Text>
-                    {item.detail && <Text style={styles.itemDetail}>{item.detail}</Text>}
-                    {item.due_date && <Text style={styles.itemDue}>기한: {item.due_date}</Text>}
-                  </View>
-                </TouchableOpacity>
-              ))}
+                );
+              })}
 
               <TouchableOpacity onPress={refreshFromServer} style={styles.refreshButton}>
                 <Text style={styles.refreshButtonText}>
