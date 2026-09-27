@@ -118,7 +118,10 @@ async function callModel(
   }
 
   const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content;
+  const message = data?.choices?.[0]?.message;
+  // 일부 NVIDIA NIM 모델(추론형)은 response_format=json_object일 때
+  // content를 null로 두고 reasoning_content에 실제 답을 담아 보낸다.
+  const content = typeof message?.content === "string" ? message.content : message?.reasoning_content;
   if (typeof content !== "string") {
     throw new Error(`AI 응답 형식이 예상과 다릅니다 (model=${model}).`);
   }
