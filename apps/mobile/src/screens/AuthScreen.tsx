@@ -111,7 +111,12 @@ export default function AuthScreen({
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <View style={styles.loadingRow}>
+            <ActivityIndicator color="#FFFFFF" />
+            <Text style={styles.buttonText}>
+              {mode === "signup" ? "가정을 만드는 중이에요" : "로그인하는 중이에요"}
+            </Text>
+          </View>
         ) : (
           <Text style={styles.buttonText}>{mode === "signup" ? "가입하기" : "로그인"}</Text>
         )}
