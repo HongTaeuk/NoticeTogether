@@ -56,9 +56,14 @@ export async function POST(req: NextRequest) {
 
 // 현재 동의 상태 조회(각 consent_type의 가장 최근 기록 기준).
 export async function GET(req: NextRequest) {
-  const as = (req.nextUrl.searchParams.get("as") ?? "primary") as DevRole;
-  const { userIds } = await ensureDevHousehold();
-  const userId = userIds[as];
+  let resolved;
+  try {
+    resolved = await resolveUser(req, req.nextUrl.searchParams.get("as") as DevRole | null);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { userId } = resolved;
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
