@@ -81,6 +81,7 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <NetworkBanner />
         {screen === 'loading' && (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <ActivityIndicator color="#1B64F2" size="large" />
