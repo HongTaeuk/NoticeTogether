@@ -759,6 +759,7 @@ v1 → v2는 "더 직관적이고 일관된 컴포넌트 API"를 위한 **prop �
 - 마감 임박 알림 등은 **Badge**(yellow/red 계열 fill variant로 긴급도 표시) + **Toast**(3~5초 자동 노출) 조합 고려.
 - 학부모 간 확인 여부 공유 같은 액션은 **BottomSheet**(useBottomSheet 훅)나 **Dialog**(useDialog 훅)로 확인 흐름 구성 가능.
 - 색상 토큰은 `@toss/tds-colors`의 grey/blue/red/yellow 팔레트를 우선 채택하고, 실제 입점 심사 전 반드시 Figma/공식 디자인 리소스(이 문서에는 없음)를 통해 정확한 hex 전체 스케일과 컴포넌트별 모서리 반경·그림자 값을 재검증할 것.
+- **⚠️ NoticeTogether는 회색(grey) 계열을 사용하지 않기로 결정함.** 위 3.1의 grey 팔레트는 TDS 원문 참고용으로만 남겨두고, 실제 화면 설계 시 배경/구분선/비활성 상태 등 TDS가 grey로 처리하는 자리는 프로젝트의 다른 뉴트럴 색상(예: blue 계열의 옅은 톤 등)으로 대체해야 함. 컴포넌트 예시 코드에 등장하는 grey 값은 그대로 쓰지 말 것.
 
 ## 10. 출처 페이지 목록
 
