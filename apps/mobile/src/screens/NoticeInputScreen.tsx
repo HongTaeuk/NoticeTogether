@@ -241,6 +241,22 @@ export default function NoticeInputScreen({
     }
   }
 
+  /**
+   * FR-1: 사용자가 원문과 실제로 대조했는지 서버가 알 수 있어야 한다(source_compared).
+   * 요약 <-> 원문을 왔다갔다 할 때마다가 아니라, "원문을 보러 간" 시점에만 기록한다.
+   */
+  function toggleShowOriginal() {
+    setShowOriginal((prev) => {
+      const next = !prev;
+      if (next && noticeId) {
+        authFetch(session.accessToken, `/api/notices/${noticeId}/source-compared`, {
+          method: "POST",
+        }).catch(() => {});
+      }
+      return next;
+    });
+  }
+
   function startEdit(item: PersistedItem) {
     setEditingItemId(item.id);
     setEditDraft({
