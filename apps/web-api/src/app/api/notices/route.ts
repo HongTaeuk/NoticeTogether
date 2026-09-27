@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
-import { ensureDevHousehold, type DevRole } from "@/lib/supabase/devSeed";
+import type { DevRole } from "@/lib/supabase/devSeed";
+import { resolveUser, AuthError } from "@/lib/auth/session";
 import type { ChecklistItemDraft } from "@/lib/ai/summarize";
 
 type CreateNoticeBody = {
@@ -22,8 +23,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "rawText, items가 필요합니다." }, { status: 400 });
   }
 
-  const { householdId, userIds } = await ensureDevHousehold();
-  const createdBy = userIds[body.createdBy ?? "primary"];
+  let resolved;
+  try {
+    resolved = await resolveUser(req, body.createdBy);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { householdId, userId: createdBy } = resolved;
   const supabase = getSupabaseServerClient();
 
   const { data: notice, error: noticeError } = await supabase
