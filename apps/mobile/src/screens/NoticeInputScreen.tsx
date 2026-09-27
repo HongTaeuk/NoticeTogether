@@ -73,7 +73,7 @@ export default function NoticeInputScreen({
     }
     setLoading(true);
     setError(null);
-    setAiResult(null);
+    setNotice(null);
     setNoticeId(null);
     setItems([]);
     try {
@@ -86,7 +86,6 @@ export default function NoticeInputScreen({
         throw new Error(summarizeData?.error ?? "요약에 실패했습니다.");
       }
       const summary = summarizeData as SummarizeResult;
-      setAiResult(summary);
       setShowOriginal(false);
 
       const noticeRes = await authFetch(session.accessToken, "/api/notices", {
