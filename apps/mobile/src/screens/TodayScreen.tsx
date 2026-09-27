@@ -87,7 +87,7 @@ export default function TodayScreen({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [session.accessToken]);
+  }, []);
 
   useEffect(() => {
     load();
