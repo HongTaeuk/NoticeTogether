@@ -314,6 +314,7 @@ export default function NoticeInputScreen({
         onComposeNew={resetToCompose}
         onLogout={onLogout}
         onManageHousehold={onManageHousehold}
+        onViewToday={() => setTab("today")}
       />
     );
   }
