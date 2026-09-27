@@ -89,6 +89,8 @@ export default function NoticeInputScreen({
     setTab("compose");
     setLoading(true);
     setError(null);
+    setShowOriginal(false);
+    setShowSummaryText(false);
     try {
       setNoticeId(id);
       await loadNoticeDetail(id);
