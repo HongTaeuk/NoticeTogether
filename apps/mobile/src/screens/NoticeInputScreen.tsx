@@ -50,6 +50,24 @@ export default function NoticeInputScreen({
   const [summarizeFailCount, setSummarizeFailCount] = useState(0);
   const role = session.role;
 
+  const DRAFT_KEY = "noticetogether:draftRawText";
+
+  // PRD 5-5: 네트워크가 끊기거나 앱이 종료돼도 입력하던 원문이 사라지면 안 된다.
+  useEffect(() => {
+    AsyncStorage.getItem(DRAFT_KEY).then((saved) => {
+      if (saved) setRawText(saved);
+    });
+  }, []);
+
+  function updateRawText(text: string) {
+    setRawText(text);
+    AsyncStorage.setItem(DRAFT_KEY, text).catch(() => {});
+  }
+
+  function clearDraft() {
+    AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
+  }
+
   function resetToCompose() {
     setNoticeId(null);
     setNotice(null);
