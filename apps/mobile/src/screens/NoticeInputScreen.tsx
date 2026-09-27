@@ -293,6 +293,8 @@ export default function NoticeInputScreen({
   async function sendNote(item: PersistedItem) {
     const note = (noteDrafts[item.id] ?? "").trim();
     if (!note) return;
+    // PRD 5-2 정상 경로: "저장중 → 저장됨(남겼어요)" 짧은 확인 표시.
+    setNoteSaveStatus((prev) => ({ ...prev, [item.id]: "saving" }));
     try {
       const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
         method: "PATCH",
@@ -302,8 +304,21 @@ export default function NoticeInputScreen({
         throw new Error("한마디 남기기에 실패했습니다.");
       }
       setNoteDrafts((prev) => ({ ...prev, [item.id]: "" }));
+      setNoteSaveStatus((prev) => ({ ...prev, [item.id]: "saved" }));
+      setTimeout(() => {
+        setNoteSaveStatus((prev) => {
+          const next = { ...prev };
+          delete next[item.id];
+          return next;
+        });
+      }, 1500);
       await refreshFromServer();
     } catch (err) {
+      setNoteSaveStatus((prev) => {
+        const next = { ...prev };
+        delete next[item.id];
+        return next;
+      });
       setError(err instanceof Error ? err.message : "한마디 남기기에 실패했습니다.");
     }
   }
