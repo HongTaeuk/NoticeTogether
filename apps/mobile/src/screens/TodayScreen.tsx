@@ -46,7 +46,6 @@ const ACTION_LABEL: Record<PartnerActionType, string> = {
  * 지금까지는 이 화면 자체가 없어서 알림을 하나씩 열어야만 체크리스트를 볼 수 있었다.
  */
 export default function TodayScreen({
-  session,
   onOpenNotice,
   onComposeNew,
   onViewHistory,
@@ -54,7 +53,6 @@ export default function TodayScreen({
   onLogout,
   onManageHousehold,
 }: {
-  session: Session;
   onOpenNotice: (noticeId: string) => void;
   onComposeNew: () => void;
   onViewHistory: () => void;
