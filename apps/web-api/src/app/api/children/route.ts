@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
-import { ensureDevHousehold, type DevRole } from "@/lib/supabase/devSeed";
+import type { DevRole } from "@/lib/supabase/devSeed";
+import { resolveUser, AuthError } from "@/lib/auth/session";
 
 type CreateChildBody = {
   as?: DevRole;
