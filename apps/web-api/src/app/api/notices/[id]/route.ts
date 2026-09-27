@@ -1,19 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
+import { resolveUser, AuthError } from "@/lib/auth/session";
 
 // Pull 기반 동기화(PRD FR-2): 앱이 열릴 때마다 이 엔드포인트를 다시 호출해서
 // 상대 보호자가 그 사이 체크/메모한 내용을 가져온다. 실시간 push는 쓰지 않는다.
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  let resolved;
+  try {
+    resolved = await resolveUser(req, req.nextUrl.searchParams.get("as") as never);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+
   const supabase = getSupabaseServerClient();
 
   const { data: notice, error: noticeError } = await supabase
     .from("notices")
-    .select("id, raw_text, ai_summary, created_at")
+    .select("id, raw_text, ai_summary, created_at, household_id")
     .eq("id", id)
     .single();
   if (noticeError) {
     return NextResponse.json({ error: noticeError.message }, { status: 404 });
+  }
+  if (notice.household_id !== resolved.householdId) {
+    return NextResponse.json({ error: "이 알림에 접근할 권한이 없습니다." }, { status: 403 });
   }
 
   const { data: items, error: itemsError } = await supabase
