@@ -314,7 +314,7 @@ export default function NoticeInputScreen({
       </View>
 
       <View style={styles.tabRow}>
-        <Text style={styles.title}>{noticeId ? "알림 상세" : "알림 붙여넣기"}</Text>
+        <Text style={styles.title}>{noticeId ? "이거 뭐야?" : "알림 붙여넣기"}</Text>
         <TouchableOpacity onPress={() => setTab("history")}>
           <Text style={styles.historyLinkText}>지난 기록 보기</Text>
         </TouchableOpacity>
