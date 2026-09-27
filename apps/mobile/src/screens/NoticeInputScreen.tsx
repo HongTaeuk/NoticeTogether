@@ -445,7 +445,10 @@ export default function NoticeInputScreen({
             disabled={!rawText.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <View style={styles.loadingRow}>
+                <ActivityIndicator color="#FFFFFF" />
+                <Text style={styles.buttonText}>핵심만 골라내는 중이에요</Text>
+              </View>
             ) : (
               <Text style={styles.buttonText}>핵심만 정리하기</Text>
             )}
