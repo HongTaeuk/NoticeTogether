@@ -29,8 +29,9 @@ export default function NoticeInputScreen({
   session: Session;
   onLogout: () => void;
 }) {
+  const [tab, setTab] = useState<"compose" | "history">("compose");
   const [rawText, setRawText] = useState("");
-  const [aiResult, setAiResult] = useState<SummarizeResult | null>(null);
+  const [notice, setNotice] = useState<{ raw_text: string; ai_summary: string | null } | null>(null);
   const [noticeId, setNoticeId] = useState<string | null>(null);
   const [items, setItems] = useState<PersistedItem[]>([]);
   const [actions, setActions] = useState<ItemAction[]>([]);
@@ -40,6 +41,31 @@ export default function NoticeInputScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const role = session.role;
+
+  function resetToCompose() {
+    setNoticeId(null);
+    setNotice(null);
+    setItems([]);
+    setActions([]);
+    setRawText("");
+    setShowOriginal(false);
+    setError(null);
+    setTab("compose");
+  }
+
+  async function openExistingNotice(id: string) {
+    setTab("compose");
+    setLoading(true);
+    setError(null);
+    try {
+      setNoticeId(id);
+      await loadNoticeDetail(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "동기화에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSummarize() {
     if (!rawText.trim()) {
