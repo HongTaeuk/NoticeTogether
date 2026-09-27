@@ -106,15 +106,26 @@ export default function NoticeInputScreen() {
   }
 
   /**
-   * PRD 7단계: 기한이 있는 항목은 전날 밤 21시에 "마감 임박" 알림을 예약한다.
+   * PRD 7~8단계: 기한이 있는 항목은 전날 밤에 "마감 임박" 알림을 예약한다.
+   * 시각은 기본 21시이되, PRD 8단계(알림 타이밍 개인화)에 따라 그 보호자가
+   * 실제로 앱을 열어본 시각 이력이 충분히 쌓였으면(`/api/reminder-time`) 그 시각으로 대체한다.
    * 이미 지난 시각이면(오늘/과거 기한) 건너뛴다. Android 전용 네이티브 모듈이라
    * 실기기가 아닌 환경(개발 중 기기 미연결 등)에서는 실패해도 화면 흐름은 막지 않는다.
    */
   async function scheduleReminders(newItems: PersistedItem[]) {
+    let hour = 21;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reminder-time?as=${role}`);
+      const data = await res.json();
+      if (typeof data?.hour === "number") hour = data.hour;
+    } catch {
+      // 개인화 시각 조회 실패 시 기본값(21시) 사용.
+    }
+
     for (const item of newItems) {
       if (!item.due_date) continue;
-      const due = new Date(`${item.due_date}T21:00:00`);
-      due.setDate(due.getDate() - 1); // 기한 전날 21시
+      const due = new Date(`${item.due_date}T${String(hour).padStart(2, "0")}:00:00`);
+      due.setDate(due.getDate() - 1); // 기한 전날
       if (due.getTime() <= Date.now()) continue;
       try {
         await scheduleReminder(
