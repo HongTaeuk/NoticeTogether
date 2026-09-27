@@ -18,15 +18,20 @@ type NoticeSummary = {
   totalItems: number;
   doneItems: number;
   nearestDueDate: string | null;
+  hasOpened: boolean;
 };
 
+type Mode = "all" | "unread";
+
 /**
- * PRD 정보구조(docs/06_prd.md Part 4)의 "지난 기록" 화면. 백엔드 GET /api/notices는
- * 이미 있었지만 지금까지 모바일에서 한 번도 쓰이지 않았다 — 알림을 만든 그 화면에서만
- * 볼 수 있었고 지난 알림을 다시 찾아볼 방법이 없었다.
+ * PRD 정보구조(docs/06_prd.md Part 4)의 "지난 기록"/"새로 온 알림" 화면. 같은 목록을
+ * 필터만 다르게 보여주는 것으로 구현한다(라벨링 원칙 4-3: "같은 기능을 다른 이름으로
+ * 부르면 인지 부담이 생긴다" — 반대로 다른 화면이 같은 자료구조를 공유하는 것은 문제없다).
+ * 백엔드 GET /api/notices는 이미 있었지만 지금까지 모바일에서 한 번도 쓰이지 않았다.
  */
 export default function NoticeListScreen({
   session,
+  mode,
   onSelectNotice,
   onComposeNew,
   onLogout,
@@ -34,6 +39,7 @@ export default function NoticeListScreen({
   onViewToday,
 }: {
   session: Session;
+  mode: Mode;
   onSelectNotice: (id: string) => void;
   onComposeNew: () => void;
   onLogout: () => void;
@@ -64,10 +70,12 @@ export default function NoticeListScreen({
     load();
   }, [load]);
 
+  const visibleNotices = mode === "unread" ? notices.filter((n) => !n.hasOpened) : notices;
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>지난 기록</Text>
+        <Text style={styles.title}>{mode === "unread" ? "새로 온 알림" : "지난 기록"}</Text>
         <TouchableOpacity onPress={onLogout}>
           <Text style={styles.logoutText}>로그아웃</Text>
         </TouchableOpacity>
@@ -90,10 +98,14 @@ export default function NoticeListScreen({
 
       {loading ? (
         <ActivityIndicator style={styles.loadingIndicator} color="#1B64F2" />
-      ) : notices.length === 0 ? (
+      ) : visibleNotices.length === 0 ? (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>아직 등록된 알림이 없어요.</Text>
-          <Text style={styles.emptySubText}>위에서 첫 알림을 붙여넣어 보세요.</Text>
+          <Text style={styles.emptyText}>
+            {mode === "unread" ? "새로 온 알림이 없어요." : "아직 등록된 알림이 없어요."}
+          </Text>
+          <Text style={styles.emptySubText}>
+            {mode === "unread" ? "전부 확인했어요." : "위에서 첫 알림을 붙여넣어 보세요."}
+          </Text>
         </View>
       ) : (
         <FlatList
