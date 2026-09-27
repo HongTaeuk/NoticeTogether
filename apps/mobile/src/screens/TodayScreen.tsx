@@ -50,6 +50,7 @@ export default function TodayScreen({
   onOpenNotice,
   onComposeNew,
   onViewHistory,
+  onViewUnread,
   onLogout,
   onManageHousehold,
 }: {
@@ -57,6 +58,7 @@ export default function TodayScreen({
   onOpenNotice: (noticeId: string) => void;
   onComposeNew: () => void;
   onViewHistory: () => void;
+  onViewUnread: () => void;
   onLogout: () => void;
   onManageHousehold: () => void;
 }) {
