@@ -30,6 +30,17 @@ type PersistedItem = {
   is_done: boolean;
 };
 
+type ItemAction = {
+  id: string;
+  checklist_item_id: string;
+  user_id: string;
+  action: "checked" | "unchecked" | "note";
+  note: string | null;
+  created_at: string;
+};
+
+const ROLE_LABEL: Record<Role, string> = { primary: "보호자 1", secondary: "보호자 2" };
+
 export default function NoticeInputScreen() {
   const [rawText, setRawText] = useState("");
   const [aiResult, setAiResult] = useState<SummarizeResult | null>(null);
