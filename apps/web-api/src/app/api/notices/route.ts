@@ -73,8 +73,15 @@ export async function POST(req: NextRequest) {
 }
 
 // PRD 정보구조(docs/06_prd.md Part 4)의 "오늘 할 일"/"지난 기록" 화면이 쓸 목록 조회.
-export async function GET() {
-  const { householdId } = await ensureDevHousehold();
+export async function GET(req: NextRequest) {
+  let resolved;
+  try {
+    resolved = await resolveUser(req, req.nextUrl.searchParams.get("as") as DevRole | null);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { householdId } = resolved;
   const supabase = getSupabaseServerClient();
 
   const { data: notices, error } = await supabase
