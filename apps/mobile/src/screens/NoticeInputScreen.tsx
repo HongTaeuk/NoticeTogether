@@ -434,7 +434,7 @@ export default function NoticeInputScreen({
             placeholderTextColor="#7FA8F5"
             multiline
             value={rawText}
-            onChangeText={setRawText}
+            onChangeText={updateRawText}
           />
 
           <TouchableOpacity
