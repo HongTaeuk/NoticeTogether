@@ -34,11 +34,15 @@ export default function NoticeInputScreen({
   onLogout,
   onManageHousehold,
   onManageAccount,
+  deepLinkNoticeId,
+  onDeepLinkHandled,
 }: {
   session: Session;
   onLogout: () => void;
   onManageHousehold: () => void;
   onManageAccount: () => void;
+  deepLinkNoticeId?: string | null;
+  onDeepLinkHandled?: () => void;
 }) {
   const [tab, setTab] = useState<"today" | "compose" | "history" | "unread">("today");
   const [rawText, setRawText] = useState("");
@@ -110,6 +114,14 @@ export default function NoticeInputScreen({
       setLoading(false);
     }
   }
+
+  // 마감 임박 알림을 탭해서 들어온 경우 해당 알림 화면으로 바로 이동한다.
+  useEffect(() => {
+    if (!deepLinkNoticeId) return;
+    openExistingNotice(deepLinkNoticeId);
+    onDeepLinkHandled?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkNoticeId]);
 
   async function handleSummarize() {
     if (!rawText.trim()) {
@@ -200,7 +212,7 @@ export default function NoticeInputScreen({
   async function scheduleReminders(newItems: PersistedItem[]) {
     const hour = await getPersonalizedHour();
     for (const item of newItems) {
-      await scheduleReminderForItem(item, hour);
+      await scheduleReminderForItem({ ...item, notice_id: noticeId ?? "" }, hour);
     }
   }
 
@@ -221,7 +233,7 @@ export default function NoticeInputScreen({
         await cancelReminderForItem(item.id);
       } else {
         const hour = await getPersonalizedHour();
-        await scheduleReminderForItem({ ...item, is_done: false }, hour);
+        await scheduleReminderForItem({ ...item, is_done: false, notice_id: noticeId ?? "" }, hour);
       }
     } catch (err) {
       // 실패하면 원상복구
@@ -364,7 +376,7 @@ export default function NoticeInputScreen({
       // 제목/기한이 바뀌었을 수 있으니 예약된 알림을 취소하고 새 값으로 다시 잡는다.
       await cancelReminderForItem(item.id);
       const hour = await getPersonalizedHour();
-      await scheduleReminderForItem(updatedItem, hour);
+      await scheduleReminderForItem({ ...updatedItem, notice_id: noticeId ?? "" }, hour);
     } catch (err) {
       setError(err instanceof Error ? err.message : "수정에 실패했습니다.");
     }

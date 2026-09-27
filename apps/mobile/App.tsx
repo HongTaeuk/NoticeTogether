@@ -16,17 +16,26 @@ import NetworkBanner from './src/components/NetworkBanner';
 import { API_BASE_URL } from './src/config/api';
 import { authFetch, getCurrentTokens, setAuthTokens, setOnSessionExpired } from './src/lib/apiClient';
 import { clearSession, loadSession, saveSession, type Session } from './src/lib/authStorage';
+import { getInitialNoticeId, subscribeNoticeDeepLink } from './src/native/deepLink';
 
 type Screen = 'loading' | 'auth' | 'onboarding-intro' | 'household-setup' | 'main';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('loading');
   const [session, setSession] = useState<Session | null>(null);
+  const [deepLinkNoticeId, setDeepLinkNoticeId] = useState<string | null>(null);
 
   useEffect(() => {
     setOnSessionExpired(() => {
       handleSessionExpired();
     });
+
+    // 마감 임박 알림을 탭해서 들어온 경우(콜드 스타트/웜 스타트 둘 다) 해당 알림
+    // 화면으로 바로 이동시킨다 — FR-4의 남은 마지막 항목(딥링크).
+    getInitialNoticeId().then((id) => {
+      if (id) setDeepLinkNoticeId(id);
+    });
+    const unsubscribe = subscribeNoticeDeepLink((id) => setDeepLinkNoticeId(id));
 
     (async () => {
       const stored = await loadSession();
@@ -39,7 +48,10 @@ function App() {
       await refreshHouseholdState(stored);
     })();
 
-    return () => setOnSessionExpired(null);
+    return () => {
+      setOnSessionExpired(null);
+      unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -165,6 +177,8 @@ function App() {
             onLogout={handleLogout}
             onManageHousehold={() => setScreen('household-setup')}
             onManageAccount={() => setScreen('auth')}
+            deepLinkNoticeId={deepLinkNoticeId}
+            onDeepLinkHandled={() => setDeepLinkNoticeId(null)}
           />
         )}
       </SafeAreaView>

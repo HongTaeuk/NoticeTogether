@@ -25,17 +25,22 @@ class ReminderBroadcastReceiver : BroadcastReceiver() {
     const val EXTRA_NOTIFICATION_ID = "notificationId"
     const val EXTRA_TITLE = "title"
     const val EXTRA_BODY = "body"
+    const val EXTRA_NOTICE_ID = "noticeId"
   }
 
   override fun onReceive(context: Context, intent: Intent) {
     val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
     val title = intent.getStringExtra(EXTRA_TITLE) ?: "알림투게더"
     val body = intent.getStringExtra(EXTRA_BODY) ?: "확인할 알림이 있어요."
+    val noticeId = intent.getStringExtra(EXTRA_NOTICE_ID)
 
     ensureChannel(context)
 
     val contentIntent = Intent(context, MainActivity::class.java).apply {
       flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+      if (!noticeId.isNullOrEmpty()) {
+        putExtra(MainActivity.EXTRA_NOTICE_ID, noticeId)
+      }
     }
     val pendingContentIntent = PendingIntent.getActivity(
       context,

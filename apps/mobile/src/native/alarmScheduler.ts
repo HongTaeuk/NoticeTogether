@@ -11,6 +11,7 @@ type AlarmSchedulerNative = {
     timestampMillis: number,
     title: string,
     body: string,
+    noticeId: string,
   ) => Promise<void>;
   cancelReminder: (notificationId: number) => Promise<void>;
   canScheduleExactAlarms: () => Promise<boolean>;
@@ -43,6 +44,7 @@ export async function scheduleReminder(
   when: Date,
   title: string,
   body: string,
+  noticeId: string,
 ): Promise<void> {
   ensureAndroid();
   await NativeAlarmScheduler!.scheduleReminder(
@@ -50,6 +52,7 @@ export async function scheduleReminder(
     when.getTime(),
     title,
     body,
+    noticeId,
   );
 }
 

@@ -3,6 +3,7 @@ import { cancelReminder, scheduleReminder } from "../native/alarmScheduler";
 
 export type ReminderItem = {
   id: string;
+  notice_id: string;
   title: string;
   due_date: string | null;
   is_done: boolean;
@@ -29,7 +30,13 @@ export async function scheduleReminderForItem(item: ReminderItem, hour: number):
   due.setDate(due.getDate() - 1); // 기한 전날
   if (due.getTime() <= Date.now()) return;
   try {
-    await scheduleReminder(item.id, due, "마감이 다가와요", `${item.title} — 내일(${item.due_date})까지예요.`);
+    await scheduleReminder(
+      item.id,
+      due,
+      "마감이 다가와요",
+      `${item.title} — 내일(${item.due_date})까지예요.`,
+      item.notice_id,
+    );
   } catch (err) {
     // 기기가 없거나(개발 중) 권한이 없는 경우 등 — 조용히 무시하고 계속 진행.
     console.warn("알림 예약 실패:", err);
