@@ -172,6 +172,7 @@ export default function NoticeInputScreen({
     if (!res.ok) {
       throw new Error(data?.error ?? "동기화에 실패했습니다.");
     }
+    setNotice(data.notice as { raw_text: string; ai_summary: string | null });
     setItems(data.items as PersistedItem[]);
     setActions(data.actions as ItemAction[]);
     const roleMap: Record<string, Role> = {};
