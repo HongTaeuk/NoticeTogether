@@ -300,8 +300,23 @@ export default function NoticeInputScreen({
         onOpenNotice={openExistingNotice}
         onComposeNew={resetToCompose}
         onViewHistory={() => setTab("history")}
+        onViewUnread={() => setTab("unread")}
         onLogout={onLogout}
         onManageHousehold={onManageHousehold}
+      />
+    );
+  }
+
+  if (tab === "unread") {
+    return (
+      <NoticeListScreen
+        mode="unread"
+        session={session}
+        onSelectNotice={openExistingNotice}
+        onComposeNew={resetToCompose}
+        onLogout={onLogout}
+        onManageHousehold={onManageHousehold}
+        onViewToday={() => setTab("today")}
       />
     );
   }
@@ -309,6 +324,7 @@ export default function NoticeInputScreen({
   if (tab === "history") {
     return (
       <NoticeListScreen
+        mode="all"
         session={session}
         onSelectNotice={openExistingNotice}
         onComposeNew={resetToCompose}
