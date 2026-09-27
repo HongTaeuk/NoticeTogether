@@ -123,23 +123,27 @@ export default function NoticeInputScreen() {
     }
   }
 
+  async function loadNoticeDetail(id: string) {
+    const res = await fetch(`${API_BASE_URL}/api/notices/${id}`);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data?.error ?? "동기화에 실패했습니다.");
+    }
+    setItems(data.items as PersistedItem[]);
+    setActions(data.actions as ItemAction[]);
+    const roleMap: Record<string, Role> = {};
+    for (const u of data.users as { id: string; role: Role }[]) {
+      roleMap[u.id] = u.role;
+    }
+    setUserRoleById(roleMap);
+  }
+
   async function refreshFromServer() {
     if (!noticeId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/notices/${noticeId}`);
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error ?? "동기화에 실패했습니다.");
-      }
-      setItems(data.items as PersistedItem[]);
-      setActions(data.actions as ItemAction[]);
-      const roleMap: Record<string, Role> = {};
-      for (const u of data.users as { id: string; role: Role }[]) {
-        roleMap[u.id] = u.role;
-      }
-      setUserRoleById(roleMap);
+      await loadNoticeDetail(noticeId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "동기화에 실패했습니다.");
     } finally {
