@@ -407,6 +407,30 @@ const styles = StyleSheet.create({
     color: "#F23B3B",
     fontWeight: "600",
   },
+  tabRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  historyLinkText: {
+    fontSize: 13,
+    color: "#1B64F2",
+    fontWeight: "600",
+  },
+  newComposeButton: {
+    alignSelf: "flex-start",
+    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "#F3F8FF",
+  },
+  newComposeButtonText: {
+    color: "#1B64F2",
+    fontSize: 13,
+    fontWeight: "700",
+  },
   title: {
     fontSize: 20,
     fontWeight: "700",
