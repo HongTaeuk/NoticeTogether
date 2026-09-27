@@ -144,6 +144,14 @@ const styles = StyleSheet.create({
     color: "#F23B3B",
     fontWeight: "600",
   },
+  householdLinkRow: {
+    marginBottom: 12,
+  },
+  householdLinkText: {
+    fontSize: 12,
+    color: "#1B64F2",
+    fontWeight: "600",
+  },
   composeButton: {
     backgroundColor: "#1B64F2",
     borderRadius: 12,
