@@ -18,9 +18,14 @@ const MIN_SAMPLES = 3; // 이 정도는 쌓여야 "그 사람의 패턴"이라�
  * 되돌아간다 — PRD가 스스로 경고한 "근거 부족한 개인화" 위험을 피하기 위함.
  */
 export async function GET(req: NextRequest) {
-  const as = (req.nextUrl.searchParams.get("as") ?? "primary") as DevRole;
-  const { userIds } = await ensureDevHousehold();
-  const userId = userIds[as];
+  let resolved;
+  try {
+    resolved = await resolveUser(req, req.nextUrl.searchParams.get("as") as DevRole | null);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { userId } = resolved;
 
   const supabase = getSupabaseServerClient();
   const { data: events, error } = await supabase
