@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import AnimatedCheckMark from "../components/AnimatedCheckMark";
 import { authFetch } from "../lib/apiClient";
-import type { Session } from "../lib/authStorage";
 import { CATEGORY_COLOR, type ChecklistCategory } from "../types/notice";
 
 type TodayItem = {
