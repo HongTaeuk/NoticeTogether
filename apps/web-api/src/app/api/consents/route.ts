@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
-import { ensureDevHousehold, type DevRole } from "@/lib/supabase/devSeed";
+import type { DevRole } from "@/lib/supabase/devSeed";
+import { resolveUser, AuthError } from "@/lib/auth/session";
 
 const CONSENT_TYPES = ["child_info", "disability_info", "ai_processing"] as const;
 type ConsentType = (typeof CONSENT_TYPES)[number];
