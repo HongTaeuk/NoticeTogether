@@ -25,9 +25,11 @@ import NoticeListScreen from "./NoticeListScreen";
 export default function NoticeInputScreen({
   session,
   onLogout,
+  onManageHousehold,
 }: {
   session: Session;
   onLogout: () => void;
+  onManageHousehold: () => void;
 }) {
   const [tab, setTab] = useState<"compose" | "history">("compose");
   const [rawText, setRawText] = useState("");
