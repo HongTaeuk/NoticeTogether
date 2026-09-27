@@ -57,7 +57,7 @@ export async function summarizeNotice(rawText: string): Promise<SummarizeResult>
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(stripMarkdownJsonFence(content));
   } catch {
     throw new Error("AI 응답을 JSON으로 파싱하지 못했습니다.");
   }
