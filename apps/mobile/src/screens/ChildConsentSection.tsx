@@ -42,10 +42,9 @@ export default function ChildConsentSection({ session }: { session: Session }) {
     !submitting;
 
   async function postConsent(consentType: string, granted: boolean) {
-    await fetch(`${API_BASE_URL}/api/consents`, {
+    await authFetch(session.accessToken, "/api/consents", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ as: role, consentType, granted }),
+      body: JSON.stringify({ consentType, granted }),
     });
   }
 
