@@ -36,26 +36,30 @@ export async function ensureDevHousehold(): Promise<DevHousehold> {
     .eq("id", primaryId)
     .maybeSingle();
 
-  let householdId = existingUser?.household_id as string | undefined;
-
-  if (!householdId) {
-    const { data: household, error: householdError } = await supabase
-      .from("households")
-      .insert({ name: "개발용 테스트 가구" })
-      .select("id")
-      .single();
-    if (householdError) throw householdError;
-    householdId = household.id;
-
-    const { error: usersError } = await supabase.from("users").upsert([
-      { id: primaryId, household_id: householdId, role: "primary", display_name: "테스트 보호자 1" },
-      { id: secondaryId, household_id: householdId, role: "secondary", display_name: "테스트 보호자 2" },
-    ]);
-    if (usersError) throw usersError;
-  }
+  const existingHouseholdId = existingUser?.household_id as string | undefined;
+  const householdId = existingHouseholdId ?? (await createDevHousehold(primaryId, secondaryId));
 
   cached = { householdId, userIds: { primary: primaryId, secondary: secondaryId } };
   return cached;
+}
+
+async function createDevHousehold(primaryId: string, secondaryId: string): Promise<string> {
+  const supabase = getSupabaseServerClient();
+
+  const { data: household, error: householdError } = await supabase
+    .from("households")
+    .insert({ name: "개발용 테스트 가구" })
+    .select("id")
+    .single();
+  if (householdError) throw householdError;
+
+  const { error: usersError } = await supabase.from("users").upsert([
+    { id: primaryId, household_id: household.id, role: "primary", display_name: "테스트 보호자 1" },
+    { id: secondaryId, household_id: household.id, role: "secondary", display_name: "테스트 보호자 2" },
+  ]);
+  if (usersError) throw usersError;
+
+  return household.id;
 }
 
 async function ensureAuthUser(email: string): Promise<string> {
