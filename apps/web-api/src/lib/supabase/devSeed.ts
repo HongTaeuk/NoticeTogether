@@ -49,7 +49,7 @@ async function createDevHousehold(primaryId: string, secondaryId: string): Promi
 
   const { data: household, error: householdError } = await supabase
     .from("households")
-    .insert({ name: "개발용 테스트 가구" })
+    .insert({ name: "개발용 테스트 가구", invite_code: generateInviteCode() })
     .select("id")
     .single();
   if (householdError) throw householdError;
