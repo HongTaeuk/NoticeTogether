@@ -20,7 +20,11 @@ import {
   type Role,
   type SummarizeResult,
 } from "../types/notice";
-import { scheduleReminder } from "../native/alarmScheduler";
+import {
+  cancelReminderForItem,
+  getPersonalizedHour,
+  scheduleReminderForItem,
+} from "../lib/reminderSync";
 import ChildConsentSection from "./ChildConsentSection";
 import NoticeListScreen from "./NoticeListScreen";
 import TodayScreen from "./TodayScreen";
