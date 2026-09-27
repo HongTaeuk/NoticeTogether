@@ -118,7 +118,7 @@ export default function NoticeInputScreen({
   async function scheduleReminders(newItems: PersistedItem[]) {
     let hour = 21;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/reminder-time?as=${role}`);
+      const res = await authFetch(session.accessToken, "/api/reminder-time");
       const data = await res.json();
       if (typeof data?.hour === "number") hour = data.hour;
     } catch {
