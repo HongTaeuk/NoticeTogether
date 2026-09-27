@@ -155,6 +155,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 10,
   },
+  loadingIndicator: {
+    marginTop: 40,
+  },
   emptyBox: {
     marginTop: 60,
     alignItems: "center",
