@@ -10,39 +10,17 @@ import {
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
-import type { ChecklistCategory, SummarizeResult } from "../types/notice";
+import {
+  CATEGORY_COLOR,
+  ROLE_LABEL,
+  type ItemAction,
+  type PersistedItem,
+  type Role,
+  type SummarizeResult,
+} from "../types/notice";
 import { scheduleReminder } from "../native/alarmScheduler";
 import ChildConsentSection from "./ChildConsentSection";
-
-const CATEGORY_COLOR: Record<ChecklistCategory, string> = {
-  준비물: "#1B64F2", // blue
-  제출서류: "#F2871B", // orange
-  기한: "#F23B3B", // red
-};
-
-type Role = "primary" | "secondary";
-
-type PersistedItem = {
-  id: string;
-  category: ChecklistCategory;
-  title: string;
-  detail: string | null;
-  due_date: string | null;
-  ai_confidence: number;
-  is_edited_by_user: boolean;
-  is_done: boolean;
-};
-
-type ItemAction = {
-  id: string;
-  checklist_item_id: string;
-  user_id: string;
-  action: "checked" | "unchecked" | "note";
-  note: string | null;
-  created_at: string;
-};
-
-const ROLE_LABEL: Record<Role, string> = { primary: "보호자 1", secondary: "보호자 2" };
+import NoticeListScreen from "./NoticeListScreen";
 
 export default function NoticeInputScreen({
   session,
