@@ -372,32 +372,91 @@ export default function NoticeInputScreen({
               <Text style={styles.summaryText}>{notice.ai_summary}</Text>
               {items.map((item) => {
                 const itemActions = actions.filter((a) => a.checklist_item_id === item.id);
+                const isEditing = editingItemId === item.id;
                 return (
                   <View key={item.id} style={styles.itemCard}>
-                    <TouchableOpacity
-                      style={styles.itemRow}
-                      onPress={() => toggleItem(item)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.checkbox, item.is_done && styles.checkboxChecked]}>
-                        {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+                    {isEditing ? (
+                      <View style={styles.editBox}>
+                        <TextInput
+                          style={styles.editInput}
+                          placeholder="제목"
+                          placeholderTextColor="#9DBEF7"
+                          value={editDraft.title}
+                          onChangeText={(text) => setEditDraft((d) => ({ ...d, title: text }))}
+                        />
+                        <TextInput
+                          style={styles.editInput}
+                          placeholder="상세 내용 (선택)"
+                          placeholderTextColor="#9DBEF7"
+                          value={editDraft.detail}
+                          onChangeText={(text) => setEditDraft((d) => ({ ...d, detail: text }))}
+                        />
+                        <TextInput
+                          style={styles.editInput}
+                          placeholder="기한 (YYYY-MM-DD, 선택)"
+                          placeholderTextColor="#9DBEF7"
+                          value={editDraft.dueDate}
+                          onChangeText={(text) => setEditDraft((d) => ({ ...d, dueDate: text }))}
+                        />
+                        <View style={styles.editButtonRow}>
+                          <TouchableOpacity onPress={() => setEditingItemId(null)}>
+                            <Text style={styles.editCancelText}>취소</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => saveEdit(item)}>
+                            <Text style={styles.editSaveText}>저장</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                      <View
-                        style={[
-                          styles.categoryBadge,
-                          { backgroundColor: CATEGORY_COLOR[item.category] },
-                        ]}
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.itemRow}
+                        onPress={() => toggleItem(item)}
+                        activeOpacity={0.7}
                       >
-                        <Text style={styles.categoryBadgeText}>{item.category}</Text>
-                      </View>
-                      <View style={styles.itemTextBox}>
-                        <Text style={[styles.itemTitle, item.is_done && styles.itemTitleDone]}>
-                          {item.title}
-                        </Text>
-                        {item.detail && <Text style={styles.itemDetail}>{item.detail}</Text>}
-                        {item.due_date && <Text style={styles.itemDue}>기한: {item.due_date}</Text>}
-                      </View>
-                    </TouchableOpacity>
+                        <View style={[styles.checkbox, item.is_done && styles.checkboxChecked]}>
+                          {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+                        </View>
+                        <View
+                          style={[
+                            styles.categoryBadge,
+                            { backgroundColor: CATEGORY_COLOR[item.category] },
+                          ]}
+                        >
+                          <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                        </View>
+                        <View style={styles.itemTextBox}>
+                          <Text style={[styles.itemTitle, item.is_done && styles.itemTitleDone]}>
+                            {item.title}
+                          </Text>
+                          {item.detail && <Text style={styles.itemDetail}>{item.detail}</Text>}
+                          {item.due_date && <Text style={styles.itemDue}>기한: {item.due_date}</Text>}
+                          <View style={styles.itemFooterRow}>
+                            {!item.is_edited_by_user && (
+                              <Text
+                                style={[
+                                  styles.confidenceText,
+                                  item.ai_confidence < 0.7 && styles.confidenceTextLow,
+                                ]}
+                              >
+                                AI 확신도 {Math.round(item.ai_confidence * 100)}%
+                                {item.ai_confidence < 0.7 ? " · 원문과 비교해보세요" : ""}
+                              </Text>
+                            )}
+                            {item.is_edited_by_user && (
+                              <Text style={styles.editedBadge}>내가 수정함</Text>
+                            )}
+                            <TouchableOpacity
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                startEdit(item);
+                              }}
+                            >
+                              <Text style={styles.editLinkText}>수정</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    )}
 
                     {itemActions
                       .filter((a) => a.note)
