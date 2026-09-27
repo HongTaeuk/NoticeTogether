@@ -763,10 +763,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  // PRD 6-1/6-3(패턴 D): "아직 안 됐다"는 사실은 경고색이 아니라 중립 톤으로만
+  // 표시한다("다그치지 않는다"). 이 팔레트는 회색을 쓰지 않기로 했으므로,
+  // 이미 보조 텍스트에 쓰던 muted blue를 회색 대용으로 쓴다.
   partnerNotViewedText: {
     fontSize: 12,
-    color: "#F2871B",
-    fontWeight: "600",
+    color: "#3D5A9C",
+    fontWeight: "500",
     marginBottom: 10,
   },
   summaryText: {
