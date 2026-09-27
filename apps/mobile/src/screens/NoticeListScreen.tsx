@@ -61,7 +61,7 @@ export default function NoticeListScreen({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [session.accessToken]);
+  }, []);
 
   useEffect(() => {
     load();
