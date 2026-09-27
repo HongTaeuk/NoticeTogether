@@ -695,6 +695,29 @@ const styles = StyleSheet.create({
     color: "#F23B3B",
     fontSize: 14,
   },
+  fallbackBox: {
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: "#FFF3E8",
+  },
+  fallbackText: {
+    fontSize: 13,
+    color: "#7A4A0E",
+    marginBottom: 10,
+    lineHeight: 19,
+  },
+  fallbackButton: {
+    backgroundColor: "#F2871B",
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  fallbackButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
   resultBox: {
     marginTop: 20,
     borderWidth: 1,
