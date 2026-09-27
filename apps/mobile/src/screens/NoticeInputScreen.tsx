@@ -371,27 +371,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#3D5A9C",
   },
-  roleButtons: {
-    flexDirection: "row",
-  },
-  roleButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1B64F2",
-    marginLeft: 8,
-  },
-  roleButtonActive: {
-    backgroundColor: "#1B64F2",
-  },
-  roleButtonText: {
+  logoutText: {
     fontSize: 12,
-    color: "#1B64F2",
+    color: "#F23B3B",
     fontWeight: "600",
-  },
-  roleButtonTextActive: {
-    color: "#FFFFFF",
   },
   title: {
     fontSize: 20,
