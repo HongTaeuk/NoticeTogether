@@ -35,7 +35,7 @@ export default function HouseholdSetupScreen({ session, onJoined, onContinue }: 
     setJoining(true);
     setError(null);
     try {
-      const res = await authFetch(session.accessToken, "/api/auth/join", {
+      const res = await authFetch("/api/auth/join", {
         method: "POST",
         body: JSON.stringify({ inviteCode: code }),
       });

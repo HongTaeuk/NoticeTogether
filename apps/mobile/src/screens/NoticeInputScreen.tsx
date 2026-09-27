@@ -117,7 +117,7 @@ export default function NoticeInputScreen({
     setNoticeId(null);
     setItems([]);
     try {
-      const summarizeRes = await authFetch(session.accessToken, "/api/summarize", {
+      const summarizeRes = await authFetch("/api/summarize", {
         method: "POST",
         body: JSON.stringify({ rawText }),
       });
@@ -131,7 +131,7 @@ export default function NoticeInputScreen({
       setSummarizeFailCount(0);
       setShowOriginal(false);
 
-      const noticeRes = await authFetch(session.accessToken, "/api/notices", {
+      const noticeRes = await authFetch("/api/notices", {
         method: "POST",
         body: JSON.stringify({
           rawText,
@@ -164,7 +164,7 @@ export default function NoticeInputScreen({
     setLoading(true);
     setError(null);
     try {
-      const noticeRes = await authFetch(session.accessToken, "/api/notices", {
+      const noticeRes = await authFetch("/api/notices", {
         method: "POST",
         body: JSON.stringify({ rawText, summary: null, items: [] }),
       });
@@ -194,7 +194,7 @@ export default function NoticeInputScreen({
   async function scheduleReminders(newItems: PersistedItem[]) {
     let hour = 21;
     try {
-      const res = await authFetch(session.accessToken, "/api/reminder-time");
+      const res = await authFetch("/api/reminder-time");
       const data = await res.json();
       if (typeof data?.hour === "number") hour = data.hour;
     } catch {
@@ -225,7 +225,7 @@ export default function NoticeInputScreen({
     // 낙관적 업데이트: 서버 응답을 기다리지 않고 먼저 화면에 반영한다.
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_done: nextDone } : i)));
     try {
-      const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
+      const res = await authFetch(`/api/checklist/${item.id}`, {
         method: "PATCH",
         body: JSON.stringify({ isDone: nextDone }),
       });
@@ -240,7 +240,7 @@ export default function NoticeInputScreen({
   }
 
   async function loadNoticeDetail(id: string) {
-    const res = await authFetch(session.accessToken, `/api/notices/${id}`);
+    const res = await authFetch(`/api/notices/${id}`);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data?.error ?? "동기화에 실패했습니다.");
@@ -269,7 +269,7 @@ export default function NoticeInputScreen({
     // PRD 5단계: 배너 미리보기가 아니라 실제로 화면에 펼쳐본 이 시점에만 열람을 기록한다.
     // (다른 보호자가 먼저 열었다면 서버가 자동으로 partner_view_confirmed로 기록한다.)
     try {
-      await authFetch(session.accessToken, `/api/notices/${id}/open`, {
+      await authFetch(`/api/notices/${id}/open`, {
         method: "POST",
       });
     } catch {
@@ -296,7 +296,7 @@ export default function NoticeInputScreen({
     // PRD 5-2 정상 경로: "저장중 → 저장됨(남겼어요)" 짧은 확인 표시.
     setNoteSaveStatus((prev) => ({ ...prev, [item.id]: "saving" }));
     try {
-      const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
+      const res = await authFetch(`/api/checklist/${item.id}`, {
         method: "PATCH",
         body: JSON.stringify({ note }),
       });
@@ -331,7 +331,7 @@ export default function NoticeInputScreen({
     setShowOriginal((prev) => {
       const next = !prev;
       if (next && noticeId) {
-        authFetch(session.accessToken, `/api/notices/${noticeId}/source-compared`, {
+        authFetch(`/api/notices/${noticeId}/source-compared`, {
           method: "POST",
         }).catch(() => {});
       }
@@ -355,7 +355,7 @@ export default function NoticeInputScreen({
   async function saveEdit(item: PersistedItem) {
     if (!editDraft.title.trim()) return;
     try {
-      const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
+      const res = await authFetch(`/api/checklist/${item.id}`, {
         method: "PATCH",
         body: JSON.stringify({
           title: editDraft.title,

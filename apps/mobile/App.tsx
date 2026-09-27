@@ -36,7 +36,7 @@ function App() {
   // PRD 5-2 분기 5: 배우자가 아직 없으면(보호자 1명뿐이면) 목록 대신 초대 화면을 채운다.
   async function refreshHouseholdState(current: Session) {
     try {
-      const res = await authFetch(current.accessToken, '/api/auth/me');
+      const res = await authFetch('/api/auth/me');
       if (!res.ok) {
         // 토큰이 만료/무효화된 경우 다시 로그인하도록 한다.
         await clearSession();

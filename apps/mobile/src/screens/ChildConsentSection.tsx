@@ -27,13 +27,13 @@ export default function ChildConsentSection({ session }: { session: Session }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    authFetch(session.accessToken, "/api/children")
+    authFetch("/api/children")
       .then((res) => res.json())
       .then((data) => setChildren(data.children ?? []))
       .catch(() => {});
 
     // 이전에 이미 동의했으면 자녀를 추가할 때마다 체크박스를 다시 누르게 하지 않는다.
-    authFetch(session.accessToken, "/api/consents")
+    authFetch("/api/consents")
       .then((res) => res.json())
       .then((data) => {
         const consents = data.consents ?? {};
@@ -42,7 +42,7 @@ export default function ChildConsentSection({ session }: { session: Session }) {
         if (consents.disability_info) setAgreeDisabilityInfo(true);
       })
       .catch(() => {});
-  }, [session.accessToken]);
+  }, []);
 
   const needsDisabilityConsent = disabilityType.trim().length > 0;
   const canSubmit =
@@ -53,7 +53,7 @@ export default function ChildConsentSection({ session }: { session: Session }) {
     !submitting;
 
   async function postConsent(consentType: string, granted: boolean) {
-    await authFetch(session.accessToken, "/api/consents", {
+    await authFetch("/api/consents", {
       method: "POST",
       body: JSON.stringify({ consentType, granted }),
     });
@@ -70,7 +70,7 @@ export default function ChildConsentSection({ session }: { session: Session }) {
         await postConsent("disability_info", true);
       }
 
-      const res = await authFetch(session.accessToken, "/api/children", {
+      const res = await authFetch("/api/children", {
         method: "POST",
         body: JSON.stringify({
           name: name.trim(),

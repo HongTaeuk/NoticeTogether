@@ -76,7 +76,7 @@ export default function TodayScreen({
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await authFetch(session.accessToken, "/api/today");
+      const res = await authFetch("/api/today");
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "불러오지 못했습니다.");
       setUrgentItems(data.urgentItems ?? []);
@@ -104,7 +104,7 @@ export default function TodayScreen({
     setAllItems(apply);
     setDoneItems((prev) => prev + (nextDone ? 1 : -1));
     try {
-      const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
+      const res = await authFetch(`/api/checklist/${item.id}`, {
         method: "PATCH",
         body: JSON.stringify({ isDone: nextDone }),
       });

@@ -54,7 +54,7 @@ export default function NoticeListScreen({
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await authFetch(session.accessToken, "/api/notices");
+      const res = await authFetch("/api/notices");
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "목록을 불러오지 못했습니다.");
       setNotices(data.notices as NoticeSummary[]);
