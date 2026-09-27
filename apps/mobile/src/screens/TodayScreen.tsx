@@ -10,6 +10,11 @@ import {
 } from "react-native";
 import AnimatedCheckMark from "../components/AnimatedCheckMark";
 import { authFetch } from "../lib/apiClient";
+import {
+  cancelReminderForItem,
+  getPersonalizedHour,
+  scheduleReminderForItem,
+} from "../lib/reminderSync";
 import { CATEGORY_COLOR, type ChecklistCategory } from "../types/notice";
 
 type TodayItem = {
