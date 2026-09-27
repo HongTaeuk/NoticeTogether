@@ -32,7 +32,7 @@ export default function NoticeInputScreen({
   onLogout: () => void;
   onManageHousehold: () => void;
 }) {
-  const [tab, setTab] = useState<"today" | "compose" | "history">("today");
+  const [tab, setTab] = useState<"today" | "compose" | "history" | "unread">("today");
   const [rawText, setRawText] = useState("");
   const [notice, setNotice] = useState<{ raw_text: string; ai_summary: string | null } | null>(null);
   const [noticeId, setNoticeId] = useState<string | null>(null);
