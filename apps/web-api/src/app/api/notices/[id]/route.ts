@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let resolved;
   try {
-    resolved = await resolveUser(req, req.nextUrl.searchParams.get("as") as never);
+    resolved = await resolveUser(req, req.nextUrl.searchParams.get("as") as DevRole | null);
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     throw err;
