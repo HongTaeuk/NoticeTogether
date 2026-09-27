@@ -24,8 +24,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "요청 본문이 JSON이 아닙니다." }, { status: 400 });
   }
 
-  if (body.isDone === undefined && !body.note) {
-    return NextResponse.json({ error: "isDone 또는 note 중 하나는 있어야 합니다." }, { status: 400 });
+  const hasEdit = body.title !== undefined || body.detail !== undefined || body.dueDate !== undefined;
+  if (body.isDone === undefined && !body.note && !hasEdit) {
+    return NextResponse.json(
+      { error: "isDone, note, title/detail/dueDate 중 하나는 있어야 합니다." },
+      { status: 400 },
+    );
+  }
+  if (body.title !== undefined && !body.title.trim()) {
+    return NextResponse.json({ error: "title은 비어있지 않아야 합니다." }, { status: 400 });
   }
 
   let resolved;
