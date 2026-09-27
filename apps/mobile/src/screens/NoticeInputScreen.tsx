@@ -803,6 +803,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     lineHeight: 22,
   },
+  summaryToggleText: {
+    color: "#1B64F2",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 14,
+  },
   originalText: {
     fontSize: 14,
     color: "#0B1F4D",
