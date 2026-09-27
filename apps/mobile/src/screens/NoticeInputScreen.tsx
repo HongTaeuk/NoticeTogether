@@ -293,6 +293,19 @@ export default function NoticeInputScreen({
     }
   }
 
+  if (tab === "today") {
+    return (
+      <TodayScreen
+        session={session}
+        onOpenNotice={openExistingNotice}
+        onComposeNew={resetToCompose}
+        onViewHistory={() => setTab("history")}
+        onLogout={onLogout}
+        onManageHousehold={onManageHousehold}
+      />
+    );
+  }
+
   if (tab === "history") {
     return (
       <NoticeListScreen
