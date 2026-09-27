@@ -122,9 +122,12 @@ export default function NoticeListScreen({
           }
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.card} onPress={() => onSelectNotice(item.id)}>
-              <Text style={styles.cardSummary} numberOfLines={2}>
-                {item.summary ?? "(요약 없음)"}
-              </Text>
+              <View style={styles.cardTitleRow}>
+                {!item.hasOpened && <View style={styles.unreadDot} />}
+                <Text style={styles.cardSummary} numberOfLines={2}>
+                  {item.summary ?? "(요약 없음)"}
+                </Text>
+              </View>
               <View style={styles.cardMetaRow}>
                 <Text style={styles.cardMeta}>
                   체크 {item.doneItems}/{item.totalItems}
