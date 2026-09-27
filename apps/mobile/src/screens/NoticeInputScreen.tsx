@@ -133,6 +133,7 @@ export default function NoticeInputScreen({
       }
       setNoticeId(noticeData.noticeId as string);
       setItems(noticeData.items as PersistedItem[]);
+      clearDraft();
       await loadNoticeDetail(noticeData.noticeId as string);
       await scheduleReminders(noticeData.items as PersistedItem[]);
     } catch (err) {
