@@ -76,7 +76,7 @@ export default function NoticeListScreen({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color="#1B64F2" />
+        <ActivityIndicator style={styles.loadingIndicator} color="#1B64F2" />
       ) : notices.length === 0 ? (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>아직 등록된 알림이 없어요.</Text>
