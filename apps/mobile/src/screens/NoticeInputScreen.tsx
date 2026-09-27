@@ -433,6 +433,17 @@ export default function NoticeInputScreen({
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
+      {summarizeFailCount >= 3 && !notice && (
+        <View style={styles.fallbackBox}>
+          <Text style={styles.fallbackText}>
+            핵심 정리가 자꾸 실패하네요. 일단 원문만 저장해두고, 나중에 다시 정리해볼까요?
+          </Text>
+          <TouchableOpacity onPress={saveRawTextOnly} style={styles.fallbackButton}>
+            <Text style={styles.fallbackButtonText}>원문만 저장하기</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {notice && (
         <View style={styles.resultBox}>
           <View style={styles.resultHeader}>
