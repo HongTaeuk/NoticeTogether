@@ -144,11 +144,14 @@ export default function TodayScreen({
       </View>
 
       <View style={styles.navRow}>
+        <TouchableOpacity onPress={onViewUnread}>
+          <Text style={styles.navLinkText}>새로 온 알림</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={onViewHistory}>
-          <Text style={styles.navLinkText}>지난 기록 보기</Text>
+          <Text style={styles.navLinkText}>지난 기록</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onManageHousehold}>
-          <Text style={styles.navLinkText}>배우자 초대 코드 관리</Text>
+          <Text style={styles.navLinkText}>배우자 초대 코드</Text>
         </TouchableOpacity>
       </View>
 
