@@ -38,6 +38,8 @@ export default function NoticeInputScreen({
   const [userRoleById, setUserRoleById] = useState<Record<string, Role>>({});
   const [partnerNotViewed, setPartnerNotViewed] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState({ title: "", detail: "", dueDate: "" });
   const [showOriginal, setShowOriginal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
