@@ -217,10 +217,23 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
   },
+  cardTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#F23B3B",
+    marginRight: 8,
+    marginTop: 6,
+  },
   cardSummary: {
+    flex: 1,
     fontSize: 14,
     color: "#0B1F4D",
-    marginBottom: 8,
     lineHeight: 20,
   },
   cardMetaRow: {
