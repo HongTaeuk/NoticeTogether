@@ -30,11 +30,13 @@ export default function NoticeListScreen({
   onSelectNotice,
   onComposeNew,
   onLogout,
+  onManageHousehold,
 }: {
   session: Session;
   onSelectNotice: (id: string) => void;
   onComposeNew: () => void;
   onLogout: () => void;
+  onManageHousehold: () => void;
 }) {
   const [notices, setNotices] = useState<NoticeSummary[]>([]);
   const [loading, setLoading] = useState(true);
