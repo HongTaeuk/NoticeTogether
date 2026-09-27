@@ -151,8 +151,10 @@ const styles = StyleSheet.create({
     color: "#F23B3B",
     fontWeight: "600",
   },
-  householdLinkRow: {
-    marginBottom: 12,
+  navRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
   householdLinkText: {
     fontSize: 12,
