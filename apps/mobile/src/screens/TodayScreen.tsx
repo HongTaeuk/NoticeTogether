@@ -138,8 +138,8 @@ export default function TodayScreen({
     >
       <View style={styles.headerRow}>
         <Text style={styles.title}>오늘 할 일</Text>
-        <TouchableOpacity onPress={onLogout}>
-          <Text style={styles.logoutText}>로그아웃</Text>
+        <TouchableOpacity onPress={onAccountPress}>
+          <Text style={styles.logoutText}>{accountLabel}</Text>
         </TouchableOpacity>
       </View>
 
