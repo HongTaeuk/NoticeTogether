@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { API_BASE_URL } from "../config/api";
+import { authFetch } from "../lib/apiClient";
+import type { Session } from "../lib/authStorage";
 import type { ChecklistCategory, SummarizeResult } from "../types/notice";
 import { scheduleReminder } from "../native/alarmScheduler";
 import ChildConsentSection from "./ChildConsentSection";
