@@ -117,6 +117,12 @@ export default function TodayScreen({
         body: JSON.stringify({ isDone: nextDone }),
       });
       if (!res.ok) throw new Error("체크 저장에 실패했습니다.");
+      if (nextDone) {
+        await cancelReminderForItem(item.id);
+      } else {
+        const hour = await getPersonalizedHour();
+        await scheduleReminderForItem({ ...item, is_done: false }, hour);
+      }
     } catch (err) {
       const revert = (list: TodayItem[]) =>
         list.map((i) => (i.id === item.id ? { ...i, is_done: item.is_done } : i));
