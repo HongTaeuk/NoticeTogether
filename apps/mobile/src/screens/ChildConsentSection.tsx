@@ -59,11 +59,9 @@ export default function ChildConsentSection({ session }: { session: Session }) {
         await postConsent("disability_info", true);
       }
 
-      const res = await fetch(`${API_BASE_URL}/api/children`, {
+      const res = await authFetch(session.accessToken, "/api/children", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          as: role,
           name: name.trim(),
           birthYear: birthYear ? Number(birthYear) : undefined,
           disabilityType: needsDisabilityConsent ? disabilityType.trim() : undefined,
