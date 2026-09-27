@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import { resolveUser, AuthError } from "@/lib/auth/session";
+import type { DevRole } from "@/lib/supabase/devSeed";
 
 // Pull 기반 동기화(PRD FR-2): 앱이 열릴 때마다 이 엔드포인트를 다시 호출해서
 // 상대 보호자가 그 사이 체크/메모한 내용을 가져온다. 실시간 push는 쓰지 않는다.
