@@ -8,6 +8,10 @@ type ToggleBody = {
   isDone?: boolean;
   as?: DevRole;
   note?: string;
+  // FR-1: 사용자가 AI 추출 결과를 직접 수정했는지 구분해서 인지해야 한다.
+  title?: string;
+  detail?: string | null;
+  dueDate?: string | null;
 };
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
