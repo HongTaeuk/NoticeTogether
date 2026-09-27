@@ -36,6 +36,7 @@ export default function NoticeInputScreen({
   const [items, setItems] = useState<PersistedItem[]>([]);
   const [actions, setActions] = useState<ItemAction[]>([]);
   const [userRoleById, setUserRoleById] = useState<Record<string, Role>>({});
+  const [partnerNotViewed, setPartnerNotViewed] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [showOriginal, setShowOriginal] = useState(false);
   const [loading, setLoading] = useState(false);
