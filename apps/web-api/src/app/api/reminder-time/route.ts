@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
-import { ensureDevHousehold, type DevRole } from "@/lib/supabase/devSeed";
+import type { DevRole } from "@/lib/supabase/devSeed";
+import { resolveUser, AuthError } from "@/lib/auth/session";
 
 const DEFAULT_HOUR = 21; // PRD 7단계 기본값("예: 매일 21시")
 const MIN_SAMPLES = 3; // 이 정도는 쌓여야 "그 사람의 패턴"이라고 믿을 만하다고 봄
