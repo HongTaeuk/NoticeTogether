@@ -567,10 +567,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  tabLinkGroup: {
+    flexDirection: "row",
+  },
   historyLinkText: {
     fontSize: 13,
     color: "#1B64F2",
     fontWeight: "600",
+    marginLeft: 14,
   },
   newComposeButton: {
     alignSelf: "flex-start",
