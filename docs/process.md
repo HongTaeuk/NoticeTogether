@@ -42,3 +42,5 @@
   - Supabase: 알림 저장/체크 토글/Pull 동기화 조회 전체 루프 검증. (RLS 정책은 아직 미작성 — 지금은 service_role로 우회 중이라 문제 없으나, 실제 가입 단계에서 필요. consents/ai_summary_logs 테이블은 아직 코드에서 안 씀 — 추후 구현 필요.)
   - Vercel: GitHub 연동 프로젝트 생성(Hobby 무료 플랜), 환경변수 8개 등록, 프로덕션 배포 성공. **1차 배포 시 두 가지 문제 발견 후 해결**: ① 기본으로 켜져 있던 Vercel Deployment Protection(SSO 인증)이 외부 API 호출을 막아서 Vercel API로 직접 껐음. ② PowerShell 파이프로 환경변수를 등록할 때 BOM(U+FEFF)이 값 앞에 섞여 들어가 인증 헤더가 깨졌음 — bash `printf`로 재등록 후 재배포하여 해결. 재배포 후 `/api/summarize`, `/api/notices`, `/api/checklist/[id]`, `/api/notices/[id]` 전부 프로덕션 고정 도메인(`noticetogether-web-api-notice-together.vercel.app`)에서 정상 동작 확인.
   - `apps/mobile/src/config/api.ts`를 로컬(`adb reverse`) 대신 위 프로덕션 도메인을 기본값으로 사용하도록 변경.
+- PRD 3~4단계 모바일 연결: `NoticeInputScreen.tsx`가 이제 AI 요약 후 자동으로 `/api/notices`에 저장하고, 체크박스 UI로 `/api/checklist/[id]`를 호출해 완료 상태를 토글(낙관적 업데이트 + 실패 시 롤백)한다. PRD가 요구하는 "임시 계정 2개로 동기화 검증"을 위해 화면 상단에 보호자1/보호자2 역할 전환 버튼을 추가했고, "같이 확인하기" 버튼으로 `/api/notices/[id]`를 다시 불러와 상대방이 체크한 내용을 Pull 방식으로 동기화한다.
+- 안드로이드 기기가 adb에서 다시 안 보임(재연결 필요) — 기기 확인 후 새 화면으로 재빌드/설치 예정.
