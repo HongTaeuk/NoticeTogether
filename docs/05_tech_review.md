@@ -128,6 +128,12 @@ OpenAI 모델 가격을 기준으로 최초 계산했다. GPT-4o는 입력 100�
 
 **확정: NVIDIA NIM.** 테스트 목적임을 확인했으므로 용도 제한은 문제되지 않는다. 다만 40 RPM 제한이 실제 개발 중 병목이 될 경우를 대비해 프롬프트·스키마를 OpenAI 호환 형식으로 벤더 중립적으로 작성한다.
 
+> **[갱신 2026-09-27] 실측 후 최종 결정: Gemini 1순위 + NVIDIA NIM 폴백.**
+> 위 표는 API 스펙(무료 여부, 속도 제한) 비교였고, 실제 코드를 붙여 동일한 가정통신문 두 건으로 여러 모델을 반복 테스트해본 결과 **정확도** 문제가 드러났다.
+> - NVIDIA NIM 무료 티어에서 이 계정이 접근 가능한 모델(원래 지정했던 `meta/llama-3.1-70b-instruct`는 단종됨)은 대부분 원문에 없는 내용을 지어내는 환각이 있었고(`deepseek-ai/deepseek-v4.1-flash`), 정확한 모델(`nvidia/nemotron-3-ultra-550b-a55b` 등)은 추론(reasoning) 토큰을 과도하게 써서 느리거나 응답이 잘렸다.
+> - Google이 제공하는 Gemini OpenAI 호환 엔드포인트(`generativelanguage.googleapis.com/v1beta/openai`)를 사용자가 추가로 제안해 테스트한 결과, `gemini-3.5-flash-lite`가 속도·정확도 면에서 가장 우수했다(단, 완벽하지 않고 가끔 항목을 다른 단어로 착각하는 환각이 남아있음 — 이는 FR-1의 신뢰도 표시/수정 UI로 보완).
+> - 최종 체인: **1순위 `gemini-3.5-flash-lite`, 2순위(폴백) NVIDIA `nemotron-3-ultra-550b-a55b` → `nemotron-3-super-120b-a12b` → `nemotron-3.5-lightning-30b-a3b`.** `lib/ai/client.ts`가 프로바이더(Gemini/NVIDIA) 단위로 base URL·API 키·모델 체인을 분리 관리하며, (프로바이더,모델) 조합별로 연속 실패 시 쿨다운 후 다음으로 넘어가는 구조는 유지된다. 근거 문서: `docs/process.md` 2026-09-27 기록.
+
 ## 2-4. 레이어 4: 배포/호스팅
 
 이 레이어는 대안 간 차이가 크지 않아 Vercel로 수렴한다. Next.js와 완전 통합되고 Hobby 플랜이 무료이며, Netlify·Cloudflare Pages 등 대안이 있지만 Next.js App Router와의 통합도에서 Vercel이 가장 매끄럽다.
