@@ -24,9 +24,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "isDone 또는 note 중 하나는 있어야 합니다." }, { status: 400 });
   }
 
-  const { userIds } = await ensureDevHousehold();
-  const userId = userIds[body.as ?? "primary"];
+  let resolved;
+  try {
+    resolved = await resolveUser(req, body.as);
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
+  const { userId } = resolved;
   const supabase = getSupabaseServerClient();
+
+  const { data: itemWithNotice, error: itemLookupError } = await supabase
+    .from("checklist_items")
+    .select("id, notice_id, notices!inner(household_id)")
+    .eq("id", id)
+    .single();
+  if (itemLookupError) {
+    return NextResponse.json({ error: itemLookupError.message }, { status: 404 });
+  }
+  const noticeHouseholdId = (itemWithNotice.notices as unknown as { household_id: string }).household_id;
+  if (noticeHouseholdId !== resolved.householdId) {
+    return NextResponse.json({ error: "이 항목에 접근할 권한이 없습니다." }, { status: 403 });
+  }
 
   let item: { id: string; is_done: boolean };
   if (body.isDone !== undefined) {
