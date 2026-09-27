@@ -497,7 +497,19 @@ export default function NoticeInputScreen({
             <Text style={styles.originalText}>{notice.raw_text}</Text>
           ) : (
             <>
-              <Text style={styles.summaryText}>{notice.ai_summary}</Text>
+              {/*
+                디자인 원칙 3(역할 기반 자동 전환): 정보를 도맡는 보호자(primary)에게는
+                설명 문단을 바로 보여주고, 상대적으로 정보에서 소외된 보호자(secondary)에게는
+                "무엇을, 언제까지"인 체크리스트가 먼저 눈에 들어오도록 설명 문단을 접어둔다
+                (원칙 1을 지키기 위해 완전히 숨기지 않고 한 번의 탭으로 항상 펼칠 수 있게 함).
+              */}
+              {role === "primary" || showSummaryText ? (
+                <Text style={styles.summaryText}>{notice.ai_summary}</Text>
+              ) : (
+                <TouchableOpacity onPress={() => setShowSummaryText(true)}>
+                  <Text style={styles.toggleText}>설명 더 보기</Text>
+                </TouchableOpacity>
+              )}
               {items.map((item) => {
                 const itemActions = actions.filter((a) => a.checklist_item_id === item.id);
                 const isEditing = editingItemId === item.id;
