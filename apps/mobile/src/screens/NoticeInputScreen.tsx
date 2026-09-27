@@ -58,6 +58,7 @@ export default function NoticeInputScreen({
     setRawText("");
     setShowOriginal(false);
     setError(null);
+    setSummarizeFailCount(0);
     setTab("compose");
   }
 
