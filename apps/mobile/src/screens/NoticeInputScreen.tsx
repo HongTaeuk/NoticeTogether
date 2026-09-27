@@ -312,7 +312,7 @@ export default function NoticeInputScreen({
             <Text style={styles.originalText}>{notice.raw_text}</Text>
           ) : (
             <>
-              <Text style={styles.summaryText}>{aiResult.summary}</Text>
+              <Text style={styles.summaryText}>{notice.ai_summary}</Text>
               {items.map((item) => {
                 const itemActions = actions.filter((a) => a.checklist_item_id === item.id);
                 return (
