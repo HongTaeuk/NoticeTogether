@@ -105,6 +105,11 @@ export default function NoticeInputScreen({
     if (!rawText.trim()) {
       return;
     }
+    // PRD 5-1 분기1: AI 호출 전에 미리 걸러서 40 RPM 제한을 의미 없는 요청으로 소모하지 않는다.
+    if (rawText.trim().length < 20) {
+      setError("내용이 조금 짧은 것 같아요. 학교에서 온 안내문 전체를 붙여넣어 주세요");
+      return;
+    }
     setLoading(true);
     setError(null);
     setNotice(null);
@@ -118,7 +123,8 @@ export default function NoticeInputScreen({
       const summarizeData = await summarizeRes.json();
       if (!summarizeRes.ok) {
         setSummarizeFailCount((c) => c + 1);
-        throw new Error(summarizeData?.error ?? "요약에 실패했습니다.");
+        // PRD 5-1 분기2: 기술적 에러 문구를 그대로 보여주지 않고 정해둔 안내 문구를 쓴다.
+        throw new Error("지금 조금 바빠서 정리가 늦어지고 있어요. 잠시 후 다시 시도해 주세요");
       }
       const summary = summarizeData as SummarizeResult;
       setSummarizeFailCount(0);
