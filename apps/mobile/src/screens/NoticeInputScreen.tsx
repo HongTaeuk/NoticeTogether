@@ -470,7 +470,7 @@ export default function NoticeInputScreen({
                                 startEdit(item);
                               }}
                             >
-                              <Text style={styles.editLinkText}>수정</Text>
+                              <Text style={styles.editLinkText}>이거 아닌 것 같으면 고치기</Text>
                             </TouchableOpacity>
                           </View>
                         </View>
