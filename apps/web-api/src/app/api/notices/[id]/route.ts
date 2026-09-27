@@ -34,5 +34,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         .order("created_at", { ascending: true })
     : { data: [] };
 
-  return NextResponse.json({ notice, items, actions: actions ?? [] });
+  // 클라이언트가 action.user_id를 "보호자 1/2"로 표시할 수 있도록 role을 같이 내려준다.
+  const userIds = [...new Set((actions ?? []).map((a) => a.user_id))];
+  const { data: users } = userIds.length
+    ? await supabase.from("users").select("id, role, display_name").in("id", userIds)
+    : { data: [] };
+
+  return NextResponse.json({ notice, items, actions: actions ?? [], users: users ?? [] });
 }
