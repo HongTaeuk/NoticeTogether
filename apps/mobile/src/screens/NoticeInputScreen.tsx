@@ -537,7 +537,7 @@ export default function NoticeInputScreen({
                         activeOpacity={0.7}
                       >
                         <View style={[styles.checkbox, item.is_done && styles.checkboxChecked]}>
-                          {item.is_done && <Text style={styles.checkboxMark}>✓</Text>}
+                          {item.is_done && <AnimatedCheckMark style={styles.checkboxMark} />}
                         </View>
                         <View
                           style={[
