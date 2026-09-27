@@ -44,7 +44,13 @@ type ItemAction = {
 
 const ROLE_LABEL: Record<Role, string> = { primary: "보호자 1", secondary: "보호자 2" };
 
-export default function NoticeInputScreen() {
+export default function NoticeInputScreen({
+  session,
+  onLogout,
+}: {
+  session: Session;
+  onLogout: () => void;
+}) {
   const [rawText, setRawText] = useState("");
   const [aiResult, setAiResult] = useState<SummarizeResult | null>(null);
   const [noticeId, setNoticeId] = useState<string | null>(null);
@@ -55,9 +61,7 @@ export default function NoticeInputScreen() {
   const [showOriginal, setShowOriginal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // PRD 4단계: 실제 로그인 붙이기 전까지, 임시 계정 2개(보호자 1/2)를 전환해가며
-  // 체크/동기화가 상대방 화면에도 반영되는지 검증하기 위한 역할 전환.
-  const [role, setRole] = useState<Role>("primary");
+  const role = session.role;
 
   async function handleSummarize() {
     if (!rawText.trim()) {
