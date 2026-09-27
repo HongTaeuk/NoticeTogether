@@ -14,7 +14,11 @@ import type { Session } from "../lib/authStorage";
 
 type Mode = "login" | "signup";
 
-export default function AuthScreen({ onAuthed }: { onAuthed: (session: Session) => void }) {
+export default function AuthScreen({
+  onAuthed,
+}: {
+  onAuthed: (session: Session, isNewSignup: boolean) => void;
+}) {
   const [mode, setMode] = useState<Mode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
