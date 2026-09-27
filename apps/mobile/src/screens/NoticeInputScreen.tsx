@@ -149,10 +149,9 @@ export default function NoticeInputScreen({
     // 낙관적 업데이트: 서버 응답을 기다리지 않고 먼저 화면에 반영한다.
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_done: nextDone } : i)));
     try {
-      const res = await fetch(`${API_BASE_URL}/api/checklist/${item.id}`, {
+      const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isDone: nextDone, as: role }),
+        body: JSON.stringify({ isDone: nextDone }),
       });
       if (!res.ok) {
         throw new Error("체크 상태 저장에 실패했습니다.");
