@@ -58,11 +58,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
-  await supabase.from("notice_events").insert({
-    notice_id: notice.id,
-    user_id: createdBy,
-    event_type: "notice_opened",
-  });
+  // notice_opened는 여기서 자동으로 넣지 않는다 — 클라이언트가 실제로 알림을 "펼쳐봤을 때"
+  // POST /api/notices/[id]/open 을 명시적으로 호출해서 기록한다(PRD 5단계: 배너 미리보기와
+  // 진짜 열람을 구분하기 위해 열람 이벤트의 발생 시점을 한 곳으로 모아둔다).
 
   return NextResponse.json({ noticeId: notice.id, items: checklistItems });
 }
