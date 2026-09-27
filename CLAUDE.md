@@ -13,7 +13,7 @@
 
 - 모바일: Bare React Native + TypeScript (Expo 아님), 알림은 Kotlin 네이티브 모듈(AlarmManager + Notifee) — **Android 전용, iOS 없음**
 - 백엔드: Next.js(App Router), Vercel Serverless Functions
-- DB/인증: Supabase (Postgres + Auth, RLS로 가구 단위 접근 제어)
+- DB/인증: Supabase (Postgres + Auth). 가구 단위 접근 제어는 RLS가 아니라 `apps/web-api`가 `service_role` 키로 접속 후 각 라우트에서 `resolveUser()`로 요청자의 household_id를 직접 검증하는 방식으로 구현됨(원안과 다르게 간 이유는 `docs/05_tech_review.md` 3-6절 갱신 노트 참고)
 - AI: Gemini(`gemini-3.5-flash-lite`) 1순위 + NVIDIA NIM 폴백(`nemotron-3-ultra-550b-a55b` 등), 둘 다 OpenAI 호환 엔드포인트 — 2026-09-27 실측 후 갱신(자세한 근거는 `docs/05_tech_review.md` 2-3절, `docs/process.md` 참고). `/lib/ai`로 벤더 추상화 유지, 프로바이더별 모델 체인 + 연속 실패 시 쿨다운.
 - 배포: Play Store 미사용, APK 직접 빌드 후 `adb install`/사이드로드
 - 모노레포 구조: `/apps/mobile`, `/apps/web-api`, `/supabase/migrations`
