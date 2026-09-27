@@ -239,6 +239,41 @@ export default function NoticeInputScreen({
     }
   }
 
+  function startEdit(item: PersistedItem) {
+    setEditingItemId(item.id);
+    setEditDraft({
+      title: item.title,
+      detail: item.detail ?? "",
+      dueDate: item.due_date ?? "",
+    });
+  }
+
+  /**
+   * FR-1: AI가 잘못 추출한 항목(제목/상세/기한)을 사용자가 직접 고칠 수 있어야 한다.
+   * 원문 대조 없이 AI 결과를 그대로 믿고 넘어가는 위험을 줄이기 위한 장치.
+   */
+  async function saveEdit(item: PersistedItem) {
+    if (!editDraft.title.trim()) return;
+    try {
+      const res = await authFetch(session.accessToken, `/api/checklist/${item.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: editDraft.title,
+          detail: editDraft.detail.trim() || null,
+          dueDate: editDraft.dueDate.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error ?? "수정에 실패했습니다.");
+      }
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, ...data.item } : i)));
+      setEditingItemId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "수정에 실패했습니다.");
+    }
+  }
+
   if (tab === "history") {
     return (
       <NoticeListScreen
