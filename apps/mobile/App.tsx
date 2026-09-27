@@ -59,9 +59,14 @@ function App() {
     }
   }
 
-  async function handleAuthed(newSession: Session) {
+  async function handleAuthed(newSession: Session, isNewSignup: boolean) {
     await saveSession(newSession);
     setSession(newSession);
+    if (isNewSignup) {
+      // PRD 5-4: 최초 가입 직후에만 "배너 미리보기 ≠ 확인" 온보딩 안내를 보여준다.
+      setScreen('onboarding-intro');
+      return;
+    }
     await refreshHouseholdState(newSession);
   }
 
