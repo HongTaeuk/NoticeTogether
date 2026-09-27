@@ -743,6 +743,7 @@ const styles = StyleSheet.create({
   itemFooterRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
     marginTop: 6,
   },
   confidenceText: {
