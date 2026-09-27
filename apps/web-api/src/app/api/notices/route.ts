@@ -64,3 +64,33 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ noticeId: notice.id, items: checklistItems });
 }
+
+// PRD 정보구조(docs/06_prd.md Part 4)의 "오늘 할 일"/"지난 기록" 화면이 쓸 목록 조회.
+export async function GET() {
+  const { householdId } = await ensureDevHousehold();
+  const supabase = getSupabaseServerClient();
+
+  const { data: notices, error } = await supabase
+    .from("notices")
+    .select("id, ai_summary, created_at, checklist_items(id, is_done, due_date)")
+    .eq("household_id", householdId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const summarized = (notices ?? []).map((n) => {
+    const items = (n.checklist_items ?? []) as { id: string; is_done: boolean; due_date: string | null }[];
+    return {
+      id: n.id,
+      summary: n.ai_summary,
+      createdAt: n.created_at,
+      totalItems: items.length,
+      doneItems: items.filter((i) => i.is_done).length,
+      nearestDueDate: items.map((i) => i.due_date).filter(Boolean).sort()[0] ?? null,
+    };
+  });
+
+  return NextResponse.json({ notices: summarized });
+}
