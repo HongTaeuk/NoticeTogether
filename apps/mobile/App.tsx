@@ -12,6 +12,7 @@ import NoticeInputScreen from './src/screens/NoticeInputScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import OnboardingIntroScreen from './src/screens/OnboardingIntroScreen';
 import HouseholdSetupScreen from './src/screens/HouseholdSetupScreen';
+import NetworkBanner from './src/components/NetworkBanner';
 import { authFetch } from './src/lib/apiClient';
 import { clearSession, loadSession, saveSession, type Session } from './src/lib/authStorage';
 
