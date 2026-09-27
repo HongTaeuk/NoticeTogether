@@ -520,6 +520,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  partnerNotViewedText: {
+    fontSize: 12,
+    color: "#F2871B",
+    fontWeight: "600",
+    marginBottom: 10,
+  },
   summaryText: {
     fontSize: 15,
     color: "#0B1F4D",
