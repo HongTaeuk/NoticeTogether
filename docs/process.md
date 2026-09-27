@@ -33,4 +33,12 @@
 - Gemini/NVIDIA 총 10개 모델을 동일한 두 문장(현장학습 동의서·체육대회 준비물 / 미술 준비물·건강검진 회신서)으로 반복 비교 테스트. 결과: `gemini-3.5-flash-lite`가 가장 정확(대체로 환각 없음, 항목 분리 정확)하지만 완벽하지 않음(가끔 원문에 없는 단어로 치환하는 환각 발생, temperature=0에도 비결정적). `gemini-3.5-flash`/`gemini-3.8-flash`는 추론형이라 토큰을 과도하게 쓰거나 상시 과부하(503)라 실사용 불가로 판단. NVIDIA는 접근 가능한 모델 대부분이 추론형이라 느리거나(900토큰으로도 답변 못 끝냄) 부정확함.
 - 프롬프트를 여러 차례 반복 조정(정확성 vs 완전성 강조 균형) — 완전히 없애지 못하는 잔여 환각은 모델 자체의 본질적 한계로 판단하고 튜닝 중단. **PRD가 이미 이 문제를 전제로 설계됨**(FR-1: AI 신뢰도 confidence 표시, 사용자 직접 수정, 원문 비교 토글) → 추가 프롬프트 튜닝보다 그 UI를 구현하는 방향으로 결정.
 - 최종 모델 우선순위 확정: 1순위 `gemini-3.5-flash-lite`, 2순위(폴백) NVIDIA `nemotron-3-ultra-550b-a55b` → `nemotron-3-super-120b-a12b` → `nemotron-3.5-lightning-30b-a3b` (정확도 실측 순). NVIDIA 폴백용 `maxTokens`를 2000으로 상향(추론 토큰 소모 감안).
-- `docs/05_tech_review.md`의 "AI: NVIDIA NIM 단일" 결정은 위 실측 결과에 따라 "Gemini 1순위 + NVIDIA 폴백"으로 갱신 필요 — 다음 문서 정리 시 반영 예정.
+- `docs/05_tech_review.md`의 "AI: NVIDIA NIM 단일" 결정은 위 실측 결과에 따라 "Gemini 1순위 + NVIDIA 폴백"으로 갱신, 문서 본문에 갱신 노트로 반영 완료.
+- **중요 정정**: 앞서 관찰한 "환각"의 상당수가 실제로는 bash 커맨드라인 인자(`curl -d '한글...'`)로 한글을 전달할 때 인코딩이 깨지던 버그 때문이었음을 발견(NVIDIA가 "텍스트가 손상되었다"고 명시적으로 답해서 발각). 파일 기반(`--data-binary @file`)으로 깨끗하게 재검증한 결과 Gemini(4/4)와 NVIDIA 둘 다 훨씬 안정적으로 정확했음. 다만 일부 초기 비교 테스트는 Node 스크립트로 파일을 만들어 보낸 것이라 이 버그의 영향을 받지 않았음(6개 모델 비교 스윕 등) — 모델 우선순위 결론 자체는 유지.
+- PRD 3단계(체크 완료 상태 저장) 구현: `apps/web-api/src/lib/supabase/devSeed.ts`(PRD가 인증을 마지막 단계로 미루는 것에 맞춰, 실제 가입 전까지 쓸 개발용 가구+보호자 2명을 Supabase Auth admin API로 자동 생성/재사용), `POST /api/notices`(알림+체크리스트 저장), `PATCH /api/checklist/[id]`(체크 토글 + item_actions 로그), `GET /api/notices/[id]`(Pull 기반 동기화 조회 — 원문/요약/체크리스트/액션 이력 반환). 로컬에서 저장→토글→조회 전체 루프 검증 완료.
+- **외부 시스템 전체 재점검 및 완전 검증** (사용자 요청):
+  - 완성까지 필요한 외부 시스템은 총 4개로 확정: Supabase, NVIDIA NIM, Gemini, Vercel (FCM/Play스토어/도메인/이메일서비스는 문서상 불필요로 이미 결정됨).
+  - NVIDIA: 실제 앱 코드의 폴백 경로까지 검증(Gemini 키를 일부러 무효화 → NVIDIA로 정상 폴백 → 정확한 결과, 27초).
+  - Supabase: 알림 저장/체크 토글/Pull 동기화 조회 전체 루프 검증. (RLS 정책은 아직 미작성 — 지금은 service_role로 우회 중이라 문제 없으나, 실제 가입 단계에서 필요. consents/ai_summary_logs 테이블은 아직 코드에서 안 씀 — 추후 구현 필요.)
+  - Vercel: GitHub 연동 프로젝트 생성(Hobby 무료 플랜), 환경변수 8개 등록, 프로덕션 배포 성공. **1차 배포 시 두 가지 문제 발견 후 해결**: ① 기본으로 켜져 있던 Vercel Deployment Protection(SSO 인증)이 외부 API 호출을 막아서 Vercel API로 직접 껐음. ② PowerShell 파이프로 환경변수를 등록할 때 BOM(U+FEFF)이 값 앞에 섞여 들어가 인증 헤더가 깨졌음 — bash `printf`로 재등록 후 재배포하여 해결. 재배포 후 `/api/summarize`, `/api/notices`, `/api/checklist/[id]`, `/api/notices/[id]` 전부 프로덕션 고정 도메인(`noticetogether-web-api-notice-together.vercel.app`)에서 정상 동작 확인.
+  - `apps/mobile/src/config/api.ts`를 로컬(`adb reverse`) 대신 위 프로덕션 도메인을 기본값으로 사용하도록 변경.
