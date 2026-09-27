@@ -52,7 +52,7 @@ OpenAI 모델 가격을 기준으로 최초 계산했다. GPT-4o는 입력 100�
 
 | 기능 | 구현 가능성 | 기술 | 비용 |
 |---|---|---|---|
-| FR-1: AI 자동 요약 | 가능(개발·검증 단계) | NVIDIA NIM 무료 API(Llama 3.1/3.3 또는 Qwen 2.5, OpenAI 호환 엔드포인트) | 완전 무료(단, 40 RPM 계정 전체 공유 제한) |
+| FR-1: AI 자동 요약 | 가능(개발·검증 단계) | Gemini(`gemini-3.5-flash-lite`) 1순위 + NVIDIA NIM 폴백, 둘 다 OpenAI 호환 엔드포인트 — [2-3 갱신 노트](#2-3-레이어-3-ai-연동-방식) 참고 | 완전 무료(Gemini/NVIDIA 둘 다 무료 티어) |
 | FR-2-1·2-2: 듀얼 계정·Pull 기반 조치 공유 | 가능 | Supabase 무료 티어 | 완전 무료 |
 | FR-3: PUSH 발송 | 가능 | Kotlin 네이티브(AlarmManager/Notifee) | 완전 무료(볼륨 무관, OS 내장) |
 | FR-3: 개인화 알림(스크린타임 대체) | 부분 가능(로그 기반 근사치) | 앱 내 이벤트 로그 + Supabase | 완전 무료 |
