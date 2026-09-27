@@ -38,3 +38,4 @@
 - 코드를 수정하면 `.claude/settings.json`의 hook이 자동으로 git add/commit/pull/push한다 (조용히 동작, 별도 조치 불필요).
 - **모든 변경 사항은 `docs/process.md`에 기록한다.**
 - 개발에 필요한 도구/SDK/패키지 설치는 사용자 승인 없이 바로 진행해도 된다 (destructive/비가역적 작업은 예외).
+- 사용자에게 질문하지 않는다. 모든 해답은 docs에 있고, 없더라도 가장 가까운 것을 골라 직접 판단해서 진행한다.
