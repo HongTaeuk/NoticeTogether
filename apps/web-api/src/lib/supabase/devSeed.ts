@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "./client";
+import { generateInviteCode } from "../household/inviteCode";
 
 /**
  * PRD 10단계 빌드 순서(docs/06_prd.md Part 8)상 실제 가입/로그인/초대코드 연결은
