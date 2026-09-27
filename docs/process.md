@@ -25,3 +25,12 @@
 - Android SDK 커맨드라인 도구 설치 완료(플랫폼 36/37.0, 빌드도구 36.0.0/37.0.0), JAVA_HOME/ANDROID_HOME 영구 환경변수 등록. `apps/mobile/android`에서 `gradlew assembleDebug` 실기기 빌드 시작.
 - `apps/mobile`에 PRD 1~2단계 화면 구현: `src/screens/NoticeInputScreen.tsx`(텍스트 붙여넣기 → `/api/summarize` 호출 → 카테고리별 체크리스트 표시 + 원문 보기 토글), `src/types/notice.ts`(백엔드와 타입 공유), `src/config/api.ts`(`adb reverse`로 로컬 백엔드 연결). `App.tsx`를 이 화면으로 교체. 회색 미사용 원칙에 맞춰 blue/orange/red 팔레트로 카테고리 색상 구성.
 - NVIDIA NIM API 키, Supabase 프로젝트 키는 아직 발급 전 — 사용자에게 발급 방법 안내함(둘 다 준비되면 `.env.local` 연결 예정). 목표를 "실제 기기에서 바로 테스트 가능한 완성된 MVP"로 재확인함.
+- Android SDK 37/NDK 설치, JAVA_HOME 확정. `gradlew assembleDebug` 첫 빌드 성공(12분 48초) → `app-debug.apk` 생성.
+- 실제 API 키 발급 및 연동: NVIDIA NIM 키, Supabase URL/service_role 키 수령 → `apps/web-api/.env.local` 구성(git에는 커밋 안 됨). `supabase/migrations/0001_init.sql`을 Supabase SQL Editor에서 직접 실행해 스키마 적용 완료.
+- NVIDIA NIM 원래 지정 모델(`meta/llama-3.1-70b-instruct`)이 단종(410 Gone) 확인 → `/v1/models`로 계정에서 실제 접근 가능한 모델 전수 조사(82개 중 6개만 접근 가능: super-120b, lightning-30b, ultra-550b, gemma-4-31b, mistral-nemotron, glm-5.3, deepseek-v4.1-flash, gpt-oss-20b).
+- `deepseek-ai/deepseek-v4.1-flash`로 첫 실제 요약 테스트 → **원문에 없는 내용을 지어내는 환각 확인**(예: "체력검사" 조작, "색종이/가위"를 "크레파스/물감"으로 변경). NVIDIA NIM 무료 티어 품질 리스크(문서에 이미 명시)가 실제로 재현됨.
+- 사용자가 Gemini API 키 제공, "Gemini를 표준으로 쓰고 안 되면 폴백" 제안 → Gemini의 OpenAI 호환 엔드포인트(`generativelanguage.googleapis.com/v1beta/openai`) 사용 결정. `client.ts`를 프로바이더 배열 구조로 재작성(Gemini 1순위 + NVIDIA 폴백, 프로바이더별 base URL/키/모델 체인, (프로바이더,모델) 단위 실패 쿨다운).
+- Gemini/NVIDIA 총 10개 모델을 동일한 두 문장(현장학습 동의서·체육대회 준비물 / 미술 준비물·건강검진 회신서)으로 반복 비교 테스트. 결과: `gemini-3.5-flash-lite`가 가장 정확(대체로 환각 없음, 항목 분리 정확)하지만 완벽하지 않음(가끔 원문에 없는 단어로 치환하는 환각 발생, temperature=0에도 비결정적). `gemini-3.5-flash`/`gemini-3.8-flash`는 추론형이라 토큰을 과도하게 쓰거나 상시 과부하(503)라 실사용 불가로 판단. NVIDIA는 접근 가능한 모델 대부분이 추론형이라 느리거나(900토큰으로도 답변 못 끝냄) 부정확함.
+- 프롬프트를 여러 차례 반복 조정(정확성 vs 완전성 강조 균형) — 완전히 없애지 못하는 잔여 환각은 모델 자체의 본질적 한계로 판단하고 튜닝 중단. **PRD가 이미 이 문제를 전제로 설계됨**(FR-1: AI 신뢰도 confidence 표시, 사용자 직접 수정, 원문 비교 토글) → 추가 프롬프트 튜닝보다 그 UI를 구현하는 방향으로 결정.
+- 최종 모델 우선순위 확정: 1순위 `gemini-3.5-flash-lite`, 2순위(폴백) NVIDIA `nemotron-3-ultra-550b-a55b` → `nemotron-3-super-120b-a12b` → `nemotron-3.5-lightning-30b-a3b` (정확도 실측 순). NVIDIA 폴백용 `maxTokens`를 2000으로 상향(추론 토큰 소모 감안).
+- `docs/05_tech_review.md`의 "AI: NVIDIA NIM 단일" 결정은 위 실측 결과에 따라 "Gemini 1순위 + NVIDIA 폴백"으로 갱신 필요 — 다음 문서 정리 시 반영 예정.
