@@ -29,10 +29,12 @@ export default function NoticeInputScreen({
   session,
   onLogout,
   onManageHousehold,
+  onManageAccount,
 }: {
   session: Session;
   onLogout: () => void;
   onManageHousehold: () => void;
+  onManageAccount: () => void;
 }) {
   const [tab, setTab] = useState<"today" | "compose" | "history" | "unread">("today");
   const [rawText, setRawText] = useState("");
