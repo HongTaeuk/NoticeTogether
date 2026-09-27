@@ -58,13 +58,31 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "이 항목에 접근할 권한이 없습니다." }, { status: 403 });
   }
 
-  let item: { id: string; is_done: boolean };
-  if (body.isDone !== undefined) {
+  type ItemRow = {
+    id: string;
+    is_done: boolean;
+    title: string;
+    detail: string | null;
+    due_date: string | null;
+    is_edited_by_user: boolean;
+  };
+
+  const updatePayload: Record<string, unknown> = {};
+  if (body.isDone !== undefined) updatePayload.is_done = body.isDone;
+  if (hasEdit) {
+    if (body.title !== undefined) updatePayload.title = body.title.trim();
+    if (body.detail !== undefined) updatePayload.detail = body.detail;
+    if (body.dueDate !== undefined) updatePayload.due_date = body.dueDate;
+    updatePayload.is_edited_by_user = true;
+  }
+
+  let item: ItemRow;
+  if (Object.keys(updatePayload).length > 0) {
     const { data, error: updateError } = await supabase
       .from("checklist_items")
-      .update({ is_done: body.isDone })
+      .update(updatePayload)
       .eq("id", id)
-      .select("id, is_done")
+      .select("id, is_done, title, detail, due_date, is_edited_by_user")
       .single();
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
@@ -73,7 +91,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   } else {
     const { data, error: fetchError } = await supabase
       .from("checklist_items")
-      .select("id, is_done")
+      .select("id, is_done, title, detail, due_date, is_edited_by_user")
       .eq("id", id)
       .single();
     if (fetchError) {
@@ -83,13 +101,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   // append-only 액션 로그: "누가 안 했는지"가 아니라 "각자 무엇을 했는지"를 기록한다.
-  const action = body.isDone === undefined ? "note" : body.isDone ? "checked" : "unchecked";
-  await supabase.from("item_actions").insert({
-    checklist_item_id: id,
-    user_id: userId,
-    action,
-    note: body.note ?? null,
-  });
+  // 여러 종류가 동시에 일어날 수 있어(체크+수정 등) 각각 별도 로그로 남긴다.
+  const logs: { checklist_item_id: string; user_id: string; action: string; note: string | null }[] = [];
+  if (body.isDone !== undefined) {
+    logs.push({
+      checklist_item_id: id,
+      user_id: userId,
+      action: body.isDone ? "checked" : "unchecked",
+      note: null,
+    });
+  }
+  if (hasEdit) {
+    logs.push({ checklist_item_id: id, user_id: userId, action: "edited", note: null });
+  }
+  if (body.note) {
+    logs.push({ checklist_item_id: id, user_id: userId, action: "note", note: body.note });
+  }
+  if (logs.length > 0) {
+    await supabase.from("item_actions").insert(logs);
+  }
 
   return NextResponse.json({ item });
 }
