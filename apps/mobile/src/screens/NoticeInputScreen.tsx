@@ -182,6 +182,18 @@ export default function NoticeInputScreen({
     }
     setUserRoleById(roleMap);
 
+    // PRD 5-2 분기7: 배우자는 있지만 아직 이 알림을 한 번도 안 열어봤을 때를 구분해서 보여준다.
+    const householdMembers = (data.householdMembers ?? []) as {
+      id: string;
+      role: Role;
+      display_name: string | null;
+    }[];
+    const viewedUserIds = new Set((data.viewedUserIds ?? []) as string[]);
+    const partner = householdMembers.find((m) => m.id !== session.userId);
+    setPartnerNotViewed(
+      partner && !viewedUserIds.has(partner.id) ? partner.display_name ?? ROLE_LABEL[partner.role] : null,
+    );
+
     // PRD 5단계: 배너 미리보기가 아니라 실제로 화면에 펼쳐본 이 시점에만 열람을 기록한다.
     // (다른 보호자가 먼저 열었다면 서버가 자동으로 partner_view_confirmed로 기록한다.)
     try {
