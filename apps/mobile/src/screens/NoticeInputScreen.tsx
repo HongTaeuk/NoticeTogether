@@ -355,7 +355,7 @@ export default function NoticeInputScreen({
             <Text style={styles.resultTitle}>
               {showOriginal ? "학교에서 온 그대로" : "핵심만 정리하면"}
             </Text>
-            <TouchableOpacity onPress={() => setShowOriginal((v) => !v)}>
+            <TouchableOpacity onPress={toggleShowOriginal}>
               <Text style={styles.toggleText}>
                 {showOriginal ? "요약 보기" : "원문 보기"}
               </Text>
