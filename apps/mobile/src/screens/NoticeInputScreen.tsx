@@ -73,9 +73,8 @@ export default function NoticeInputScreen({
     setNoticeId(null);
     setItems([]);
     try {
-      const summarizeRes = await fetch(`${API_BASE_URL}/api/summarize`, {
+      const summarizeRes = await authFetch(session.accessToken, "/api/summarize", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rawText }),
       });
       const summarizeData = await summarizeRes.json();
@@ -86,14 +85,12 @@ export default function NoticeInputScreen({
       setAiResult(summary);
       setShowOriginal(false);
 
-      const noticeRes = await fetch(`${API_BASE_URL}/api/notices`, {
+      const noticeRes = await authFetch(session.accessToken, "/api/notices", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           rawText,
           summary: summary.summary,
           items: summary.items,
-          createdBy: role,
         }),
       });
       const noticeData = await noticeRes.json();
