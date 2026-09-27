@@ -721,6 +721,59 @@ const styles = StyleSheet.create({
     color: "#F23B3B",
     marginTop: 2,
   },
+  itemFooterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+  },
+  confidenceText: {
+    fontSize: 11,
+    color: "#1B64F2",
+    marginRight: 12,
+  },
+  confidenceTextLow: {
+    color: "#F2871B",
+    fontWeight: "700",
+  },
+  editedBadge: {
+    fontSize: 11,
+    color: "#3D5A9C",
+    fontWeight: "700",
+    marginRight: 12,
+  },
+  editLinkText: {
+    fontSize: 12,
+    color: "#1B64F2",
+    fontWeight: "600",
+  },
+  editBox: {
+    marginLeft: 0,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: "#C7DBFB",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: "#0B1F4D",
+    marginBottom: 6,
+  },
+  editButtonRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  editCancelText: {
+    fontSize: 13,
+    color: "#3D5A9C",
+    fontWeight: "600",
+    marginRight: 16,
+  },
+  editSaveText: {
+    fontSize: 13,
+    color: "#1B64F2",
+    fontWeight: "700",
+  },
   refreshButton: {
     marginTop: 8,
     alignItems: "center",
