@@ -19,7 +19,12 @@ export type ResolvedUser = {
 /**
  * PRD 10단계: 실제 로그인(Authorization: Bearer <access_token>)이 있으면 그것으로
  * 사용자를 식별한다. 없으면 1~9단계에서 써온 개발용 임시 계정(`?as=primary|secondary`)으로
- * 계속 동작한다 — 기존에 검증된 흐름을 깨지 않기 위한 하위호환이다.
+ * 계속 동작한다 — 로컬 curl 테스트 등 개발 편의를 위한 하위호환이다.
+ *
+ * **프로덕션에서는 이 폴백을 쓰지 않는다.** 실제 앱은 익명 로그인이 항상 자동으로
+ * Authorization 헤더를 붙이므로, 프로덕션에서 그 헤더가 없다는 것은 정상적인 클라이언트가
+ * 아니라는 뜻이다 — 이 폴백을 프로덕션까지 열어두면 인증 없이 dev 시드 가정의 데이터를
+ * 읽고 쓸 수 있는 우회로가 된다.
  */
 export async function resolveUser(
   req: NextRequest,
@@ -28,6 +33,10 @@ export async function resolveUser(
   const authHeader = req.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     return resolveUserFromToken(authHeader.slice("Bearer ".length));
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new AuthError("로그인이 필요합니다.");
   }
 
   const { householdId, userIds } = await ensureDevHousehold();
