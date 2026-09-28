@@ -99,6 +99,21 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
 .state-panel.on{display:block}
 .done-hero{text-align:center;padding:36px 10px}
 .done-hero svg{margin-bottom:10px}
+.lockwrap{height:100%;background:linear-gradient(180deg,#0B1F4D,#1B3B8C);color:#fff;padding:60px 18px 0;text-align:center}
+.locktime{font-size:52px;font-weight:800}
+.lockdate{font-size:13px;opacity:.8;margin-bottom:30px}
+.lockcard{background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border-radius:16px;padding:12px;text-align:left;cursor:pointer}
+.lockcard .lc-row{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.lockcard .lc-app{font-size:11px;font-weight:700;opacity:.85}
+.lockcard .lc-title{font-size:13px;font-weight:700}
+.lockcard .lc-body{font-size:12px;opacity:.85;margin-top:2px}
+.push-banner{position:absolute;left:10px;right:10px;top:8px;background:#fff;border-radius:16px;padding:11px 12px;display:flex;gap:10px;align-items:center;
+  box-shadow:0 14px 30px -10px rgba(11,31,77,.5);transform:translateY(-140%);transition:transform .3s cubic-bezier(.22,1,.36,1);z-index:50;cursor:pointer}
+.push-banner.show{transform:translateY(0)}
+.push-icon{width:30px;height:30px;border-radius:9px;background:var(--blue);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
+.actionnote{display:flex;gap:6px;margin-top:8px}
+.actionnote input{margin:0}
+.note-bubble{background:var(--blue-bg);border-radius:10px;padding:7px 10px;font-size:12px;margin-top:6px}
 .skeleton{background:linear-gradient(90deg,var(--blue-bg) 25%,#e4edfc 37%,var(--blue-bg) 63%);background-size:400% 100%;
   animation:shimmer 1.4s ease infinite;border-radius:8px}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
@@ -121,6 +136,33 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
       <div class="splash">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#1B64F2"/><path d="M8 12.5l2.5 2.5L16 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <div class="brand">함께알림</div>
+      </div>
+    </div>
+
+    <div class="screen full" data-s="lockscreen">
+      <div class="lockwrap">
+        <div class="locktime">9:41</div>
+        <div class="lockdate">9월 28일 월요일</div>
+        <div class="lockcard" onclick="toast('탭해서 열면 읽음으로 처리돼요');go('today')">
+          <div class="lc-row"><span class="lc-app">🔔 함께알림</span></div>
+          <div class="lc-title">현장학습 동의서 제출 D-1</div>
+          <div class="lc-body">내일까지 제출해야 해요. 탭해서 앱을 열면 읽음 처리돼요.</div>
+        </div>
+        <p style="color:#fff;opacity:.75;margin-top:16px">이 미리보기만 보고 앱을 안 열면 '읽음'으로 안 쳐줘요 — 카드를 눌러 직접 확인해보세요.</p>
+        <div class="link" style="color:#9DBEF7" onclick="toast('미리보기만 봄 — 아직 읽음 처리 안 됨');">그냥 미리보기만 슬쩍 보기</div>
+      </div>
+    </div>
+
+    <div class="screen full" data-s="consent">
+      <div style="padding-top:20px">
+        <h1 style="font-size:20px">아이 정보 등록 동의</h1>
+        <p>이름·학년·반 등 아이 정보는 체크리스트를 구분하는 용도로만 쓰여요.</p>
+        <div class="card" style="margin-top:16px">
+          <div class="row" style="margin-bottom:10px"><b style="font-size:13px">아이 이름/학년 저장에 동의</b><div class="check done" id="c1" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''">✓</div></div>
+          <div class="row"><b style="font-size:13px">제3자(배우자)와 공유에 동의</b><div class="check done" id="c2" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''">✓</div></div>
+        </div>
+        <button class="btn" style="margin-top:16px" onclick="toast('아이 정보가 등록됐어요');go('settings')">동의하고 계속하기</button>
+        <div class="link" style="text-align:center;margin-top:12px" onclick="go('settings')">나중에 하기</div>
       </div>
     </div>
 
@@ -323,6 +365,11 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
             <div class="note" style="background:transparent;padding:8px 0 0">개별화교육계획(IEP): 우리 아이에게 딱 맞게 공부 목표와 방법을 정해주는 특별한 계획이에요.</div>
           </div>
           <div class="link" style="text-align:center;margin-top:12px" onclick="toast('배우자 체크 상태를 새로고침했어요')">같이 확인하기 (새로고침)</div>
+          <div class="actionnote">
+            <input id="noteInput" placeholder="배우자에게 한마디 남기기 (예: 체육복 제가 살게요)">
+            <button class="btn sm" onclick="shareNote()">공유</button>
+          </div>
+          <div id="noteList"></div>
         </div>
       </div>
       <div class="state-panel" data-panel="alldone">
@@ -357,7 +404,10 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
       <h2>아이 정보</h2>
       <div class="item"><div style="flex:1"><b>민준</b><div class="note">3학년 2반</div></div><span class="link">수정</span></div>
       <div class="item"><div style="flex:1"><b>서연</b><div class="note">1학년 5반</div></div><span class="link">수정</span></div>
-      <div class="link" style="margin-top:10px">+ 아이 추가하기</div>
+      <div class="link" style="margin-top:10px" onclick="go('consent')">+ 아이 추가하기</div>
+      <h2>테스트</h2>
+      <button class="btn ghost sm" onclick="go('lockscreen')">잠금화면 배너 미리보기 테스트</button>
+      <button class="btn ghost sm" style="margin-top:8px" onclick="firePush()">마감 임박 알림 테스트</button>
     </div>
 
     <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
@@ -368,20 +418,24 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
       <p style="margin-top:10px;font-size:11px">노란 표시 = AI가 체크리스트로 뽑아낸 원문 부분</p>
     </div>
     <div class="burst" id="burst"><svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r="40" fill="var(--blue)"/><path d="M30 46l10 10 20-22" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
-  </div>
-  <div class="toast" id="toast"></div>
-  <div class="tabbar" id="tabbar">
-    <div class="tab on" data-t="today" onclick="go('today')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1v-9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>오늘</span></div>
-    <div class="tab" data-t="list" onclick="go('list')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>지난 기록</span></div>
-    <div class="tab" data-t="compose" onclick="go('compose')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>새 알림</span></div>
-    <div class="tab" data-t="settings" onclick="go('settings')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M4 12h2m12 0h2M12 4v2m0 12v2M6.3 6.3l1.4 1.4m8.6 8.6l1.4 1.4M6.3 17.7l1.4-1.4m8.6-8.6l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>설정</span></div>
+    <div class="toast" id="toast"></div>
+    <div class="push-banner" id="pushBanner" onclick="tapPush()">
+      <div class="push-icon">🔔</div>
+      <div><div style="font-size:12px;font-weight:800">함께알림 · 마감 임박</div><div style="font-size:12px;color:var(--muted)">현장학습 동의서, 내일까지예요</div></div>
+    </div>
+    <div class="tabbar" id="tabbar">
+      <div class="tab on" data-t="today" onclick="go('today')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1v-9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>오늘</span></div>
+      <div class="tab" data-t="list" onclick="go('list')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>지난 기록</span></div>
+      <div class="tab" data-t="compose" onclick="go('compose')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>새 알림</span></div>
+      <div class="tab" data-t="settings" onclick="go('settings')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M4 12h2m12 0h2M12 4v2m0 12v2M6.3 6.3l1.4 1.4m8.6 8.6l1.4 1.4M6.3 17.7l1.4-1.4m8.6-8.6l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>설정</span></div>
+    </div>
   </div>
 </div>
 <div class="hint">화면 상단 버튼으로 화면을 옮겨보고, 체크박스·링크를 눌러 실제 동작(체크 토글, 토스트, 화면 전환)을 확인해보세요</div>
 
 <script>
-const order=[['splash','스플래시'],['onb1','온보딩1'],['onb2','온보딩2'],['onb3','온보딩3'],['auth','시작하기'],
-['household','초대코드'],['today','오늘 할 일'],['list','지난 기록'],['compose','알림 붙여넣기'],['result','정리 결과'],['settings','설정']];
+const order=[['splash','스플래시'],['lockscreen','잠금화면'],['onb1','온보딩1'],['onb2','온보딩2'],['onb3','온보딩3'],['auth','시작하기'],
+['household','초대코드'],['consent','아이정보 동의'],['today','오늘 할 일'],['list','지난 기록'],['compose','알림 붙여넣기'],['result','정리 결과'],['settings','설정']];
 const tabScreens=['today','list','compose','result','settings'];
 const nav=document.getElementById('nav');
 order.forEach(([id,label])=>{
@@ -440,6 +494,28 @@ function setState(screenId,btn){
   const screen=document.querySelector('.screen[data-s="'+screenId+'"]');
   screen.querySelectorAll('.stateb').forEach(b=>b.classList.toggle('on', b===btn));
   screen.querySelectorAll('.state-panel').forEach(p=>p.classList.toggle('on', p.dataset.panel===btn.dataset.st));
+}
+function firePush(){
+  const b=document.getElementById('pushBanner');
+  b.classList.add('show');
+  toast('마감 임박 알림이 시스템 배너로 왔어요');
+  setTimeout(()=>b.classList.remove('show'), 3200);
+}
+function tapPush(){
+  document.getElementById('pushBanner').classList.remove('show');
+  go('result');
+}
+function shareNote(){
+  const input=document.getElementById('noteInput');
+  const msg=input.value.trim();
+  if(!msg) return;
+  const list=document.getElementById('noteList');
+  const el=document.createElement('div');
+  el.className='note-bubble';
+  el.textContent='👤 나: '+msg;
+  list.appendChild(el);
+  input.value='';
+  toast('배우자에게 공유했어요');
 }
 go('splash');
 setTimeout(()=>{
