@@ -3,7 +3,9 @@
  * 로컬 백엔드로 테스트하려면 `adb reverse tcp:3000 tcp:3000` 후
  * "http://localhost:3000"으로 바꾸면 된다(에뮬레이터는 10.0.2.2:3000).
  */
-export const API_BASE_URL = "https://noticetogether-web-api-notice-together.vercel.app";
+export const API_BASE_URL = "http://localhost:3000";
+// TODO(임시, 테스트 후 되돌릴 것): Vercel 배포 한도가 풀릴 때까지 로컬 백엔드로 검증.
+// 원래 값: "https://noticetogether-web-api-notice-together.vercel.app"
 
 /**
  * Google 로그인용 OAuth 2.0 "웹 애플리케이션" 클라이언트 ID(Supabase가 idToken을
