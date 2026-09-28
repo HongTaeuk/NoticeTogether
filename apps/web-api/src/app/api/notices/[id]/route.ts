@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data: notice, error: noticeError } = await supabase
     .from("notices")
-    .select("id, raw_text, ai_summary, easy_explanations, created_at, household_id")
+    .select("id, raw_text, ai_summary, easy_explanations, created_at, household_id, child_id, children(name)")
     .eq("id", id)
     .single();
   if (noticeError) {
@@ -29,6 +29,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (notice.household_id !== resolved.householdId) {
     return NextResponse.json({ error: "이 알림에 접근할 권한이 없습니다." }, { status: 403 });
   }
+  const noticeChild = notice.children as unknown as { name: string } | null;
+  const noticeOut = { ...notice, children: undefined, childName: noticeChild?.name ?? null };
 
   const { data: items, error: itemsError } = await supabase
     .from("checklist_items")
@@ -69,7 +71,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const viewedUserIds = [...new Set((viewEvents ?? []).map((e) => e.user_id as string))];
 
   return NextResponse.json({
-    notice,
+    notice: noticeOut,
     items,
     actions: actions ?? [],
     users: users ?? [],

@@ -10,6 +10,9 @@ type CreateNoticeBody = {
   summary: string;
   items: ChecklistItemDraft[];
   createdBy?: DevRole;
+  // 해결검토 1번(다자녀 가정은 알림이 누구 것인지 헷갈린다): 이 알림이 어느 자녀
+  // 것인지 선택적으로 지정한다. 자녀가 1명뿐이거나 등록 안 한 가정은 그냥 null.
+  childId?: string | null;
 };
 
 export async function POST(req: NextRequest) {
@@ -33,6 +36,23 @@ export async function POST(req: NextRequest) {
   }
   const { householdId, userId: createdBy } = resolved;
   const supabase = getSupabaseServerClient();
+
+  let childId: string | null = null;
+  if (body.childId) {
+    const { data: child, error: childError } = await supabase
+      .from("children")
+      .select("id")
+      .eq("id", body.childId)
+      .eq("household_id", householdId)
+      .maybeSingle();
+    if (childError) {
+      return NextResponse.json({ error: childError.message }, { status: 500 });
+    }
+    if (!child) {
+      return NextResponse.json({ error: "이 가정에 속하지 않은 자녀입니다." }, { status: 403 });
+    }
+    childId = child.id as string;
+  }
 
   // PRD 4-4: 장애 자녀로 등록된 가정에게만 "쉬운 설명" 섹션을 조건부로 만든다.
   // 해당 없는 가정(대다수)은 이 AI 호출 자체를 하지 않는다(불필요한 40 RPM 소모 방지).
@@ -61,6 +81,7 @@ export async function POST(req: NextRequest) {
       ai_summary: body.summary ?? null,
       easy_explanations: easyExplanations,
       created_by: createdBy,
+      child_id: childId,
     })
     .select("id, created_at")
     .single();
@@ -107,7 +128,7 @@ export async function GET(req: NextRequest) {
 
   const { data: notices, error } = await supabase
     .from("notices")
-    .select("id, ai_summary, created_at, checklist_items(id, is_done, due_date)")
+    .select("id, ai_summary, created_at, child_id, children(name), checklist_items(id, is_done, due_date)")
     .eq("household_id", householdId)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -129,6 +150,7 @@ export async function GET(req: NextRequest) {
 
   const summarized = (notices ?? []).map((n) => {
     const items = (n.checklist_items ?? []) as { id: string; is_done: boolean; due_date: string | null }[];
+    const child = n.children as unknown as { name: string } | null;
     return {
       id: n.id,
       summary: n.ai_summary,
@@ -137,6 +159,8 @@ export async function GET(req: NextRequest) {
       doneItems: items.filter((i) => i.is_done).length,
       nearestDueDate: items.map((i) => i.due_date).filter(Boolean).sort()[0] ?? null,
       hasOpened: openedByMe.has(n.id as string),
+      childId: n.child_id,
+      childName: child?.name ?? null,
     };
   });
 

@@ -22,7 +22,7 @@ import {
 } from "../types/notice";
 import {
   cancelReminderForItem,
-  getPersonalizedHour,
+  getPersonalizedSchedule,
   scheduleReminderForItem,
 } from "../lib/reminderSync";
 import ChildConsentSection from "./ChildConsentSection";
@@ -47,6 +47,7 @@ export default function NoticeInputScreen({
   const [tab, setTab] = useState<"today" | "compose" | "history" | "unread">("today");
   const [rawText, setRawText] = useState("");
   const [notice, setNotice] = useState<{ raw_text: string; ai_summary: string | null } | null>(null);
+  const [noticeChildName, setNoticeChildName] = useState<string | null>(null);
   const [easyExplanations, setEasyExplanations] = useState<{ term: string; explanation: string }[]>([]);
   const [easyExplanationsExpanded, setEasyExplanationsExpanded] = useState(false);
   const [noticeId, setNoticeId] = useState<string | null>(null);
@@ -63,6 +64,8 @@ export default function NoticeInputScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summarizeFailCount, setSummarizeFailCount] = useState(0);
+  const [children, setChildren] = useState<{ id: string; name: string }[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const role = session.role;
   // 익명 계정은 "로그인 상태"라는 개념이 없으므로 로그아웃 대신 계정 만들기를 제안한다.
   const accountLabel = session.isAnonymous ? "계정 만들기" : "로그아웃";
@@ -77,6 +80,15 @@ export default function NoticeInputScreen({
     });
   }, []);
 
+  // 해결검토 1번(다자녀 가정): 자녀가 2명 이상 등록돼 있으면 이 알림이 누구 것인지
+  // 고를 수 있게 한다(1명뿐이면 물어볼 필요가 없으므로 묻지 않는다).
+  useEffect(() => {
+    authFetch("/api/children")
+      .then((res) => res.json())
+      .then((data) => setChildren(data.children ?? []))
+      .catch(() => {});
+  }, []);
+
   function updateRawText(text: string) {
     setRawText(text);
     AsyncStorage.setItem(DRAFT_KEY, text).catch(() => {});
@@ -89,6 +101,7 @@ export default function NoticeInputScreen({
   function resetToCompose() {
     setNoticeId(null);
     setNotice(null);
+    setNoticeChildName(null);
     setEasyExplanations([]);
     setEasyExplanationsExpanded(false);
     setItems([]);
@@ -162,6 +175,7 @@ export default function NoticeInputScreen({
           rawText,
           summary: summary.summary,
           items: summary.items,
+          childId: selectedChildId,
         }),
       });
       const noticeData = await noticeRes.json();
@@ -191,7 +205,7 @@ export default function NoticeInputScreen({
     try {
       const noticeRes = await authFetch("/api/notices", {
         method: "POST",
-        body: JSON.stringify({ rawText, summary: null, items: [] }),
+        body: JSON.stringify({ rawText, summary: null, items: [], childId: selectedChildId }),
       });
       const noticeData = await noticeRes.json();
       if (!noticeRes.ok) {
@@ -214,9 +228,9 @@ export default function NoticeInputScreen({
    * 공용 로직 — `TodayScreen`의 앱 진입 시 재동기화와 같은 규칙을 쓴다).
    */
   async function scheduleReminders(newItems: PersistedItem[]) {
-    const hour = await getPersonalizedHour();
+    const schedule = await getPersonalizedSchedule();
     for (const item of newItems) {
-      await scheduleReminderForItem({ ...item, notice_id: noticeId ?? "" }, hour);
+      await scheduleReminderForItem({ ...item, notice_id: noticeId ?? "" }, schedule);
     }
   }
 
@@ -236,8 +250,8 @@ export default function NoticeInputScreen({
       if (nextDone) {
         await cancelReminderForItem(item.id);
       } else {
-        const hour = await getPersonalizedHour();
-        await scheduleReminderForItem({ ...item, is_done: false, notice_id: noticeId ?? "" }, hour);
+        const schedule = await getPersonalizedSchedule();
+        await scheduleReminderForItem({ ...item, is_done: false, notice_id: noticeId ?? "" }, schedule);
       }
     } catch (err) {
       // 실패하면 원상복구
@@ -253,6 +267,7 @@ export default function NoticeInputScreen({
       throw new Error(data?.error ?? "동기화에 실패했습니다.");
     }
     setNotice(data.notice as { raw_text: string; ai_summary: string | null });
+    setNoticeChildName((data.notice as { childName?: string | null })?.childName ?? null);
     setEasyExplanations(
       (data.notice as { easy_explanations?: { term: string; explanation: string }[] | null })
         ?.easy_explanations ?? [],
@@ -384,8 +399,8 @@ export default function NoticeInputScreen({
       setEditingItemId(null);
       // 제목/기한이 바뀌었을 수 있으니 예약된 알림을 취소하고 새 값으로 다시 잡는다.
       await cancelReminderForItem(item.id);
-      const hour = await getPersonalizedHour();
-      await scheduleReminderForItem({ ...updatedItem, notice_id: noticeId ?? "" }, hour);
+      const schedule = await getPersonalizedSchedule();
+      await scheduleReminderForItem({ ...updatedItem, notice_id: noticeId ?? "" }, schedule);
     } catch (err) {
       setError(err instanceof Error ? err.message : "수정에 실패했습니다.");
     }
@@ -472,6 +487,40 @@ export default function NoticeInputScreen({
           <Text style={styles.devFillButtonText}>[개발용] 테스트 문장 채우기</Text>
         </TouchableOpacity>
       )}
+      {!noticeId && children.length > 1 && (
+        <View style={styles.childPickerRow}>
+          <TouchableOpacity
+            onPress={() => setSelectedChildId(null)}
+            style={[styles.childChip, selectedChildId === null && styles.childChipSelected]}
+          >
+            <Text
+              style={[
+                styles.childChipText,
+                selectedChildId === null && styles.childChipTextSelected,
+              ]}
+            >
+              공통
+            </Text>
+          </TouchableOpacity>
+          {children.map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              onPress={() => setSelectedChildId(c.id)}
+              style={[styles.childChip, selectedChildId === c.id && styles.childChipSelected]}
+            >
+              <Text
+                style={[
+                  styles.childChipText,
+                  selectedChildId === c.id && styles.childChipTextSelected,
+                ]}
+              >
+                {c.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {!noticeId && (
         <>
           <TextInput
@@ -525,6 +574,8 @@ export default function NoticeInputScreen({
               </Text>
             </TouchableOpacity>
           </View>
+
+          {noticeChildName && <Text style={styles.childTagText}>👤 {noticeChildName}</Text>}
 
           {partnerNotViewed && (
             <Text style={styles.partnerNotViewedText}>
@@ -1043,6 +1094,37 @@ const styles = StyleSheet.create({
     color: "#1B64F2",
     fontSize: 13,
     fontWeight: "600",
+  },
+  childTagText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1B64F2",
+    marginBottom: 8,
+  },
+  childPickerRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 10,
+  },
+  childChip: {
+    borderWidth: 1,
+    borderColor: "#1B64F2",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  childChipSelected: {
+    backgroundColor: "#1B64F2",
+  },
+  childChipText: {
+    color: "#1B64F2",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  childChipTextSelected: {
+    color: "#FFFFFF",
   },
   easyExplanationBox: {
     marginTop: 12,

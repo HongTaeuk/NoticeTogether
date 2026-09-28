@@ -21,14 +21,25 @@ export async function GET(req: NextRequest) {
   const { householdId, userId } = resolved;
   const supabase = getSupabaseServerClient();
 
+  // 해결검토 1번(다자녀 가정): 각 항목이 어느 자녀 것인지 화면에서 구분/필터링할 수
+  // 있도록 notice별 child_id/이름을 같이 내려준다.
   const { data: notices, error: noticesError } = await supabase
     .from("notices")
-    .select("id")
+    .select("id, child_id, children(name)")
     .eq("household_id", householdId);
   if (noticesError) {
     return NextResponse.json({ error: noticesError.message }, { status: 500 });
   }
   const noticeIds = (notices ?? []).map((n) => n.id as string);
+  const childByNoticeId = new Map(
+    (notices ?? []).map((n) => [
+      n.id as string,
+      {
+        childId: n.child_id as string | null,
+        childName: (n.children as unknown as { name: string } | null)?.name ?? null,
+      },
+    ]),
+  );
 
   if (noticeIds.length === 0) {
     return NextResponse.json({
@@ -37,6 +48,7 @@ export async function GET(req: NextRequest) {
       recentPartnerAction: null,
       totalItems: 0,
       doneItems: 0,
+      children: [],
     });
   }
 
@@ -48,7 +60,15 @@ export async function GET(req: NextRequest) {
   if (itemsError) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
-  const allItems = items ?? [];
+  const allItems = (items ?? []).map((i) => ({
+    ...i,
+    ...(childByNoticeId.get(i.notice_id as string) ?? { childId: null, childName: null }),
+  }));
+
+  const { data: householdChildren } = await supabase
+    .from("children")
+    .select("id, name")
+    .eq("household_id", householdId);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const windowEnd = new Date();
@@ -95,5 +115,6 @@ export async function GET(req: NextRequest) {
     recentPartnerAction,
     totalItems: allItems.length,
     doneItems: allItems.filter((i) => i.is_done).length,
+    children: householdChildren ?? [],
   });
 }

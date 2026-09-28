@@ -9,45 +9,77 @@ export type ReminderItem = {
   is_done: boolean;
 };
 
+export type ReminderSchedule = {
+  hour: number;
+  /** 기한 며칠 전부터 반복 알림을 보낼지 — FR-4(빈도 개인화)의 핵심. */
+  daysBeforeDue: number[];
+};
+
+const DEFAULT_SCHEDULE: ReminderSchedule = { hour: 21, daysBeforeDue: [1] };
+
+// cancelReminderForItem이 항상 이 전체 집합을 취소 시도한다 — 이전에 어떤 빈도로
+// 예약됐었는지(1회였는지 3회였는지) 몰라도 되게 하기 위한 상한선.
+const MAX_POSSIBLE_DAYS_BEFORE = [1, 2, 3];
+
+function reminderKey(itemId: string, daysBefore: number): string {
+  return `${itemId}#${daysBefore}`;
+}
+
 /**
- * PRD 7~8단계: 기한 임박 알림의 발송 시각(기본 21시, 개인화되면 그 사람이 실제로
- * 앱을 여는 시각대)을 가져온다. 실패하면 기본값으로 조용히 넘어간다.
+ * PRD 7~8단계/FR-4: 기한 임박 알림의 발송 시각 + 빈도(며칠 전부터 반복할지)를
+ * 그 사람의 실제 앱 확인 패턴에 맞춰 가져온다. 실패하면 기본값으로 조용히 넘어간다.
  */
-export async function getPersonalizedHour(): Promise<number> {
+export async function getPersonalizedSchedule(): Promise<ReminderSchedule> {
   try {
     const res = await authFetch("/api/reminder-time");
     const data = await res.json();
-    if (typeof data?.hour === "number") return data.hour;
+    const hour = typeof data?.hour === "number" ? data.hour : DEFAULT_SCHEDULE.hour;
+    const daysBeforeDue = Array.isArray(data?.daysBeforeDue) && data.daysBeforeDue.length > 0
+      ? (data.daysBeforeDue as number[])
+      : DEFAULT_SCHEDULE.daysBeforeDue;
+    return { hour, daysBeforeDue };
   } catch {
-    // 조회 실패 시 기본값(21시) 사용.
+    return DEFAULT_SCHEDULE;
   }
-  return 21;
 }
 
-export async function scheduleReminderForItem(item: ReminderItem, hour: number): Promise<void> {
+/** 이전 버전과의 호출부 호환을 위해 시각만 필요한 곳에서 쓴다. */
+export async function getPersonalizedHour(): Promise<number> {
+  return (await getPersonalizedSchedule()).hour;
+}
+
+export async function scheduleReminderForItem(
+  item: ReminderItem,
+  schedule: ReminderSchedule,
+): Promise<void> {
   if (!item.due_date || item.is_done) return;
-  const due = new Date(`${item.due_date}T${String(hour).padStart(2, "0")}:00:00`);
-  due.setDate(due.getDate() - 1); // 기한 전날
-  if (due.getTime() <= Date.now()) return;
-  try {
-    await scheduleReminder(
-      item.id,
-      due,
-      "마감이 다가와요",
-      `${item.title} — 내일(${item.due_date})까지예요.`,
-      item.notice_id,
-    );
-  } catch (err) {
-    // 기기가 없거나(개발 중) 권한이 없는 경우 등 — 조용히 무시하고 계속 진행.
-    console.warn("알림 예약 실패:", err);
+  for (const daysBefore of schedule.daysBeforeDue) {
+    const due = new Date(`${item.due_date}T${String(schedule.hour).padStart(2, "0")}:00:00`);
+    due.setDate(due.getDate() - daysBefore);
+    if (due.getTime() <= Date.now()) continue;
+    const label = daysBefore === 1 ? "내일" : `${daysBefore}일 후`;
+    try {
+      await scheduleReminder(
+        reminderKey(item.id, daysBefore),
+        due,
+        "마감이 다가와요",
+        `${item.title} — ${label}(${item.due_date})까지예요.`,
+        item.notice_id,
+      );
+    } catch (err) {
+      // 기기가 없거나(개발 중) 권한이 없는 경우 등 — 조용히 무시하고 계속 진행.
+      console.warn("알림 예약 실패:", err);
+    }
   }
 }
 
 export async function cancelReminderForItem(itemId: string): Promise<void> {
-  try {
-    await cancelReminder(itemId);
-  } catch (err) {
-    console.warn("알림 취소 실패:", err);
+  for (const daysBefore of MAX_POSSIBLE_DAYS_BEFORE) {
+    try {
+      await cancelReminder(reminderKey(itemId, daysBefore));
+    } catch (err) {
+      console.warn("알림 취소 실패:", err);
+    }
   }
 }
 
@@ -63,12 +95,13 @@ export async function cancelReminderForItem(itemId: string): Promise<void> {
  * 설계됐으므로 실용적인 절충으로 판단함 — `docs/process.md` 참고).
  */
 export async function resyncAllReminders(items: ReminderItem[]): Promise<void> {
-  const hour = await getPersonalizedHour();
+  const schedule = await getPersonalizedSchedule();
   for (const item of items) {
     if (item.is_done) {
       await cancelReminderForItem(item.id);
     } else {
-      await scheduleReminderForItem(item, hour);
+      await cancelReminderForItem(item.id);
+      await scheduleReminderForItem(item, schedule);
     }
   }
 }

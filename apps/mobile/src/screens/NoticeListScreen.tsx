@@ -18,6 +18,7 @@ type NoticeSummary = {
   doneItems: number;
   nearestDueDate: string | null;
   hasOpened: boolean;
+  childName?: string | null;
 };
 
 type Mode = "all" | "unread";
@@ -129,6 +130,7 @@ export default function NoticeListScreen({
               <View style={styles.cardTitleRow}>
                 {!item.hasOpened && <View style={styles.unreadDot} />}
                 <Text style={styles.cardSummary} numberOfLines={2}>
+                  {item.childName ? `[${item.childName}] ` : ""}
                   {item.summary ?? "(요약 없음)"}
                 </Text>
               </View>

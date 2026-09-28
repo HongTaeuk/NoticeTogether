@@ -12,7 +12,7 @@ import AnimatedCheckMark from "../components/AnimatedCheckMark";
 import { authFetch } from "../lib/apiClient";
 import {
   cancelReminderForItem,
-  getPersonalizedHour,
+  getPersonalizedSchedule,
   resyncAllReminders,
   scheduleReminderForItem,
 } from "../lib/reminderSync";
@@ -25,7 +25,11 @@ type TodayItem = {
   category: ChecklistCategory;
   due_date: string | null;
   is_done: boolean;
+  childId?: string | null;
+  childName?: string | null;
 };
+
+type Child = { id: string; name: string };
 
 type PartnerActionType = "checked" | "unchecked" | "note" | "edited";
 
@@ -71,12 +75,12 @@ export default function TodayScreen({
   const [urgentItems, setUrgentItems] = useState<TodayItem[]>([]);
   const [allItems, setAllItems] = useState<TodayItem[]>([]);
   const [recentPartnerAction, setRecentPartnerAction] = useState<RecentPartnerAction>(null);
-  const [totalItems, setTotalItems] = useState(0);
-  const [doneItems, setDoneItems] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -87,8 +91,7 @@ export default function TodayScreen({
       setUrgentItems(data.urgentItems ?? []);
       setAllItems(data.allItems ?? []);
       setRecentPartnerAction(data.recentPartnerAction ?? null);
-      setTotalItems(data.totalItems ?? 0);
-      setDoneItems(data.doneItems ?? 0);
+      setChildren(data.children ?? []);
       // 앱을 열 때마다 서버 기준으로 알림을 다시 맞춘다 — 배우자 기기, 재부팅,
       // 다른 기기에서의 체크/수정 전부 이 한 번의 재동기화로 반영된다.
       resyncAllReminders(data.allItems ?? []).catch(() => {});
@@ -100,6 +103,16 @@ export default function TodayScreen({
     }
   }, []);
 
+  // 해결검토 1번(다자녀 가정): 자녀가 2명 이상이면 그중 한 명 기준으로만 필터링해서 볼 수 있다.
+  const filteredUrgentItems = selectedChildId
+    ? urgentItems.filter((i) => i.childId === selectedChildId)
+    : urgentItems;
+  const filteredAllItems = selectedChildId
+    ? allItems.filter((i) => i.childId === selectedChildId)
+    : allItems;
+  const totalItems = filteredAllItems.length;
+  const doneItems = filteredAllItems.filter((i) => i.is_done).length;
+
   useEffect(() => {
     load();
   }, [load]);
@@ -110,7 +123,6 @@ export default function TodayScreen({
       list.map((i) => (i.id === item.id ? { ...i, is_done: nextDone } : i));
     setUrgentItems(apply);
     setAllItems(apply);
-    setDoneItems((prev) => prev + (nextDone ? 1 : -1));
     try {
       const res = await authFetch(`/api/checklist/${item.id}`, {
         method: "PATCH",
@@ -120,15 +132,14 @@ export default function TodayScreen({
       if (nextDone) {
         await cancelReminderForItem(item.id);
       } else {
-        const hour = await getPersonalizedHour();
-        await scheduleReminderForItem({ ...item, is_done: false }, hour);
+        const schedule = await getPersonalizedSchedule();
+        await scheduleReminderForItem({ ...item, is_done: false }, schedule);
       }
     } catch (err) {
       const revert = (list: TodayItem[]) =>
         list.map((i) => (i.id === item.id ? { ...i, is_done: item.is_done } : i));
       setUrgentItems(revert);
       setAllItems(revert);
-      setDoneItems((prev) => prev - (nextDone ? 1 : -1));
       setError(err instanceof Error ? err.message : "체크 저장에 실패했습니다.");
     }
   }
@@ -174,6 +185,37 @@ export default function TodayScreen({
         <Text style={styles.composeButtonText}>+ 새 알림 작성하기</Text>
       </TouchableOpacity>
 
+      {children.length > 1 && (
+        <View style={styles.childFilterRow}>
+          <TouchableOpacity
+            onPress={() => setSelectedChildId(null)}
+            style={[styles.childChip, selectedChildId === null && styles.childChipSelected]}
+          >
+            <Text
+              style={[styles.childChipText, selectedChildId === null && styles.childChipTextSelected]}
+            >
+              전체
+            </Text>
+          </TouchableOpacity>
+          {children.map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              onPress={() => setSelectedChildId(c.id)}
+              style={[styles.childChip, selectedChildId === c.id && styles.childChipSelected]}
+            >
+              <Text
+                style={[
+                  styles.childChipText,
+                  selectedChildId === c.id && styles.childChipTextSelected,
+                ]}
+              >
+                {c.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {loading ? (
@@ -184,10 +226,10 @@ export default function TodayScreen({
       ) : (
         <>
           <Text style={styles.sectionTitle}>지금 해야 할 것</Text>
-          {urgentItems.length === 0 ? (
+          {filteredUrgentItems.length === 0 ? (
             <Text style={styles.emptyText}>기한이 임박한 항목이 없어요.</Text>
           ) : (
-            urgentItems.map((item) => (
+            filteredUrgentItems.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.urgentRow}
@@ -234,7 +276,7 @@ export default function TodayScreen({
 
           {expanded && (
             <View>
-              {allItems.map((item) => (
+              {filteredAllItems.map((item) => (
                 <TouchableOpacity
                   key={item.id}
                   style={styles.urgentRow}
@@ -305,6 +347,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#1B64F2",
     fontWeight: "600",
+  },
+  childFilterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 16,
+  },
+  childChip: {
+    borderWidth: 1,
+    borderColor: "#1B64F2",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  childChipSelected: {
+    backgroundColor: "#1B64F2",
+  },
+  childChipText: {
+    color: "#1B64F2",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  childChipTextSelected: {
+    color: "#FFFFFF",
   },
   composeButton: {
     backgroundColor: "#1B64F2",
