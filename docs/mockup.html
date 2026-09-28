@@ -17,8 +17,9 @@ body{margin:0;background:var(--page-bg);font-family:'Noto Sans KR',system-ui,san
 .toolbar button{border:1px solid var(--border);background:var(--white);color:var(--muted);font:600 12px 'Noto Sans KR';
   padding:7px 12px;border-radius:20px;cursor:pointer;transition:.15s}
 .toolbar button.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 4px 10px -4px rgba(27,100,242,.6)}
-.phone{width:375px;max-width:calc(100vw - 32px);height:812px;max-height:82vh;background:linear-gradient(160deg,#14265c,var(--frame));
+.phone{width:min(390px,calc(100vw - 32px));aspect-ratio:9/19.5;max-height:86vh;background:linear-gradient(160deg,#14265c,var(--frame));
   border-radius:46px;padding:12px;box-shadow:0 40px 70px -24px rgba(11,31,77,.55), inset 0 0 0 2px rgba(255,255,255,.06)}
+@media (max-height:700px){.phone{width:auto;height:86vh;aspect-ratio:9/19.5}}
 .screen-wrap{width:100%;height:100%;background:#fff;border-radius:34px;overflow:hidden;position:relative}
 .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;background:var(--frame);border-radius:0 0 16px 16px;z-index:20}
 .statusbar{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:700 12px 'Noto Sans KR';color:var(--ink)}
@@ -91,6 +92,13 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .empty{text-align:center;padding:50px 10px;color:var(--blue-dim)}
 .empty svg{margin-bottom:10px}
+.statebar{display:flex;gap:6px;margin-bottom:12px;padding:3px;background:var(--blue-bg);border-radius:10px}
+.stateb{flex:1;text-align:center;font:700 11px 'Noto Sans KR';padding:7px 4px;border-radius:8px;color:var(--muted);cursor:pointer}
+.stateb.on{background:#fff;color:var(--blue);box-shadow:0 2px 6px -2px rgba(11,31,77,.3)}
+.state-panel{display:none}
+.state-panel.on{display:block}
+.done-hero{text-align:center;padding:36px 10px}
+.done-hero svg{margin-bottom:10px}
 .skeleton{background:linear-gradient(90deg,var(--blue-bg) 25%,#e4edfc 37%,var(--blue-bg) 63%);background-size:400% 100%;
   animation:shimmer 1.4s ease infinite;border-radius:8px}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
@@ -206,7 +214,7 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
           <button class="btn ghost sm" style="margin-top:10px" onclick="toast('공유 시트가 열려요')">초대 코드 공유하기</button>
         </div>
         <input style="margin-top:20px;text-align:center" placeholder="초대 코드 입력">
-        <button class="btn">지금 초대하기</button>
+        <button class="btn" onclick="toast('배우자와 연결됐어요');go('today')">지금 초대하기</button>
         <div class="link" style="margin-top:14px" onclick="go('today')">나중에 하기</div>
       </div>
     </div>
@@ -224,27 +232,68 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
           <text x="27" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink)">2/5</text>
         </svg>
       </div>
-      <div style="margin:12px 0"><span class="chip on">전체</span><span class="chip">민준</span><span class="chip">서연</span></div>
-      <h2>지금 해야 할 것</h2>
-      <div class="item"><div class="check" onclick="toggleCheck(this,'현장학습 동의서')"></div>
-        <div><span class="badge doc">제출서류</span><b>현장학습 동의서</b><div class="note">내일(9월 29일)까지 · D-1</div></div></div>
-      <div class="item"><div class="check" onclick="toggleCheck(this,'체육복 · 물통')"></div>
-        <div><span class="badge prep">준비물</span><b>체육복, 물통</b><div class="note">목요일 체육대회 · D-3</div></div></div>
-      <div class="card" style="background:var(--blue-bg);margin-top:10px">
-        <div style="font-size:12px;font-weight:700;margin-bottom:4px">👀 배우자 활동</div>
-        <div style="font-size:13px">서연님이 "체육복" 준비 완료로 체크했어요 · 3분 전</div>
+      <div class="statebar">
+        <div class="stateb on" data-st="todo" onclick="setState('today',this)">할 일 있음</div>
+        <div class="stateb" data-st="done" onclick="setState('today',this)">오늘 다 끝남</div>
+        <div class="stateb" data-st="empty" onclick="setState('today',this)">할 일 없음</div>
+      </div>
+      <div class="state-panel on" data-panel="todo">
+        <div class="row">
+          <div id="todayChips"><span class="chip on" data-child="all" onclick="filterChild(this,'todayChips','todayItems')">전체</span><span class="chip" data-child="민준" onclick="filterChild(this,'todayChips','todayItems')">민준</span><span class="chip" data-child="서연" onclick="filterChild(this,'todayChips','todayItems')">서연</span></div>
+          <span class="link" onclick="go('household')">배우자 초대</span>
+        </div>
+        <h2>지금 해야 할 것</h2>
+        <div id="todayItems">
+        <div class="item" data-child="민준"><div class="check" onclick="toggleCheck(this,'현장학습 동의서')"></div>
+          <div><span class="badge doc">제출서류</span><b>현장학습 동의서</b><div class="note">👤 민준 · 내일(9월 29일)까지 · D-1</div></div></div>
+        <div class="item" data-child="서연"><div class="check" onclick="toggleCheck(this,'체육복 · 물통')"></div>
+          <div><span class="badge prep">준비물</span><b>체육복, 물통</b><div class="note">👤 서연 · 목요일 체육대회 · D-3</div></div></div>
+        </div>
+        <div class="card" style="background:var(--blue-bg);margin-top:10px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:4px">👀 배우자 활동</div>
+          <div style="font-size:13px">서연님이 "체육복" 준비 완료로 체크했어요 · 3분 전</div>
+        </div>
+      </div>
+      <div class="state-panel" data-panel="done">
+        <div class="done-hero">
+          <svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="var(--blue-bg)"/><path d="M20 33l8 8 16-18" stroke="var(--blue)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          <h1>오늘 챙길 건 다 끝났어요</h1>
+          <p>새 알림이 오면 여기 다시 쌓여요.</p>
+        </div>
+      </div>
+      <div class="state-panel" data-panel="empty">
+        <div class="empty">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><rect x="10" y="14" width="36" height="30" rx="6" stroke="var(--blue-dim)" stroke-width="2"/><path d="M18 24h20M18 32h12" stroke="var(--blue-dim)" stroke-width="2" stroke-linecap="round"/></svg>
+          <p>아직 정리한 알림이 없어요</p>
+        </div>
       </div>
       <button class="btn" style="margin-top:14px" onclick="go('compose')">+ 새 알림 작성하기</button>
     </div>
 
     <div class="screen" data-s="list">
       <h1>지난 기록</h1>
-      <p style="margin-bottom:14px">지금까지 정리한 알림 전체 보기</p>
-      <div class="card"><div class="row"><b style="font-size:13px">3학년 2반 현장학습 및 체육대회 안내</b></div>
-        <div class="row" style="margin-top:6px"><span style="font-size:12px;color:var(--muted)">체크 1/3</span><span style="font-size:12px;color:var(--red)">가까운 기한 09-29</span></div></div>
-      <div class="card"><div class="row"><b style="font-size:13px">관악장애인복지관 IEP 상담 안내</b></div>
-        <div class="row" style="margin-top:6px"><span style="font-size:12px;color:var(--muted)">체크 0/1</span></div></div>
-      <div class="card" style="opacity:.5"><div class="skeleton" style="height:14px;width:70%;margin-bottom:8px"></div><div class="skeleton" style="height:12px;width:40%"></div></div>
+      <div class="statebar">
+        <div class="stateb on" data-st="has" onclick="setState('list',this)">기록 있음</div>
+        <div class="stateb" data-st="loading" onclick="setState('list',this)">불러오는 중</div>
+        <div class="stateb" data-st="empty" onclick="setState('list',this)">기록 없음</div>
+      </div>
+      <div class="state-panel on" data-panel="has">
+        <p style="margin-bottom:14px">지금까지 정리한 알림 전체 보기</p>
+        <div class="card" onclick="go('result')" style="cursor:pointer"><div class="row"><b style="font-size:13px">3학년 2반 현장학습 및 체육대회 안내</b></div>
+          <div class="row" style="margin-top:6px"><span style="font-size:12px;color:var(--muted)">체크 1/3</span><span style="font-size:12px;color:var(--red)">가까운 기한 09-29</span></div></div>
+        <div class="card"><div class="row"><b style="font-size:13px">관악장애인복지관 IEP 상담 안내</b></div>
+          <div class="row" style="margin-top:6px"><span style="font-size:12px;color:var(--muted)">체크 0/1</span></div></div>
+      </div>
+      <div class="state-panel" data-panel="loading">
+        <div class="card"><div class="skeleton" style="height:14px;width:70%;margin-bottom:8px"></div><div class="skeleton" style="height:12px;width:40%"></div></div>
+        <div class="card"><div class="skeleton" style="height:14px;width:55%;margin-bottom:8px"></div><div class="skeleton" style="height:12px;width:30%"></div></div>
+      </div>
+      <div class="state-panel" data-panel="empty">
+        <div class="empty">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><rect x="10" y="14" width="36" height="30" rx="6" stroke="var(--blue-dim)" stroke-width="2"/><path d="M18 24h20M18 32h12" stroke="var(--blue-dim)" stroke-width="2" stroke-linecap="round"/></svg>
+          <p>아직 지난 기록이 없어요</p>
+        </div>
+      </div>
     </div>
 
     <div class="screen" data-s="compose">
@@ -257,17 +306,41 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
 
     <div class="screen" data-s="result">
       <h1>정리 결과</h1>
-      <div class="card" style="margin-top:10px">
-        <div class="row"><b style="font-size:13px">핵심만 정리하면</b><span class="link" onclick="openSheet()">학교에서 온 그대로 보기</span></div>
-        <p style="margin-top:8px">👤 민준</p>
-        <p>9월 29일 화요일까지 현장학습 동의서 제출, 목요일 체육대회에 체육복과 물통이 필요해요.</p>
-        <div class="item"><div class="check done">✓</div><div><span class="badge doc">제출서류</span><b>현장학습 동의서 제출</b><div class="note">기한: 2026-09-29 · AI 확신도 95%</div></div></div>
-        <div class="item"><div class="check" onclick="toggleCheck(this,'체육복')"></div><div><span class="badge prep">준비물</span><b>체육복</b><div class="note">목요일 체육대회 · ❓ AI 확신도 62% · 원문과 비교해보기</div></div></div>
-        <div class="item"><div class="check" onclick="toggleCheck(this,'물통')"></div><div><span class="badge prep">준비물</span><b>물통</b><div class="note">목요일 체육대회 · AI 확신도 90%</div></div></div>
-        <div class="explain"><b>이게 무슨 뜻인지 쉽게 설명 ▾</b>
-          <div class="note" style="background:transparent;padding:8px 0 0">개별화교육계획(IEP): 우리 아이에게 딱 맞게 공부 목표와 방법을 정해주는 특별한 계획이에요.</div>
+      <div class="statebar">
+        <div class="stateb on" data-st="progress" onclick="setState('result',this)">확인 중</div>
+        <div class="stateb" data-st="alldone" onclick="setState('result',this)">전체 완료</div>
+        <div class="stateb" data-st="analyzing" onclick="setState('result',this)">분석 중</div>
+      </div>
+      <div class="state-panel on" data-panel="progress">
+        <div class="card" style="margin-top:10px">
+          <div class="row"><b style="font-size:13px">핵심만 정리하면</b><span class="link" onclick="openSheet()">학교에서 온 그대로 보기</span></div>
+          <p style="margin-top:8px">👤 민준</p>
+          <p>9월 29일 화요일까지 현장학습 동의서 제출, 목요일 체육대회에 체육복과 물통이 필요해요.</p>
+          <div class="item"><div class="check done">✓</div><div><span class="badge doc">제출서류</span><b>현장학습 동의서 제출</b><div class="note">기한: 2026-09-29 · AI 확신도 95%</div></div></div>
+          <div class="item"><div class="check" onclick="toggleCheck(this,'체육복')"></div><div><span class="badge prep">준비물</span><b>체육복</b><div class="note">목요일 체육대회 · ❓ AI 확신도 62% · 원문과 비교해보기</div></div></div>
+          <div class="item"><div class="check" onclick="toggleCheck(this,'물통')"></div><div><span class="badge prep">준비물</span><b>물통</b><div class="note">목요일 체육대회 · AI 확신도 90%</div></div></div>
+          <div class="explain"><b>이게 무슨 뜻인지 쉽게 설명 ▾</b>
+            <div class="note" style="background:transparent;padding:8px 0 0">개별화교육계획(IEP): 우리 아이에게 딱 맞게 공부 목표와 방법을 정해주는 특별한 계획이에요.</div>
+          </div>
+          <div class="link" style="text-align:center;margin-top:12px" onclick="toast('배우자 체크 상태를 새로고침했어요')">같이 확인하기 (새로고침)</div>
         </div>
-        <div class="link" style="text-align:center;margin-top:12px" onclick="toast('배우자 체크 상태를 새로고침했어요')">같이 확인하기 (새로고침)</div>
+      </div>
+      <div class="state-panel" data-panel="alldone">
+        <div class="card" style="margin-top:10px">
+          <div class="row"><b style="font-size:13px">핵심만 정리하면</b><span class="link" onclick="openSheet()">학교에서 온 그대로 보기</span></div>
+          <div class="item"><div class="check done">✓</div><div><span class="badge doc">제출서류</span><b>현장학습 동의서 제출</b><div class="note">기한: 2026-09-29</div></div></div>
+          <div class="item"><div class="check done">✓</div><div><span class="badge prep">준비물</span><b>체육복</b><div class="note">목요일 체육대회</div></div></div>
+          <div class="item"><div class="check done">✓</div><div><span class="badge prep">준비물</span><b>물통</b><div class="note">목요일 체육대회</div></div></div>
+          <div class="note" style="margin-top:8px;text-align:center;background:var(--blue-bg)">✅ 민준님 알림, 전부 확인했어요</div>
+        </div>
+      </div>
+      <div class="state-panel" data-panel="analyzing">
+        <div class="card" style="margin-top:10px;text-align:center;padding:30px 16px">
+          <div class="skeleton" style="height:14px;width:80%;margin:0 auto 10px"></div>
+          <div class="skeleton" style="height:14px;width:60%;margin:0 auto 10px"></div>
+          <div class="skeleton" style="height:14px;width:70%;margin:0 auto"></div>
+          <p style="margin-top:14px">AI가 핵심만 뽑아내는 중이에요…</p>
+        </div>
       </div>
     </div>
 
@@ -355,5 +428,22 @@ function toast(msg){
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
 }
+function filterChild(chip,chipsId,itemsId){
+  document.querySelectorAll('#'+chipsId+' .chip').forEach(c=>c.classList.remove('on'));
+  chip.classList.add('on');
+  const child=chip.dataset.child;
+  document.querySelectorAll('#'+itemsId+' .item').forEach(it=>{
+    it.style.display = (child==='all' || it.dataset.child===child) ? 'flex' : 'none';
+  });
+}
+function setState(screenId,btn){
+  const screen=document.querySelector('.screen[data-s="'+screenId+'"]');
+  screen.querySelectorAll('.stateb').forEach(b=>b.classList.toggle('on', b===btn));
+  screen.querySelectorAll('.state-panel').forEach(p=>p.classList.toggle('on', p.dataset.panel===btn.dataset.st));
+}
 go('splash');
+setTimeout(()=>{
+  const splashEl=document.querySelector('.screen[data-s="splash"]');
+  if(splashEl && splashEl.classList.contains('active')) go('onb1');
+}, 1400);
 </script>
