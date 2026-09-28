@@ -18,8 +18,11 @@ type NoticeSummary = {
   doneItems: number;
   nearestDueDate: string | null;
   hasOpened: boolean;
+  childId?: string | null;
   childName?: string | null;
 };
+
+type Child = { id: string; name: string };
 
 type Mode = "all" | "unread";
 
@@ -50,6 +53,8 @@ export default function NoticeListScreen({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -58,6 +63,7 @@ export default function NoticeListScreen({
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "목록을 불러오지 못했습니다.");
       setNotices(data.notices as NoticeSummary[]);
+      setChildren(data.children ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "목록을 불러오지 못했습니다.");
     } finally {
@@ -70,7 +76,10 @@ export default function NoticeListScreen({
     load();
   }, [load]);
 
-  const visibleNotices = mode === "unread" ? notices.filter((n) => !n.hasOpened) : notices;
+  const modeFiltered = mode === "unread" ? notices.filter((n) => !n.hasOpened) : notices;
+  const visibleNotices = selectedChildId
+    ? modeFiltered.filter((n) => n.childId === selectedChildId)
+    : modeFiltered;
 
   return (
     <View style={styles.container}>
@@ -93,6 +102,37 @@ export default function NoticeListScreen({
       <TouchableOpacity style={styles.composeButton} onPress={onComposeNew}>
         <Text style={styles.composeButtonText}>+ 새 알림 작성하기</Text>
       </TouchableOpacity>
+
+      {children.length > 1 && (
+        <View style={styles.childFilterRow}>
+          <TouchableOpacity
+            onPress={() => setSelectedChildId(null)}
+            style={[styles.childChip, selectedChildId === null && styles.childChipSelected]}
+          >
+            <Text
+              style={[styles.childChipText, selectedChildId === null && styles.childChipTextSelected]}
+            >
+              전체
+            </Text>
+          </TouchableOpacity>
+          {children.map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              onPress={() => setSelectedChildId(c.id)}
+              style={[styles.childChip, selectedChildId === c.id && styles.childChipSelected]}
+            >
+              <Text
+                style={[
+                  styles.childChipText,
+                  selectedChildId === c.id && styles.childChipTextSelected,
+                ]}
+              >
+                {c.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
@@ -181,6 +221,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#1B64F2",
     fontWeight: "600",
+  },
+  childFilterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 16,
+  },
+  childChip: {
+    borderWidth: 1,
+    borderColor: "#1B64F2",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  childChipSelected: {
+    backgroundColor: "#1B64F2",
+  },
+  childChipText: {
+    color: "#1B64F2",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  childChipTextSelected: {
+    color: "#FFFFFF",
   },
   composeButton: {
     backgroundColor: "#1B64F2",

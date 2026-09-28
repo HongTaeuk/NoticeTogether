@@ -184,5 +184,10 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  return NextResponse.json({ notices: summarized });
+  const { data: householdChildren } = await supabase
+    .from("children")
+    .select("id, name")
+    .eq("household_id", householdId);
+
+  return NextResponse.json({ notices: summarized, children: householdChildren ?? [] });
 }
