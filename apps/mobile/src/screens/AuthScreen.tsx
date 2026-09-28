@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -82,11 +83,30 @@ export default function AuthScreen({
     }
   }
 
-  async function handleGoogleSignIn() {
+  function handleGoogleSignIn() {
     if (!GOOGLE_WEB_CLIENT_ID) {
       setError("Google 로그인은 아직 설정 중이에요. 이메일로 가입해주세요.");
       return;
     }
+    // 신뢰 원칙: Google 로그인은 지금 쓰던 익명 계정을 "승격"하는 게 아니라 완전히
+    // 다른 계정으로 전환하는 것이라, 지금까지 쌓인 알림/체크리스트가 안 이어진다
+    // (docs/process.md 2026-09-28 기록). 이 사실을 모른 채 데이터를 잃으면 신뢰가
+    // 깨지므로, 실행 전에 반드시 알려주고 취소할 기회를 준다.
+    if (isUpgrade) {
+      Alert.alert(
+        "지금까지 기록이 안 이어져요",
+        "Google 로그인은 완전히 새 계정으로 시작하는 방식이라, 지금까지 쌓인 알림·체크리스트는 이 계정에 남지 않아요. 기존 기록을 이어가려면 '이메일로 계정 만들기'를 이용해주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          { text: "그래도 계속하기", onPress: performGoogleSignIn },
+        ],
+      );
+      return;
+    }
+    performGoogleSignIn();
+  }
+
+  async function performGoogleSignIn() {
     setLoading(true);
     setError(null);
     try {

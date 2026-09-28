@@ -5,6 +5,10 @@ type Tokens = { accessToken: string; refreshToken: string };
 let currentTokens: Tokens | null = null;
 let onSessionExpired: (() => void) | null = null;
 let refreshInFlight: Promise<boolean> | null = null;
+// 화면 하나가 여러 요청을 동시에 보낼 수 있어(예: TodayScreen 진입 시), refreshToken까지
+// 무효화된 순간 여러 요청이 한꺼번에 401을 맞으면 onSessionExpired가 중복 호출돼
+// App.tsx가 새 익명 가정을 여러 개 만들어버릴 수 있다 — 세션당 한 번만 통지한다.
+let sessionExpiredNotified = false;
 
 /**
  * App.tsx가 세션을 불러오거나(로그인/가입/승격/토큰 갱신) 로그아웃할 때마다 호출해서
@@ -14,6 +18,7 @@ let refreshInFlight: Promise<boolean> | null = null;
  */
 export function setAuthTokens(tokens: Tokens | null) {
   currentTokens = tokens;
+  if (tokens) sessionExpiredNotified = false;
 }
 
 /** refreshToken까지 만료/무효화되어 더 이상 갱신할 수 없을 때 App.tsx가 반응할 수 있게 등록. */
@@ -70,7 +75,8 @@ export async function authFetch(path: string, init: RequestInit = {}): Promise<R
     const refreshed = await refreshTokens();
     if (refreshed) {
       res = await doFetch();
-    } else {
+    } else if (!sessionExpiredNotified) {
+      sessionExpiredNotified = true;
       onSessionExpired?.();
     }
   }
