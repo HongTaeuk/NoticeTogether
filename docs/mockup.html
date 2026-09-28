@@ -1,0 +1,359 @@
+<title>함께알림 목업</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+:root{
+  --blue:#1B64F2; --blue-dim:#9DBEF7; --blue-bg:#F3F8FF; --border:#C7DBFB;
+  --orange:#F2871B; --orange-bg:#FFF3E6; --orange-ink:#B85C00;
+  --red:#F23B3B; --ink:#0B1F4D; --muted:#3D5A9C; --white:#FFFFFF;
+  --page-bg:#E8EEF9; --frame:#0B1F4D;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page-bg);font-family:'Noto Sans KR',system-ui,sans-serif;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;gap:16px;padding-block:32px;min-height:100%}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px;padding-inline:16px}
+.toolbar button{border:1px solid var(--border);background:var(--white);color:var(--muted);font:600 12px 'Noto Sans KR';
+  padding:7px 12px;border-radius:20px;cursor:pointer;transition:.15s}
+.toolbar button.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 4px 10px -4px rgba(27,100,242,.6)}
+.phone{width:375px;max-width:calc(100vw - 32px);height:812px;max-height:82vh;background:linear-gradient(160deg,#14265c,var(--frame));
+  border-radius:46px;padding:12px;box-shadow:0 40px 70px -24px rgba(11,31,77,.55), inset 0 0 0 2px rgba(255,255,255,.06)}
+.screen-wrap{width:100%;height:100%;background:#fff;border-radius:34px;overflow:hidden;position:relative}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;background:var(--frame);border-radius:0 0 16px 16px;z-index:20}
+.statusbar{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:700 12px 'Noto Sans KR';color:var(--ink)}
+.statusbar .icons{display:flex;align-items:center;gap:4px}
+.statusbar svg{display:block}
+.screen{position:absolute;inset:0;top:40px;bottom:64px;overflow-y:auto;padding:18px;opacity:0;pointer-events:none;
+  transform:translateX(28px);transition:opacity .28s cubic-bezier(.22,1,.36,1),transform .28s cubic-bezier(.22,1,.36,1)}
+.screen.active{opacity:1;pointer-events:auto;transform:translateX(0)}
+.screen.leave{transform:translateX(-28px)}
+.screen.full{bottom:0}
+.illust{width:100%;max-width:220px;margin:0 auto 18px;display:block}
+.sheet-backdrop{position:absolute;inset:0;background:rgba(11,31,77,.42);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.sheet-backdrop.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:16px 18px 24px;
+  box-shadow:0 -20px 40px -20px rgba(11,31,77,.4);transform:translateY(100%);transition:transform .26s cubic-bezier(.22,1,.36,1);z-index:41;max-height:70%;overflow-y:auto}
+.sheet.show{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:3px;margin:0 auto 14px}
+.diff-orig{background:var(--blue-bg);border-radius:10px;padding:10px;font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px}
+.diff-orig mark{background:#FFE6A8;color:var(--ink);border-radius:3px;padding:0 2px}
+.burst{position:absolute;inset:0;pointer-events:none;z-index:35;display:flex;align-items:center;justify-content:center}
+.burst svg{opacity:0}
+.burst.go svg{animation:burst .6s ease forwards}
+@keyframes burst{0%{opacity:0;transform:scale(.4)}55%{opacity:1;transform:scale(1.08)}100%{opacity:0;transform:scale(1.35)}}
+h1{font-size:19px;font-weight:800;margin:0 0 4px;letter-spacing:-.2px}
+h2{font-size:13px;font-weight:700;color:var(--muted);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.4px}
+p{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 4px}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:14px;padding:14px;font:700 15px 'Noto Sans KR';width:100%;
+  cursor:pointer;text-align:center;box-shadow:0 10px 20px -10px rgba(27,100,242,.7);transition:.12s}
+.btn:active{transform:scale(.98);box-shadow:0 4px 10px -6px rgba(27,100,242,.7)}
+.btn.ghost{background:transparent;border:1.5px solid var(--blue);color:var(--blue);box-shadow:none}
+.btn.sm{padding:8px 14px;font-size:12px;border-radius:10px;width:auto}
+.row{display:flex;justify-content:space-between;align-items:center}
+.link{color:var(--blue);font:600 12px 'Noto Sans KR';cursor:pointer}
+.chip{border:1px solid var(--blue);color:var(--blue);border-radius:16px;padding:6px 13px;font:600 12px 'Noto Sans KR';
+  cursor:pointer;display:inline-block;margin:0 6px 6px 0;transition:.12s}
+.chip.on{background:var(--blue);color:#fff}
+.card{border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:12px;background:#fff;
+  box-shadow:0 6px 16px -12px rgba(11,31,77,.25)}
+.badge{border-radius:8px;padding:3px 8px;font:700 11px 'Noto Sans KR';color:#fff;margin-right:8px;display:inline-block}
+.badge.prep{background:var(--blue)} .badge.doc{background:var(--orange)} .badge.due{background:var(--red)}
+.check{width:23px;height:23px;border:2px solid var(--blue);border-radius:7px;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;flex:none;transition:.15s;font-size:13px;font-weight:700;color:#fff}
+.check.done{background:var(--blue);box-shadow:0 4px 10px -4px rgba(27,100,242,.7)}
+.item{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--blue-bg)}
+.item:last-child{border-bottom:none}
+.dots{display:flex;gap:5px;justify-content:center;margin:20px 0}
+.dot{width:7px;height:7px;border-radius:4px;background:var(--border);transition:.2s}
+.dot.on{background:var(--blue);width:18px}
+textarea{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;font:400 13px 'Noto Sans KR';color:var(--ink);
+  min-height:110px;resize:none;background:var(--blue-bg)}
+input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;font:400 14px 'Noto Sans KR';margin-bottom:9px;
+  background:var(--blue-bg);color:var(--ink)}
+.splash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#fff;gap:10px}
+.splash svg{width:88px;height:88px;animation:fade 1.1s ease}
+.splash .brand{font-size:15px;font-weight:800;color:var(--blue);opacity:0;animation:fade .9s ease .3s forwards}
+@keyframes fade{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.note{background:var(--blue-bg);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--ink);margin-top:6px}
+.explain{background:var(--orange-bg);border-radius:12px;padding:12px;margin-top:10px}
+.explain b{color:var(--orange-ink);font-size:13px}
+.hint{font-size:11px;color:var(--blue-dim);text-align:center;margin-top:10px;max-width:320px}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid var(--blue-bg);
+  display:flex;padding-bottom:6px}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--blue-dim)}
+.tab.on{color:var(--blue)}
+.tab span{font-size:10px;font-weight:700}
+.ring{width:54px;height:54px;flex:none}
+.toast{position:absolute;left:50%;bottom:78px;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;
+  font:600 12px 'Noto Sans KR';padding:10px 16px;border-radius:24px;opacity:0;pointer-events:none;transition:.25s;z-index:30;
+  white-space:nowrap;box-shadow:0 10px 24px -8px rgba(11,31,77,.5)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:50px 10px;color:var(--blue-dim)}
+.empty svg{margin-bottom:10px}
+.skeleton{background:linear-gradient(90deg,var(--blue-bg) 25%,#e4edfc 37%,var(--blue-bg) 63%);background-size:400% 100%;
+  animation:shimmer 1.4s ease infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+</style>
+
+<div class="toolbar" id="nav"></div>
+<div class="phone">
+  <div class="screen-wrap">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <div class="icons">
+        <svg width="16" height="11" viewBox="0 0 16 11"><rect x="0" y="6" width="3" height="5" rx="1" fill="#0B1F4D"/><rect x="4.5" y="4" width="3" height="7" rx="1" fill="#0B1F4D"/><rect x="9" y="2" width="3" height="9" rx="1" fill="#0B1F4D"/><rect x="13.5" y="0" width="2.5" height="11" rx="1" fill="#0B1F4D"/></svg>
+        <svg width="16" height="11" viewBox="0 0 16 11"><path d="M8 2.5c2.4 0 4.6 1 6.2 2.6l-1.4 1.4C11.5 5.2 9.8 4.5 8 4.5s-3.5.7-4.8 2L1.8 5.1C3.4 3.5 5.6 2.5 8 2.5zm0 3.3c1.3 0 2.5.5 3.4 1.4l-1.4 1.4c-.5-.5-1.2-.8-2-.8s-1.5.3-2 .8L4.6 7.2c.9-.9 2.1-1.4 3.4-1.4zM8 9a1.2 1.2 0 100 2.4A1.2 1.2 0 008 9z" fill="#0B1F4D"/></svg>
+        <svg width="24" height="11" viewBox="0 0 24 11"><rect x=".5" y=".5" width="20" height="10" rx="2.5" stroke="#0B1F4D"/><rect x="2" y="2" width="16" height="7" rx="1.2" fill="#0B1F4D"/><rect x="21" y="3.5" width="2" height="4" rx="1" fill="#0B1F4D"/></svg>
+      </div>
+    </div>
+
+    <div class="screen full" data-s="splash">
+      <div class="splash">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#1B64F2"/><path d="M8 12.5l2.5 2.5L16 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="brand">함께알림</div>
+      </div>
+    </div>
+
+    <div class="screen full" data-s="onb1">
+      <div style="text-align:center;padding-top:46px">
+        <svg class="illust" viewBox="0 0 220 170" fill="none">
+          <rect x="14" y="18" width="140" height="46" rx="12" fill="#F3F8FF" stroke="var(--border)" stroke-width="1.5"/>
+          <circle cx="34" cy="41" r="10" fill="var(--blue)"/>
+          <path d="M30 41l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="52" y="32" width="80" height="7" rx="3.5" fill="var(--blue-dim)"/>
+          <rect x="52" y="44" width="56" height="6" rx="3" fill="var(--border)"/>
+          <g opacity=".55"><rect x="34" y="72" width="140" height="40" rx="12" fill="#F3F8FF" stroke="var(--border)" stroke-width="1.5"/></g>
+          <line x1="18" y1="140" x2="202" y2="140" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3 5"/>
+          <circle cx="18" cy="140" r="3" fill="var(--red)"/>
+          <text x="28" y="144" font-size="11" font-weight="700" fill="var(--red)" font-family="'Noto Sans KR'">여기까지만 보면 '읽음'이 아니에요</text>
+        </svg>
+        <h1>휴대폰 알림창에서<br>미리보기만 봐도<br>확인한 게 안 돼요</h1>
+        <p>배너를 살짝 봤다고 해서 '읽음' 처리되지 않아요. 앱을 열어서 확인해야 정확해요.</p>
+        <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+        <button class="btn" onclick="go('onb2')">다음</button>
+        <div class="link" style="margin-top:12px" onclick="go('auth')">건너뛰기</div>
+      </div>
+    </div>
+    <div class="screen full" data-s="onb2">
+      <div style="text-align:center;padding-top:46px">
+        <svg class="illust" viewBox="0 0 220 170" fill="none">
+          <rect x="16" y="14" width="86" height="118" rx="10" fill="#fff" stroke="var(--border)" stroke-width="1.5"/>
+          <rect x="26" y="26" width="66" height="5" rx="2.5" fill="var(--border)"/>
+          <rect x="26" y="37" width="66" height="5" rx="2.5" fill="var(--border)"/>
+          <rect x="26" y="48" width="46" height="5" rx="2.5" fill="var(--border)"/>
+          <rect x="26" y="66" width="66" height="5" rx="2.5" fill="var(--border)"/>
+          <rect x="26" y="77" width="52" height="5" rx="2.5" fill="var(--border)"/>
+          <path d="M108 70l14-10 14 10" stroke="var(--orange)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="118" y="18" width="86" height="118" rx="10" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1.5"/>
+          <circle cx="141" cy="38" r="9" fill="var(--orange)"/>
+          <path d="M137 38l2.5 2.5L146 34" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="156" y="34" width="36" height="6" rx="3" fill="var(--blue)"/>
+          <rect x="130" y="54" width="62" height="5" rx="2.5" fill="var(--blue-dim)"/>
+          <rect x="130" y="64" width="62" height="5" rx="2.5" fill="var(--blue-dim)"/>
+          <rect x="130" y="74" width="40" height="5" rx="2.5" fill="var(--blue-dim)"/>
+        </svg>
+        <h1>긴 알림문도<br>핵심만 뽑아드려요</h1>
+        <p>원문이 궁금하면 언제든 '학교에서 온 그대로 보기'로 AI 요약과 원문을 나란히 대조해볼 수 있어요.</p>
+        <div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
+        <button class="btn" onclick="go('onb3')">다음</button>
+        <div class="link" style="margin-top:12px" onclick="go('auth')">건너뛰기</div>
+      </div>
+    </div>
+    <div class="screen full" data-s="onb3">
+      <div style="text-align:center;padding-top:46px">
+        <svg class="illust" viewBox="0 0 220 170" fill="none">
+          <circle cx="70" cy="52" r="22" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1.5"/>
+          <circle cx="70" cy="44" r="8" fill="var(--blue)"/>
+          <path d="M54 66c2-9 8-14 16-14s14 5 16 14" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="150" cy="52" r="22" fill="var(--orange-bg)" stroke="var(--orange)" stroke-width="1.5"/>
+          <circle cx="150" cy="44" r="8" fill="var(--orange)"/>
+          <path d="M134 66c2-9 8-14 16-14s14 5 16 14" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M92 60q18 10 36 0" stroke="var(--border)" stroke-width="2" stroke-dasharray="4 5" fill="none"/>
+          <rect x="46" y="98" width="128" height="50" rx="12" fill="#fff" stroke="var(--border)" stroke-width="1.5"/>
+          <circle cx="66" cy="116" r="9" fill="var(--blue)"/>
+          <path d="M62 116l2.5 2.5L70 112" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="82" y="111" width="70" height="6" rx="3" fill="var(--blue-dim)"/>
+          <text x="66" y="136" font-size="10" font-weight="700" fill="var(--muted)" font-family="'Noto Sans KR'">서연님이 방금 체크했어요</text>
+        </svg>
+        <h1>배우자와 함께<br>확인하고 나눠 맡아요</h1>
+        <p>누가 뭘 체크했는지 서로 볼 수 있어서, 같은 걸 두 번 챙기거나 놓치는 일이 줄어요.</p>
+        <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+        <button class="btn" onclick="go('auth')">알겠어요, 바로 시작할게요</button>
+      </div>
+    </div>
+
+    <div class="screen full" data-s="auth">
+      <div style="text-align:center;margin:34px 0 22px">
+        <div style="font-size:22px;font-weight:800;color:var(--blue)">함께알림</div>
+        <p style="margin-top:8px">지금 바로 써볼 수 있어요 — 가입은 나중에, 배우자와 공유할 때만 필요해요</p>
+      </div>
+      <button class="btn" onclick="toast('혼자만의 가정이 만들어졌어요');go('today')">바로 시작하기 (가입 없이)</button>
+      <div class="row" style="margin:16px 0"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--blue-dim);padding:0 10px">또는</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
+      <input placeholder="이메일"><input placeholder="비밀번호 (8자 이상)">
+      <button class="btn ghost" onclick="go('today')">이메일로 계정 만들기</button>
+      <div class="link" style="text-align:center;margin-top:16px">이미 계정이 있어요 · 로그인</div>
+    </div>
+
+    <div class="screen full" data-s="household">
+      <div style="text-align:center;padding-top:20px">
+        <h1 style="font-size:20px">아직 함께 볼 사람이 없어요</h1>
+        <p>배우자를 초대하면 서로 뭘 챙겼는지 볼 수 있어요.</p>
+        <div class="card" style="background:var(--blue-bg);text-align:center;margin-top:20px">
+          <p style="margin-bottom:6px">내 초대 코드</p>
+          <div style="font-size:26px;font-weight:800;color:var(--blue);letter-spacing:3px">7B2U5W</div>
+          <button class="btn ghost sm" style="margin-top:10px" onclick="toast('공유 시트가 열려요')">초대 코드 공유하기</button>
+        </div>
+        <input style="margin-top:20px;text-align:center" placeholder="초대 코드 입력">
+        <button class="btn">지금 초대하기</button>
+        <div class="link" style="margin-top:14px" onclick="go('today')">나중에 하기</div>
+      </div>
+    </div>
+
+    <div class="screen" data-s="today">
+      <div class="row">
+        <div>
+          <h1>오늘 할 일</h1>
+          <p style="margin-top:2px">9월 28일 월요일</p>
+        </div>
+        <svg class="ring" viewBox="0 0 54 54">
+          <circle cx="27" cy="27" r="23" fill="none" stroke="var(--blue-bg)" stroke-width="6"/>
+          <circle cx="27" cy="27" r="23" fill="none" stroke="var(--blue)" stroke-width="6" stroke-linecap="round"
+            stroke-dasharray="144.5" stroke-dashoffset="57.8" transform="rotate(-90 27 27)"/>
+          <text x="27" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink)">2/5</text>
+        </svg>
+      </div>
+      <div style="margin:12px 0"><span class="chip on">전체</span><span class="chip">민준</span><span class="chip">서연</span></div>
+      <h2>지금 해야 할 것</h2>
+      <div class="item"><div class="check" onclick="toggleCheck(this,'현장학습 동의서')"></div>
+        <div><span class="badge doc">제출서류</span><b>현장학습 동의서</b><div class="note">내일(9월 29일)까지 · D-1</div></div></div>
+      <div class="item"><div class="check" onclick="toggleCheck(this,'체육복 · 물통')"></div>
+        <div><span class="badge prep">준비물</span><b>체육복, 물통</b><div class="note">목요일 체육대회 · D-3</div></div></div>
+      <div class="card" style="background:var(--blue-bg);margin-top:10px">
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">👀 배우자 활동</div>
+        <div style="font-size:13px">서연님이 "체육복" 준비 완료로 체크했어요 · 3분 전</div>
+      </div>
+      <button class="btn" style="margin-top:14px" onclick="go('compose')">+ 새 알림 작성하기</button>
+    </div>
+
+    <div class="screen" data-s="list">
+      <h1>지난 기록</h1>
+      <p style="margin-bottom:14px">지금까지 정리한 알림 전체 보기</p>
+      <div class="card"><div class="row"><b style="font-size:13px">3학년 2반 현장학습 및 체육대회 안내</b></div>
+        <div class="row" style="margin-top:6px"><span style="font-size:12px;color:var(--muted)">체크 1/3</span><span style="font-size:12px;color:var(--red)">가까운 기한 09-29</span></div></div>
+      <div class="card"><div class="row"><b style="font-size:13px">관악장애인복지관 IEP 상담 안내</b></div>
+        <div class="row" style="margin-top:6px"><span style="font-size:12px;color:var(--muted)">체크 0/1</span></div></div>
+      <div class="card" style="opacity:.5"><div class="skeleton" style="height:14px;width:70%;margin-bottom:8px"></div><div class="skeleton" style="height:12px;width:40%"></div></div>
+    </div>
+
+    <div class="screen" data-s="compose">
+      <h1>알림 붙여넣기</h1>
+      <p style="margin-bottom:12px">학교/복지관에서 받은 문자나 알림 내용을 그대로 붙여넣으세요</p>
+      <div style="margin-bottom:10px"><span class="chip on">전체</span><span class="chip">민준</span><span class="chip">서연</span></div>
+      <textarea placeholder="여기에 붙여넣으세요">안녕하세요, 3학년 2반입니다. 다음주 화요일(9월 29일)까지 현장학습 동의서를 제출해주세요. 목요일 체육대회에는 체육복과 물통을 챙겨주세요.</textarea>
+      <button class="btn" style="margin-top:10px" onclick="go('result')">핵심만 정리하기</button>
+    </div>
+
+    <div class="screen" data-s="result">
+      <h1>정리 결과</h1>
+      <div class="card" style="margin-top:10px">
+        <div class="row"><b style="font-size:13px">핵심만 정리하면</b><span class="link" onclick="openSheet()">학교에서 온 그대로 보기</span></div>
+        <p style="margin-top:8px">👤 민준</p>
+        <p>9월 29일 화요일까지 현장학습 동의서 제출, 목요일 체육대회에 체육복과 물통이 필요해요.</p>
+        <div class="item"><div class="check done">✓</div><div><span class="badge doc">제출서류</span><b>현장학습 동의서 제출</b><div class="note">기한: 2026-09-29 · AI 확신도 95%</div></div></div>
+        <div class="item"><div class="check" onclick="toggleCheck(this,'체육복')"></div><div><span class="badge prep">준비물</span><b>체육복</b><div class="note">목요일 체육대회 · ❓ AI 확신도 62% · 원문과 비교해보기</div></div></div>
+        <div class="item"><div class="check" onclick="toggleCheck(this,'물통')"></div><div><span class="badge prep">준비물</span><b>물통</b><div class="note">목요일 체육대회 · AI 확신도 90%</div></div></div>
+        <div class="explain"><b>이게 무슨 뜻인지 쉽게 설명 ▾</b>
+          <div class="note" style="background:transparent;padding:8px 0 0">개별화교육계획(IEP): 우리 아이에게 딱 맞게 공부 목표와 방법을 정해주는 특별한 계획이에요.</div>
+        </div>
+        <div class="link" style="text-align:center;margin-top:12px" onclick="toast('배우자 체크 상태를 새로고침했어요')">같이 확인하기 (새로고침)</div>
+      </div>
+    </div>
+
+    <div class="screen" data-s="settings">
+      <h1>알림 타이밍</h1>
+      <p style="margin-bottom:14px">평소 몇 개나 챙기는지에 따라 알림 시점을 자동으로 조절해요</p>
+      <div class="card">
+        <div class="row"><b style="font-size:13px">기본 알림</b><span style="font-size:12px;color:var(--blue)">마감 1일 전</span></div>
+      </div>
+      <div class="card" style="background:var(--blue-bg)">
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">📈 최근 4주 참여도 기반 조정</div>
+        <p>최근 체크가 빨랐던 편이라, 다음 알림은 <b>마감 2일 전</b>으로 조금 더 일찍 보내드릴게요.</p>
+      </div>
+      <h2>아이 정보</h2>
+      <div class="item"><div style="flex:1"><b>민준</b><div class="note">3학년 2반</div></div><span class="link">수정</span></div>
+      <div class="item"><div style="flex:1"><b>서연</b><div class="note">1학년 5반</div></div><span class="link">수정</span></div>
+      <div class="link" style="margin-top:10px">+ 아이 추가하기</div>
+    </div>
+
+    <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+    <div class="sheet" id="sheet">
+      <div class="sheet-handle"></div>
+      <div class="row"><b style="font-size:14px">학교에서 온 그대로 보기</b><span class="link" onclick="closeSheet()">닫기</span></div>
+      <div class="diff-orig">안녕하세요, 3학년 2반입니다. 다음주 <mark>화요일(9월 29일)까지 현장학습 동의서를 제출</mark>해주세요. <mark>목요일 체육대회</mark>에는 <mark>체육복과 물통</mark>을 챙겨주세요.</div>
+      <p style="margin-top:10px;font-size:11px">노란 표시 = AI가 체크리스트로 뽑아낸 원문 부분</p>
+    </div>
+    <div class="burst" id="burst"><svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r="40" fill="var(--blue)"/><path d="M30 46l10 10 20-22" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="tabbar" id="tabbar">
+    <div class="tab on" data-t="today" onclick="go('today')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1v-9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>오늘</span></div>
+    <div class="tab" data-t="list" onclick="go('list')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>지난 기록</span></div>
+    <div class="tab" data-t="compose" onclick="go('compose')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>새 알림</span></div>
+    <div class="tab" data-t="settings" onclick="go('settings')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M4 12h2m12 0h2M12 4v2m0 12v2M6.3 6.3l1.4 1.4m8.6 8.6l1.4 1.4M6.3 17.7l1.4-1.4m8.6-8.6l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>설정</span></div>
+  </div>
+</div>
+<div class="hint">화면 상단 버튼으로 화면을 옮겨보고, 체크박스·링크를 눌러 실제 동작(체크 토글, 토스트, 화면 전환)을 확인해보세요</div>
+
+<script>
+const order=[['splash','스플래시'],['onb1','온보딩1'],['onb2','온보딩2'],['onb3','온보딩3'],['auth','시작하기'],
+['household','초대코드'],['today','오늘 할 일'],['list','지난 기록'],['compose','알림 붙여넣기'],['result','정리 결과'],['settings','설정']];
+const tabScreens=['today','list','compose','result','settings'];
+const nav=document.getElementById('nav');
+order.forEach(([id,label])=>{
+  const b=document.createElement('button'); b.textContent=label; b.onclick=()=>go(id); b.dataset.s=id; nav.appendChild(b);
+});
+let curIdx=0;
+function go(id){
+  const nextIdx=order.findIndex(o=>o[0]===id);
+  const forward=nextIdx>=curIdx;
+  document.querySelectorAll('.screen').forEach(s=>{
+    const active=s.dataset.s===id;
+    s.classList.toggle('active', active);
+    s.classList.toggle('leave', !active && forward);
+  });
+  curIdx=nextIdx<0?curIdx:nextIdx;
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.s===id));
+  document.getElementById('tabbar').style.display = tabScreens.includes(id) ? 'flex' : 'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.t===(id==='result'?'compose':id)));
+}
+function openSheet(){
+  document.getElementById('sheetBackdrop').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+function closeSheet(){
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+}
+function toggleCheck(el,label){
+  const done=el.classList.toggle('done');
+  el.textContent=done?'✓':'';
+  if(done){
+    toast(label+' 체크 완료');
+    const scope=el.closest('.screen');
+    if(scope && scope.querySelectorAll('.check').length && scope.querySelectorAll('.check:not(.done)').length===0){
+      const b=document.getElementById('burst');
+      b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
+    }
+  }
+}
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+go('splash');
+</script>
