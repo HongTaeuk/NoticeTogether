@@ -764,7 +764,11 @@ export default function NoticeInputScreen({
         </View>
       )}
 
-      {!noticeId && <ChildConsentSection />}
+      {!noticeId && (
+        <ChildConsentSection
+          onChildAdded={(child) => setChildren((prev) => [...prev, child])}
+        />
+      )}
     </ScrollView>
   );
 }

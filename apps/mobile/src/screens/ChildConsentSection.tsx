@@ -14,7 +14,13 @@ type Child = {
  * AI 처리 고지 — AI기본법 31조). 장애 유형은 더 민감한 정보라 별도 동의가 필요하다.
  * 체크박스가 없으면 "자녀 등록" 버튼 자체가 비활성화되어, 서버가 막기 전에 UI에서도 막는다.
  */
-export default function ChildConsentSection() {
+export default function ChildConsentSection({
+  onChildAdded,
+}: {
+  // 다자녀 필터 UI(NoticeInputScreen의 "공통/자녀명" 칩)가 이 화면을 나가지 않고도
+  // 방금 등록한 자녀를 바로 반영할 수 있게 부모에게 알려준다.
+  onChildAdded?: (child: Child) => void;
+}) {
   const [children, setChildren] = useState<Child[]>([]);
   const [name, setName] = useState("");
   const [birthYear, setBirthYear] = useState("");
@@ -82,6 +88,7 @@ export default function ChildConsentSection() {
         throw new Error(data?.error ?? "자녀 등록에 실패했습니다.");
       }
       setChildren((prev) => [...prev, data.child as Child]);
+      onChildAdded?.(data.child as Child);
       setName("");
       setBirthYear("");
       setDisabilityType("");
