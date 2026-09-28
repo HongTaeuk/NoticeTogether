@@ -13,7 +13,10 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--page-bg);font-family:'Noto Sans KR',system-ui,sans-serif;color:var(--ink);
   display:flex;flex-direction:column;align-items:center;gap:16px;padding-block:32px;min-height:100%}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px;padding-inline:16px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px;padding-inline:16px;align-items:center}
+.clock{font:800 13px 'Noto Sans KR';color:var(--ink);background:#fff;border:1px solid var(--border);border-radius:20px;padding:7px 14px}
+@keyframes flash{0%{background:#FFE6A8}100%{background:transparent}}
+.flash{animation:flash 1.1s ease}
 .toolbar button{border:1px solid var(--border);background:var(--white);color:var(--muted);font:600 12px 'Noto Sans KR';
   padding:7px 12px;border-radius:20px;cursor:pointer;transition:.15s}
 .toolbar button.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 4px 10px -4px rgba(27,100,242,.6)}
@@ -119,7 +122,12 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 </style>
 
-<div class="toolbar" id="nav"></div>
+<div class="toolbar" id="nav">
+  <button onclick="location.reload()">↺ 처음부터(기본)</button>
+  <button onclick="advanceDay()">⏱ 하루 지나기</button>
+  <button onclick="advanceWeek()">⏱ 1주 지나기</button>
+  <div class="clock">현재 시점: <span id="clockDay">0</span>일째 · <span id="clockWeek">0</span>주차</div>
+</div>
 <div class="phone">
   <div class="screen-wrap">
     <div class="notch"></div>
@@ -306,9 +314,6 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
           <span class="link" onclick="go('household')">배우자 초대</span>
         </div>
         <h2>지금 해야 할 것</h2>
-        <div class="statebar" style="background:var(--orange-bg)">
-          <div class="stateb on" style="color:var(--orange-ink)" onclick="advanceDay()">⏱ 하루 지나기 (<span id="dayCount">0</span>일 경과)</div>
-        </div>
         <div id="todayItems">
         <div class="item" data-child="민준"><div class="check" onclick="toggleCheck(this,'현장학습 동의서')"></div>
           <div><span class="badge doc" id="docBadge">제출서류</span><b>현장학습 동의서</b><div class="note">👤 민준 · <span id="docDday">내일(9월 29일)까지 · D-1</span></div></div></div>
@@ -425,7 +430,6 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
       <div class="card" style="background:var(--blue-bg)">
         <div style="font-size:12px;font-weight:700;margin-bottom:4px">📈 최근 <span id="weekCount">0</span>주 참여도 기반 조정</div>
         <p id="fr4Text">아직 데이터가 부족해서 기본값(마감 1일 전)으로 보내드려요.</p>
-        <button class="btn ghost sm" style="margin-top:8px" onclick="advanceWeek()">⏱ 1주 지나기(참여 패턴 갱신)</button>
       </div>
       <h2>아이 정보</h2>
       <div class="item"><div style="flex:1"><b>민준</b><div class="note">3학년 2반</div></div><span class="link">수정</span></div>
@@ -463,10 +467,6 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
 const order=[['splash','스플래시'],['lockscreen','잠금화면'],['onb1','온보딩1'],['onb2','온보딩2'],['onb3','온보딩3'],['auth','시작하기'],
 ['household','초대코드'],['sync','동기화 테스트'],['consent','아이정보 동의'],['today','오늘 할 일'],['list','지난 기록'],['compose','알림 붙여넣기'],['result','정리 결과'],['settings','설정']];
 const tabScreens=['today','list','compose','result','settings'];
-const nav=document.getElementById('nav');
-order.forEach(([id,label])=>{
-  const b=document.createElement('button'); b.textContent=label; b.onclick=()=>go(id); b.dataset.s=id; nav.appendChild(b);
-});
 let curIdx=0;
 function go(id){
   const nextIdx=order.findIndex(o=>o[0]===id);
@@ -555,25 +555,31 @@ function pullSync(who){
   toast('당겨서 새로고침 — 계정 '+other+'의 최신 상태를 가져왔어요');
 }
 let daysPassed=0, weeksPassed=0, docLeft=1, bookLeft=3, pendingSpouseEvent=false;
+function flashEl(el){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 function advanceDay(){
   daysPassed++; docLeft--; bookLeft--;
-  document.getElementById('dayCount').textContent=daysPassed;
+  document.getElementById('clockDay').textContent=daysPassed;
   const docEl=document.getElementById('docDday'), bookEl=document.getElementById('bookDday'), badge=document.getElementById('docBadge');
   docEl.textContent = docLeft>0?('D-'+docLeft) : docLeft===0?'오늘 마감!':'D+'+(-docLeft)+' 지남 (기한 초과)';
-  if(docLeft<=0){ badge.classList.remove('doc'); badge.classList.add('due'); badge.textContent='기한 초과'; }
+  flashEl(docEl); flashEl(bookEl);
+  if(docLeft<=0){ badge.classList.remove('doc'); badge.classList.add('due'); badge.textContent='기한 초과'; flashEl(badge); }
   bookEl.textContent = bookLeft>0?('D-'+bookLeft) : bookLeft===0?'오늘 마감!':'D+'+(-bookLeft)+' 지남';
   if(docLeft===1 && !pendingSpouseEvent){
     firePush();
+    toast(daysPassed+'일째 — 마감이 가까워져서 알림이 자동으로 왔어요');
   }
   if(daysPassed===2){
     pendingSpouseEvent=true;
-    document.getElementById('pullDot').style.display='inline-block';
-    document.getElementById('pullLink').style.display='block';
-    toast('배우자 쪽에 새 활동이 생겼어요 (아직 안 당겨옴)');
+    const dot=document.getElementById('pullDot'), link=document.getElementById('pullLink');
+    dot.style.display='inline-block'; link.style.display='block';
+    flashEl(document.getElementById('spouseCard'));
+    toast(daysPassed+'일째 — 배우자 쪽에 새 활동이 생겼어요 (Pull 전이라 아직 안 보임)');
   }
 }
 function pullTodaySync(){
-  document.getElementById('spouseMsg').textContent='서연님이 "물통" 준비 완료로 체크했어요 · 방금';
+  const msg=document.getElementById('spouseMsg');
+  msg.textContent='서연님이 "물통" 준비 완료로 체크했어요 · 방금';
+  flashEl(msg);
   document.getElementById('pullDot').style.display='none';
   document.getElementById('pullLink').style.display='none';
   pendingSpouseEvent=false;
@@ -581,12 +587,14 @@ function pullTodaySync(){
 }
 function advanceWeek(){
   weeksPassed++;
+  document.getElementById('clockWeek').textContent=weeksPassed;
   document.getElementById('weekCount').textContent=weeksPassed;
   const fr4=document.getElementById('fr4Text'), base=document.getElementById('baseTiming');
   if(weeksPassed===1){ fr4.textContent='체크가 조금 늦은 편이에요. 다음 알림은 조금 더 일찍, 마감 2일 전에 보내드릴게요.'; base.textContent='마감 2일 전'; }
   else if(weeksPassed>=2 && weeksPassed<4){ fr4.textContent='최근엔 체크가 빨라졌어요! 마감 1일 전으로 다시 조정할게요.'; base.textContent='마감 1일 전'; }
   else { fr4.textContent='꾸준히 체크가 빨라서, 여유 있게 마감 3일 전에만 알려드려도 될 것 같아요.'; base.textContent='마감 3일 전'; }
-  toast(weeksPassed+'주치 참여 데이터가 반영됐어요');
+  flashEl(fr4); flashEl(base);
+  toast(weeksPassed+'주차 — 참여 패턴이 바뀌어서 알림 타이밍이 "'+base.textContent+'"으로 조정됐어요');
 }
 function firePush(){
   const b=document.getElementById('pushBanner');
