@@ -30,7 +30,7 @@ class ReminderBroadcastReceiver : BroadcastReceiver() {
 
   override fun onReceive(context: Context, intent: Intent) {
     val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
-    val title = intent.getStringExtra(EXTRA_TITLE) ?: "알림투게더"
+    val title = intent.getStringExtra(EXTRA_TITLE) ?: "함께알림"
     val body = intent.getStringExtra(EXTRA_BODY) ?: "확인할 알림이 있어요."
     val noticeId = intent.getStringExtra(EXTRA_NOTICE_ID)
 

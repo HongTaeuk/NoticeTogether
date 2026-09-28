@@ -155,7 +155,7 @@ export default function AuthScreen({
           <Text style={styles.backButtonText}>← 나중에 하기</Text>
         </TouchableOpacity>
       )}
-      <Text style={styles.logo}>NoticeTogether</Text>
+      <Text style={styles.logo}>함께알림</Text>
       <Text style={styles.subtitle}>
         {mode === "signup"
           ? isUpgrade

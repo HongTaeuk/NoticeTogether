@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -449,7 +451,11 @@ export default function NoticeInputScreen({
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "android" ? "height" : "padding"}
+    >
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <View style={styles.roleSwitchRow}>
         <Text style={styles.roleLabel}>{ROLE_LABEL[role]}(으)로 로그인됨</Text>
         <TouchableOpacity onPress={onAccountPress}>
@@ -770,6 +776,7 @@ export default function NoticeInputScreen({
         />
       )}
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

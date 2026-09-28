@@ -22,7 +22,7 @@ export default function HouseholdSetupScreen({ session, onJoined, onContinue }: 
   async function handleShare() {
     try {
       await Share.share({
-        message: `NoticeTogether에서 같이 확인해요! 초대 코드: ${session.inviteCode}`,
+        message: `함께알림에서 같이 확인해요! 초대 코드: ${session.inviteCode}`,
       });
     } catch {
       // 공유 시트 취소 등은 무시한다.
