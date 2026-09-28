@@ -6,13 +6,14 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StatusBar, Text, View } from 'react-native';
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import NoticeInputScreen from './src/screens/NoticeInputScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import OnboardingIntroScreen from './src/screens/OnboardingIntroScreen';
 import HouseholdSetupScreen from './src/screens/HouseholdSetupScreen';
 import NetworkBanner from './src/components/NetworkBanner';
+import SplashLogo from './src/components/SplashLogo';
 import { API_BASE_URL } from './src/config/api';
 import { authFetch, getCurrentTokens, setAuthTokens, setOnSessionExpired } from './src/lib/apiClient';
 import { clearSession, loadSession, saveSession, type Session } from './src/lib/authStorage';
@@ -141,14 +142,7 @@ function App() {
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         <NetworkBanner />
-        {screen === 'loading' && (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color="#1B64F2" size="large" />
-            <Text style={{ marginTop: 12, fontSize: 13, color: '#3D5A9C' }}>
-              불러오는 중이에요
-            </Text>
-          </View>
-        )}
+        {screen === 'loading' && <SplashLogo />}
         {screen === 'auth' && (
           <AuthScreen
             isUpgrade={session?.isAnonymous ?? false}
