@@ -18,13 +18,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const supabase = getSupabaseServerClient();
 
-  const { data: notice, error: noticeError } = await supabase
+  let { data: notice, error: noticeError } = await supabase
     .from("notices")
     .select("id, raw_text, ai_summary, easy_explanations, created_at, household_id, child_id, children(name)")
     .eq("id", id)
     .single();
-  if (noticeError) {
-    return NextResponse.json({ error: noticeError.message }, { status: 404 });
+
+  // 0003 마이그레이션(easy_explanations)이 아직 안 된 배포 환경에서도 알림 상세
+  // 조회 자체는 항상 되게 하는 폴백 — POST /api/notices와 같은 이유.
+  if (noticeError?.message?.includes("schema cache")) {
+    const fallback = await supabase
+      .from("notices")
+      .select("id, raw_text, ai_summary, created_at, household_id, child_id, children(name)")
+      .eq("id", id)
+      .single();
+    notice = fallback.data ? { ...fallback.data, easy_explanations: null } : null;
+    noticeError = fallback.error;
+  }
+
+  if (noticeError || !notice) {
+    return NextResponse.json({ error: noticeError?.message ?? "알림을 찾을 수 없습니다." }, { status: 404 });
   }
   if (notice.household_id !== resolved.householdId) {
     return NextResponse.json({ error: "이 알림에 접근할 권한이 없습니다." }, { status: 403 });

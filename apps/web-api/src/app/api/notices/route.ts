@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { data: notice, error: noticeError } = await supabase
+  let { data: notice, error: noticeError } = await supabase
     .from("notices")
     .insert({
       household_id: householdId,
@@ -85,8 +85,28 @@ export async function POST(req: NextRequest) {
     })
     .select("id, created_at")
     .single();
-  if (noticeError) {
-    return NextResponse.json({ error: noticeError.message }, { status: 500 });
+
+  // easy_explanations/child_id 컬럼은 각각 0003/0001 마이그레이션이 있어야 존재한다.
+  // 마이그레이션이 아직 실행되지 않은 배포 환경(스키마 캐시에 컬럼이 없음)에서도
+  // 최소한 알림 저장 자체는 항상 되게 하기 위한 폴백 — 이 부가 기능들만 조용히 빠진다.
+  if (noticeError?.message?.includes("schema cache")) {
+    easyExplanations = null;
+    const fallback = await supabase
+      .from("notices")
+      .insert({
+        household_id: householdId,
+        raw_text: body.rawText,
+        ai_summary: body.summary ?? null,
+        created_by: createdBy,
+      })
+      .select("id, created_at")
+      .single();
+    notice = fallback.data;
+    noticeError = fallback.error;
+  }
+
+  if (noticeError || !notice) {
+    return NextResponse.json({ error: noticeError?.message ?? "알림 저장에 실패했습니다." }, { status: 500 });
   }
 
   const itemsToInsert = body.items.map((item) => ({
