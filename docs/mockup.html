@@ -306,15 +306,19 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
           <span class="link" onclick="go('household')">배우자 초대</span>
         </div>
         <h2>지금 해야 할 것</h2>
+        <div class="statebar" style="background:var(--orange-bg)">
+          <div class="stateb on" style="color:var(--orange-ink)" onclick="advanceDay()">⏱ 하루 지나기 (<span id="dayCount">0</span>일 경과)</div>
+        </div>
         <div id="todayItems">
         <div class="item" data-child="민준"><div class="check" onclick="toggleCheck(this,'현장학습 동의서')"></div>
-          <div><span class="badge doc">제출서류</span><b>현장학습 동의서</b><div class="note">👤 민준 · 내일(9월 29일)까지 · D-1</div></div></div>
+          <div><span class="badge doc" id="docBadge">제출서류</span><b>현장학습 동의서</b><div class="note">👤 민준 · <span id="docDday">내일(9월 29일)까지 · D-1</span></div></div></div>
         <div class="item" data-child="서연"><div class="check" onclick="toggleCheck(this,'체육복 · 물통')"></div>
-          <div><span class="badge prep">준비물</span><b>체육복, 물통</b><div class="note">👤 서연 · 목요일 체육대회 · D-3</div></div></div>
+          <div><span class="badge prep">준비물</span><b>체육복, 물통</b><div class="note">👤 서연 · <span id="bookDday">목요일 체육대회 · D-3</span></div></div></div>
         </div>
-        <div class="card" style="background:var(--blue-bg);margin-top:10px">
-          <div style="font-size:12px;font-weight:700;margin-bottom:4px">👀 배우자 활동</div>
-          <div style="font-size:13px">서연님이 "체육복" 준비 완료로 체크했어요 · 3분 전</div>
+        <div class="card" style="background:var(--blue-bg);margin-top:10px" id="spouseCard">
+          <div class="row"><div style="font-size:12px;font-weight:700;margin-bottom:4px">👀 배우자 활동</div><span id="pullDot" style="display:none;width:8px;height:8px;border-radius:5px;background:var(--red)"></span></div>
+          <div style="font-size:13px" id="spouseMsg">아직 배우자 활동이 없어요</div>
+          <div class="link" style="margin-top:6px;font-size:11px;display:none" id="pullLink" onclick="pullTodaySync()">🔄 당겨서 새로고침</div>
         </div>
       </div>
       <div class="state-panel" data-panel="done">
@@ -416,11 +420,12 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
       <h1>알림 타이밍</h1>
       <p style="margin-bottom:14px">평소 몇 개나 챙기는지에 따라 알림 시점을 자동으로 조절해요</p>
       <div class="card">
-        <div class="row"><b style="font-size:13px">기본 알림</b><span style="font-size:12px;color:var(--blue)">마감 1일 전</span></div>
+        <div class="row"><b style="font-size:13px">기본 알림</b><span style="font-size:12px;color:var(--blue)" id="baseTiming">마감 1일 전</span></div>
       </div>
       <div class="card" style="background:var(--blue-bg)">
-        <div style="font-size:12px;font-weight:700;margin-bottom:4px">📈 최근 4주 참여도 기반 조정</div>
-        <p>최근 체크가 빨랐던 편이라, 다음 알림은 <b>마감 2일 전</b>으로 조금 더 일찍 보내드릴게요.</p>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">📈 최근 <span id="weekCount">0</span>주 참여도 기반 조정</div>
+        <p id="fr4Text">아직 데이터가 부족해서 기본값(마감 1일 전)으로 보내드려요.</p>
+        <button class="btn ghost sm" style="margin-top:8px" onclick="advanceWeek()">⏱ 1주 지나기(참여 패턴 갱신)</button>
       </div>
       <h2>아이 정보</h2>
       <div class="item"><div style="flex:1"><b>민준</b><div class="note">3학년 2반</div></div><span class="link">수정</span></div>
@@ -548,6 +553,40 @@ function pullSync(who){
   syncState[who]={...syncState[other]};
   renderSync(who);
   toast('당겨서 새로고침 — 계정 '+other+'의 최신 상태를 가져왔어요');
+}
+let daysPassed=0, weeksPassed=0, docLeft=1, bookLeft=3, pendingSpouseEvent=false;
+function advanceDay(){
+  daysPassed++; docLeft--; bookLeft--;
+  document.getElementById('dayCount').textContent=daysPassed;
+  const docEl=document.getElementById('docDday'), bookEl=document.getElementById('bookDday'), badge=document.getElementById('docBadge');
+  docEl.textContent = docLeft>0?('D-'+docLeft) : docLeft===0?'오늘 마감!':'D+'+(-docLeft)+' 지남 (기한 초과)';
+  if(docLeft<=0){ badge.classList.remove('doc'); badge.classList.add('due'); badge.textContent='기한 초과'; }
+  bookEl.textContent = bookLeft>0?('D-'+bookLeft) : bookLeft===0?'오늘 마감!':'D+'+(-bookLeft)+' 지남';
+  if(docLeft===1 && !pendingSpouseEvent){
+    firePush();
+  }
+  if(daysPassed===2){
+    pendingSpouseEvent=true;
+    document.getElementById('pullDot').style.display='inline-block';
+    document.getElementById('pullLink').style.display='block';
+    toast('배우자 쪽에 새 활동이 생겼어요 (아직 안 당겨옴)');
+  }
+}
+function pullTodaySync(){
+  document.getElementById('spouseMsg').textContent='서연님이 "물통" 준비 완료로 체크했어요 · 방금';
+  document.getElementById('pullDot').style.display='none';
+  document.getElementById('pullLink').style.display='none';
+  pendingSpouseEvent=false;
+  toast('당겨서 새로고침 — 배우자 활동을 가져왔어요');
+}
+function advanceWeek(){
+  weeksPassed++;
+  document.getElementById('weekCount').textContent=weeksPassed;
+  const fr4=document.getElementById('fr4Text'), base=document.getElementById('baseTiming');
+  if(weeksPassed===1){ fr4.textContent='체크가 조금 늦은 편이에요. 다음 알림은 조금 더 일찍, 마감 2일 전에 보내드릴게요.'; base.textContent='마감 2일 전'; }
+  else if(weeksPassed>=2 && weeksPassed<4){ fr4.textContent='최근엔 체크가 빨라졌어요! 마감 1일 전으로 다시 조정할게요.'; base.textContent='마감 1일 전'; }
+  else { fr4.textContent='꾸준히 체크가 빨라서, 여유 있게 마감 3일 전에만 알려드려도 될 것 같아요.'; base.textContent='마감 3일 전'; }
+  toast(weeksPassed+'주치 참여 데이터가 반영됐어요');
 }
 function firePush(){
   const b=document.getElementById('pushBanner');
