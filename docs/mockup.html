@@ -241,9 +241,11 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
       </div>
       <button class="btn" onclick="toast('혼자만의 가정이 만들어졌어요');go('today')">바로 시작하기 (가입 없이)</button>
       <div class="row" style="margin:16px 0"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--blue-dim);padding:0 10px">또는</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
-      <input placeholder="이메일"><input placeholder="비밀번호 (8자 이상)">
-      <button class="btn ghost" onclick="go('today')">이메일로 계정 만들기</button>
-      <div class="link" style="text-align:center;margin-top:16px">이미 계정이 있어요 · 로그인</div>
+      <input id="authEmail" placeholder="이메일" oninput="validateAuth()">
+      <input id="authPw" type="password" placeholder="비밀번호 (8자 이상)" oninput="validateAuth()">
+      <div class="note" id="authErr" style="display:none;background:transparent;color:var(--red);padding:0 0 6px"></div>
+      <button class="btn ghost" id="authSubmit" disabled onclick="toast('계정이 만들어졌어요 — 이제 데이터가 이 계정에 계속 이어져요');go('today')">이메일로 계정 만들기</button>
+      <div class="link" style="text-align:center;margin-top:16px" onclick="toast('로그인 화면 (준비 중 데모)')">이미 계정이 있어요 · 로그인</div>
     </div>
 
     <div class="screen full" data-s="household">
@@ -258,7 +260,27 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
         <input style="margin-top:20px;text-align:center" placeholder="초대 코드 입력">
         <button class="btn" onclick="toast('배우자와 연결됐어요');go('today')">지금 초대하기</button>
         <div class="link" style="margin-top:14px" onclick="go('today')">나중에 하기</div>
+        <div class="link" style="margin-top:10px" onclick="go('sync')">두 계정 동기화(Pull) 테스트해보기</div>
       </div>
+    </div>
+
+    <div class="screen full" data-s="sync">
+      <h1 style="font-size:17px">두 계정 동기화 테스트</h1>
+      <p style="margin-bottom:12px">Pull 방식이라 자동으로 실시간 반영되지 않아요 — 상대방 화면에서 체크한 뒤, 내 화면에서 직접 '당겨서 새로고침'해야 보여요.</p>
+      <div class="row" style="gap:10px;align-items:stretch">
+        <div class="card" style="flex:1;margin-bottom:0">
+          <b style="font-size:12px;color:var(--blue)">👤 계정 A (나)</b>
+          <div id="syncA" style="margin-top:8px"></div>
+          <button class="btn ghost sm" style="margin-top:10px;width:100%" onclick="pullSync('A')">↓ 당겨서 새로고침</button>
+        </div>
+        <div class="card" style="flex:1;margin-bottom:0">
+          <b style="font-size:12px;color:var(--orange-ink)">👤 계정 B (배우자)</b>
+          <div id="syncB" style="margin-top:8px"></div>
+          <button class="btn ghost sm" style="margin-top:10px;width:100%" onclick="pullSync('B')">↓ 당겨서 새로고침</button>
+        </div>
+      </div>
+      <div class="link" style="text-align:center;margin-top:14px" onclick="go('household')">초대코드 화면으로</div>
+    </div>
     </div>
 
     <div class="screen" data-s="today">
@@ -435,7 +457,7 @@ input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
 
 <script>
 const order=[['splash','스플래시'],['lockscreen','잠금화면'],['onb1','온보딩1'],['onb2','온보딩2'],['onb3','온보딩3'],['auth','시작하기'],
-['household','초대코드'],['consent','아이정보 동의'],['today','오늘 할 일'],['list','지난 기록'],['compose','알림 붙여넣기'],['result','정리 결과'],['settings','설정']];
+['household','초대코드'],['sync','동기화 테스트'],['consent','아이정보 동의'],['today','오늘 할 일'],['list','지난 기록'],['compose','알림 붙여넣기'],['result','정리 결과'],['settings','설정']];
 const tabScreens=['today','list','compose','result','settings'];
 const nav=document.getElementById('nav');
 order.forEach(([id,label])=>{
@@ -495,6 +517,39 @@ function setState(screenId,btn){
   screen.querySelectorAll('.stateb').forEach(b=>b.classList.toggle('on', b===btn));
   screen.querySelectorAll('.state-panel').forEach(p=>p.classList.toggle('on', p.dataset.panel===btn.dataset.st));
 }
+function validateAuth(){
+  const email=document.getElementById('authEmail').value.trim();
+  const pw=document.getElementById('authPw').value;
+  const btn=document.getElementById('authSubmit');
+  const err=document.getElementById('authErr');
+  const emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const pwOk=pw.length>=8;
+  let msg='';
+  if(email && !emailOk) msg='이메일 형식이 올바르지 않아요';
+  else if(pw && !pwOk) msg='비밀번호는 8자 이상이어야 해요';
+  err.style.display=msg?'block':'none';
+  err.textContent=msg;
+  btn.disabled=!(emailOk && pwOk);
+}
+const syncState={A:{doc:false,book:false},B:{doc:false,book:false}};
+function renderSync(who){
+  const el=document.getElementById('sync'+who);
+  const s=syncState[who];
+  el.innerHTML=
+    '<div class="item" style="padding:6px 0"><div class="check '+(s.doc?'done':'')+'" onclick="toggleSyncLocal(\''+who+'\',\'doc\')">'+(s.doc?'✓':'')+'</div><div style="font-size:12px">동의서 제출</div></div>'+
+    '<div class="item" style="padding:6px 0;border-bottom:none"><div class="check '+(s.book?'done':'')+'" onclick="toggleSyncLocal(\''+who+'\',\'book\')">'+(s.book?'✓':'')+'</div><div style="font-size:12px">체육복 준비</div></div>';
+}
+function toggleSyncLocal(who,key){
+  syncState[who][key]=!syncState[who][key];
+  renderSync(who);
+  toast((who==='A'?'계정 A':'계정 B')+'에서 체크함 (상대는 아직 못 봄)');
+}
+function pullSync(who){
+  const other=who==='A'?'B':'A';
+  syncState[who]={...syncState[other]};
+  renderSync(who);
+  toast('당겨서 새로고침 — 계정 '+other+'의 최신 상태를 가져왔어요');
+}
 function firePush(){
   const b=document.getElementById('pushBanner');
   b.classList.add('show');
@@ -517,6 +572,7 @@ function shareNote(){
   input.value='';
   toast('배우자에게 공유했어요');
 }
+renderSync('A'); renderSync('B');
 go('splash');
 setTimeout(()=>{
   const splashEl=document.querySelector('.screen[data-s="splash"]');
