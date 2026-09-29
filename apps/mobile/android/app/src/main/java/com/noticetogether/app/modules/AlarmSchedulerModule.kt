@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.core.app.NotificationManagerCompat
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -46,19 +47,7 @@ class AlarmSchedulerModule(reactContext: ReactApplicationContext) :
       val id = notificationId.toInt()
       val timestamp = timestampMillis.toLong()
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-        promise.reject(
-          "EXACT_ALARM_NOT_PERMITTED",
-          "정확한 알람 권한이 없습니다. 설정에서 허용해야 합니다.",
-        )
-        return
-      }
-
-      alarmManager.setExactAndAllowWhileIdle(
-        AlarmManager.RTC_WAKEUP,
-        timestamp,
-        buildPendingIntent(id, title, body, noticeId),
-      )
+      setAlarm(alarmManager, timestamp, buildPendingIntent(id, title, body, noticeId))
       ReminderStore.save(reactApplicationContext, id, timestamp, title, body, noticeId)
       promise.resolve(null)
     } catch (e: Exception) {
@@ -86,6 +75,20 @@ class AlarmSchedulerModule(reactContext: ReactApplicationContext) :
   }
 
   companion object {
+    /**
+     * 정확한 알람 권한이 없어도 알림을 버리지 않는다 — 예전엔 여기서 reject하고 JS는 경고만 찍어서
+     * 예약이 조용히 사라졌다. 권한이 없으면 Doze 중에도 울리는 비정확 알람으로 대신 건다
+     * (몇 분 늦을 수 있지만 "마감 전날 저녁" 알림엔 충분하다).
+     */
+    fun setAlarm(alarmManager: AlarmManager, timestamp: Long, pendingIntent: PendingIntent) {
+      val canExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
+      if (canExact) {
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timestamp, pendingIntent)
+      } else {
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timestamp, pendingIntent)
+      }
+    }
+
     fun buildPendingIntent(
       context: Context,
       id: Int,
@@ -110,6 +113,11 @@ class AlarmSchedulerModule(reactContext: ReactApplicationContext) :
 
   private fun buildPendingIntent(id: Int, title: String, body: String, noticeId: String) =
     Companion.buildPendingIntent(reactApplicationContext, id, title, body, noticeId)
+
+  @ReactMethod
+  fun areNotificationsEnabled(promise: Promise) {
+    promise.resolve(NotificationManagerCompat.from(reactApplicationContext).areNotificationsEnabled())
+  }
 
   @ReactMethod
   fun canScheduleExactAlarms(promise: Promise) {

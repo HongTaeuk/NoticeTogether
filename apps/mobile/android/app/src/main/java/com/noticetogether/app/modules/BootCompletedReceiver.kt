@@ -30,11 +30,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
         entry.body,
         entry.noticeId,
       )
-      alarmManager.setExactAndAllowWhileIdle(
-        AlarmManager.RTC_WAKEUP,
-        entry.timestampMillis,
-        pendingIntent,
-      )
+      AlarmSchedulerModule.setAlarm(alarmManager, entry.timestampMillis, pendingIntent)
     }
 
     ReminderStore.removeExpired(context, expired)

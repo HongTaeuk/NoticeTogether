@@ -15,6 +15,7 @@ type AlarmSchedulerNative = {
   ) => Promise<void>;
   cancelReminder: (notificationId: number) => Promise<void>;
   canScheduleExactAlarms: () => Promise<boolean>;
+  areNotificationsEnabled: () => Promise<boolean>;
 };
 
 const NativeAlarmScheduler = NativeModules.AlarmScheduler as AlarmSchedulerNative | undefined;
@@ -64,4 +65,10 @@ export async function cancelReminder(checklistItemId: string): Promise<void> {
 export async function canScheduleExactAlarms(): Promise<boolean> {
   ensureAndroid();
   return NativeAlarmScheduler!.canScheduleExactAlarms();
+}
+
+/** 권한 요청(Android 13+)과 별개로, 사용자가 시스템 설정에서 알림을 꺼둔 경우까지 반영한다. */
+export async function areNotificationsEnabled(): Promise<boolean> {
+  ensureAndroid();
+  return NativeAlarmScheduler!.areNotificationsEnabled();
 }

@@ -209,3 +209,11 @@
   1. `POST_NOTIFICATIONS` `granted=false` — Android 13+는 런타임 요청이 필수인데 앱 코드 어디에도 `PermissionsAndroid.request`가 없음. 알람이 울려도 알림이 표시되지 않음.
   2. "알람 및 리마인더"(`SCHEDULE_EXACT_ALARM`) 스위치 꺼짐(설정 화면 스크린샷으로 확인) — Android 14+는 새로 설치한 앱에 기본 거부. 이 경우 `AlarmSchedulerModule.scheduleReminder`가 `EXACT_ALARM_NOT_PERMITTED`로 거절하고, JS는 `console.warn`만 하고 넘어가서 **예약 자체가 조용히 안 됨**. 네이티브에 `canScheduleExactAlarms()`가 있지만 JS에서 호출하는 곳이 없음.
   - 즉 FR-4(마감 임박 알림)는 코드상 구현돼 있지만 이 폰에선 한 번도 동작할 수 없었음. 다음 작업 1순위: 앱 시작 시(또는 첫 알림 저장 시) 두 권한을 요청하고, 거부 상태면 설정 탭 "언제 알려줄지"에 "알림이 꺼져 있어요 → 켜기" 안내를 띄우기.
+
+## 2026-09-29(계속4) — 마감 알림 권한 문제 수정 (사용자 요청: "먼저 알려드릴 문제만 개선")
+
+- **정확한 알람 권한**: `AndroidManifest.xml`에 `USE_EXACT_ALARM` 추가(Android 13+ 설치 즉시 허용, 사용자가 켤 필요 없음), `SCHEDULE_EXACT_ALARM`은 `maxSdkVersion="32"`로 제한. Play 스토어 정책("알람/캘린더 앱만 USE_EXACT_ALARM")은 Play 미배포라 해당 없음.
+- **예약이 조용히 사라지던 문제 제거**: `AlarmSchedulerModule`에 공통 `setAlarm()` 신설 — 정확한 알람이 가능하면 `setExactAndAllowWhileIdle`, 불가하면 reject 대신 `setAndAllowWhileIdle`(Doze 중에도 울림, 수 분 오차)로 대신 건다. `BootCompletedReceiver`도 같은 함수를 쓰도록 변경 — 기존엔 권한이 없으면 재부팅 복구 중 `SecurityException`으로 죽었을 것.
+- **알림 표시 권한**: `src/lib/notificationPermission.ts` 신설. 메인 화면(`NoticeInputScreen`) 진입 시 `POST_NOTIFICATIONS` 요청(Android 13+; 이미 허용/영구 거부면 창 안 뜸). 켜짐 여부는 네이티브 `NotificationManagerCompat.areNotificationsEnabled()`(새 브릿지 메서드 `areNotificationsEnabled`)로 판단해 시스템 설정에서 끈 경우까지 반영.
+- **설정 탭 안내**: 알림이 꺼져 있으면 "언제 알려줄지" 위에 주황색 "휴대폰 알림이 꺼져 있어요 → 알림 켜기" 카드. 버튼은 권한 요청, 영구 거부 상태면 시스템 앱 설정으로 이동. 설정에서 돌아오면(`AppState` active) 상태 재확인.
+- `docs/05_tech_review.md` 3-6절에 갱신 노트(권한 확보 방식, Notifee 미사용 사실) 추가. 모바일 `tsc`/`eslint` 통과.

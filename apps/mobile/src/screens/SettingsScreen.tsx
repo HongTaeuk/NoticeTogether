@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  AppState,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -10,6 +11,11 @@ import {
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
+import {
+  isNotificationEnabled,
+  openAppSettings,
+  requestNotificationPermission,
+} from "../lib/notificationPermission";
 import { ROLE_LABEL } from "../types/notice";
 import ChildConsentSection from "./ChildConsentSection";
 
@@ -50,6 +56,29 @@ export default function SettingsScreen({
   onChildAdded: () => void;
 }) {
   const [reminder, setReminder] = useState<ReminderInfo | null>(null);
+  const [notificationsOn, setNotificationsOn] = useState(true);
+
+  const refreshNotificationStatus = useCallback(() => {
+    isNotificationEnabled().then(setNotificationsOn);
+  }, []);
+
+  // 시스템 설정에서 알림을 켜고 돌아왔을 때 경고가 바로 사라지게 한다.
+  useEffect(() => {
+    refreshNotificationStatus();
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") refreshNotificationStatus();
+    });
+    return () => sub.remove();
+  }, [refreshNotificationStatus]);
+
+  async function turnOnNotifications() {
+    const result = await requestNotificationPermission();
+    if (result === "blocked") {
+      openAppSettings();
+      return;
+    }
+    setNotificationsOn(result === "granted");
+  }
 
   useEffect(() => {
     authFetch("/api/reminder-time")
@@ -73,6 +102,17 @@ export default function SettingsScreen({
         <Text style={styles.title}>설정</Text>
 
         <Text style={styles.sectionTitle}>언제 알려줄지</Text>
+        {!notificationsOn && (
+          <View style={[styles.card, styles.warningCard]}>
+            <Text style={styles.warningTitle}>휴대폰 알림이 꺼져 있어요</Text>
+            <Text style={styles.warningBody}>
+              이대로면 마감이 다가와도 알림이 오지 않아요. 알림을 켜주세요.
+            </Text>
+            <TouchableOpacity onPress={turnOnNotifications} style={styles.warningButton}>
+              <Text style={styles.warningButtonText}>알림 켜기</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>마감 알림</Text>
@@ -155,6 +195,34 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     backgroundColor: "#FFFFFF",
+  },
+  warningCard: {
+    backgroundColor: "#FFF3E6",
+    borderColor: "#FFF3E6",
+  },
+  warningTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#B85C00",
+  },
+  warningBody: {
+    fontSize: 13,
+    color: "#B85C00",
+    lineHeight: 19,
+    marginTop: 4,
+  },
+  warningButton: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+    backgroundColor: "#F2871B",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  warningButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
   cardTinted: {
     backgroundColor: "#F3F8FF",

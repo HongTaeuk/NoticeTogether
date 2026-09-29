@@ -28,6 +28,7 @@ import {
   scheduleReminderForItem,
 } from "../lib/reminderSync";
 import BottomTabBar, { type MainTab } from "../components/BottomTabBar";
+import { requestNotificationPermission } from "../lib/notificationPermission";
 import NoticeListScreen from "./NoticeListScreen";
 import SettingsScreen from "./SettingsScreen";
 import TodayScreen from "./TodayScreen";
@@ -94,6 +95,8 @@ export default function NoticeInputScreen({
 
   useEffect(() => {
     loadChildren();
+    // FR-4: 마감 알림이 실제로 뜨려면 알림 권한이 있어야 한다. 이미 허용/영구 거부면 창이 뜨지 않는다.
+    requestNotificationPermission().catch(() => {});
   }, []);
 
   function updateRawText(text: string) {
