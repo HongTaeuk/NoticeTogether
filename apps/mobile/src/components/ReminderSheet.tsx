@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatKoreanDate, formatKoreanDateTime, formatKoreanTime } from "../lib/dateFormat";
 import type { ReminderPref } from "../lib/reminderPrefs";
 import { computeReminderTimes, type ReminderSchedule } from "../lib/reminderSync";
@@ -33,6 +34,8 @@ export default function ReminderSheet({
 }) {
   const [mode, setMode] = useState<ReminderPref["mode"]>(pref.mode);
   const [customAt, setCustomAt] = useState<Date>(new Date());
+  // Modal은 화면 끝까지 그려져서 하단 내비게이션 바가 저장 버튼을 가린다.
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!visible || !item) return;
@@ -90,7 +93,7 @@ export default function ReminderSheet({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
-      <View style={styles.sheet}>
+      <View style={[styles.sheet, { paddingBottom: 20 + insets.bottom }]}>
         <View style={styles.handle} />
         <Text style={styles.title}>알림 설정</Text>
         <Text style={styles.itemTitle} numberOfLines={2}>
@@ -182,7 +185,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 22,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 28,
   },
   handle: {
     alignSelf: "center",
