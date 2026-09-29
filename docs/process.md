@@ -165,3 +165,11 @@
   - 모바일: `NoticeInputScreen`의 "핵심만 정리하면" 화면 안에 "이게 무슨 뜻인지 쉽게 설명" 접힘 섹션 추가(PRD 4-4 트리 구조 그대로, 별도 최상위 메뉴 아님, 기본값 접힘 — 가이드라인 5 준수).
   - `tsc`/`next build`/모바일 `tsc` 전부 통과.
 - **FR-4 마지막 남은 항목 완료 — 알림 탭 → 해당 알림 화면 딥링크**: 예약 시점부터 `noticeId`를 함께 들고 다니도록 전체 체인을 확장함(`ReminderStore`/`AlarmSchedulerModule`/`ReminderBroadcastReceiver`가 전부 `noticeId` 필드 추가, JS `native/alarmScheduler.ts`·`lib/reminderSync.ts`·`NoticeInputScreen`의 호출부 3곳도 함께 갱신). 알림을 탭하면 `MainActivity`로 가는 콘텐츠 인텐트에 `noticeId`가 실려가고, `MainActivity`가 콜드 스타트(`onCreate`)면 정적 필드에 담아 두고, 웜 스타트(`onNewIntent`, `singleTask`라 이미 떠 있으면 여기로 옴)면 `RCTDeviceEventEmitter`로 "NoticeDeepLink" 이벤트를 바로 쏜다. 신설한 `DeepLinkModule`(`getInitialNoticeId()`)과 JS `native/deepLink.ts`(콜드 스타트 조회 + 웜 스타트 이벤트 구독을 하나로 감쌈)를 `App.tsx`가 구독해서 `deepLinkNoticeId` 상태로 들고 있다가 `NoticeInputScreen`에 내려주면, 거기 있던 `openExistingNotice(id)`(원래 "지난 기록"에서 알림을 탭했을 때 쓰던 함수)를 그대로 재사용해 화면을 전환한다. 새 네이티브 모듈 추가라 새 파일 하나(`ReactPackage` 재사용)만 필요했고 기존 알림 파이프라인 구조를 그대로 씀 — 새 아키텍처를 얹지 않음. `tsc`/`gradlew assembleDebug` 통과, 실기기 재설치 확인. **이걸로 FR-4(마감 임박 알림) 신뢰성 관련 문제가 전부 해결됨** — 이전 세션 감사에서 나온 남은 항목이 이제 없음.
+
+## 2026-09-29 — 실기기에서 앱이 안 켜지던 문제
+
+- **증상**: 휴대폰(R5CX227ZZST)에서 앱을 열면 빨간 에러 화면("Unable to load script… Make sure you're running Metro")만 뜨고 사용 불가.
+- **원인**: 기기에 깔려 있던 게 **debug APK**(`flags=DEBUGGABLE`, 2026-09-29 20:10 설치)였음. debug 빌드는 JS 번들을 내장하지 않고 PC의 Metro 개발 서버(`localhost:8081`)에서 받아오므로, PC/Metro 없이 폰만으로 열면 항상 이렇게 실패함. 코드 버그 아님.
+- **해결**: JS 번들이 내장된 release APK(`android/app/build/outputs/apk/release/app-release.apk`, 2026-09-28 19:42 빌드 — 이후 mobile 쪽 변경은 빌드 로그/스크린샷뿐이라 최신 코드와 동일)를 `adb install -r`로 덮어써 설치. debug/release 둘 다 같은 debug keystore로 서명돼 있어 삭제 없이 교체 가능 → 익명 계정 세션 등 앱 데이터 유지. 재실행 시 온보딩 화면이 정상 렌더링됨을 스크린샷으로 확인. 설치 파일도 폰의 `Download/NoticeTogether.apk`로 복사해 둠(재설치/다른 기기 공유용).
+- **부수 이슈**: 처음엔 adb에서 기기가 `unauthorized`로 떠서 설치 자체가 막혔음 — 안드로이드가 한동안 안 쓴 PC의 USB 디버깅 승인을 자동 취소한 것. 휴대폰에서 "USB 디버깅 권한 취소 → 재연결 → 허용"으로 해결.
+- **앞으로 지침**: 사용자가 PC 없이 쓰는 폰에는 항상 **release APK**를 설치한다. debug APK는 Metro를 띄워 둔 개발 중에만 쓰고, 실기기 확인용 설치가 끝나면 release로 되돌려 둔다. (Git Bash에서 `adb push`/`adb shell`에 `/sdcard/...` 경로를 쓰면 윈도우 경로로 변환돼 실패하므로 `MSYS_NO_PATHCONV=1`을 붙일 것.)
