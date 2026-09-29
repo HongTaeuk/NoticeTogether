@@ -217,3 +217,9 @@
 - **알림 표시 권한**: `src/lib/notificationPermission.ts` 신설. 메인 화면(`NoticeInputScreen`) 진입 시 `POST_NOTIFICATIONS` 요청(Android 13+; 이미 허용/영구 거부면 창 안 뜸). 켜짐 여부는 네이티브 `NotificationManagerCompat.areNotificationsEnabled()`(새 브릿지 메서드 `areNotificationsEnabled`)로 판단해 시스템 설정에서 끈 경우까지 반영.
 - **설정 탭 안내**: 알림이 꺼져 있으면 "언제 알려줄지" 위에 주황색 "휴대폰 알림이 꺼져 있어요 → 알림 켜기" 카드. 버튼은 권한 요청, 영구 거부 상태면 시스템 앱 설정으로 이동. 설정에서 돌아오면(`AppState` active) 상태 재확인.
 - `docs/05_tech_review.md` 3-6절에 갱신 노트(권한 확보 방식, Notifee 미사용 사실) 추가. 모바일 `tsc`/`eslint` 통과.
+- **실기기 검증(release APK 21:30 빌드, sha256 `3afc4a49…`, `adb install -r`로 데이터 유지 + `Download/NoticeTogether.apk` 교체)**:
+  - 설치 직후 `USE_EXACT_ALARM: granted=true` — 사용자 조작 없이 자동 허용 확인.
+  - 메인 화면 진입 시 시스템 알림 권한 창(`GrantPermissionsActivity`)이 뜸 → 사용자가 폰에서 "허용" → `POST_NOTIFICATIONS: granted=true, USER_SET`.
+  - 설정 탭: 알림 켜진 상태라 경고 카드 없이 정상 표시.
+  - `dumpsys alarm`: 이 앱의 `ReminderBroadcastReceiver` 알람 2건이 `2026-10-11 20:00`(= 설정에 표시된 "마감 1일 전 · 오후 8시")에 `exactAllowReason=policy_permission, window=0`(정확한 알람)으로 등록됨. 수정 전엔 이 앱 알람이 0건이었음.
+  - 아직 못 한 것: 실제로 알람 시각이 되어 알림이 화면에 뜨는 것까지는 이번에 확인 못 함(가장 가까운 알람이 10/11). 알림 표시 코드(`ReminderBroadcastReceiver`)는 이번에 안 바뀌었고, 막혀 있던 두 권한은 모두 해소됨. 경고 카드("알림 켜기")가 뜨는 경로도 알림이 켜진 상태라 실기기로는 못 봄(코드·타입 검사만).
