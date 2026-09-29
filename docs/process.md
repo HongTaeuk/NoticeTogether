@@ -184,3 +184,18 @@
   - 폰에서 온보딩 화면이 떴다는 것 자체가 Vercel의 `POST /api/auth/anonymous` 성공 증거(`App.tsx` 로직상 실패하면 가입 화면으로 감).
 - **발견한 문제 — `apps/web-api/vercel.json`의 자동배포 차단이 실제로는 안 먹고 있었음**: 방금 `process.md`만 고친 자동 커밋(3ed8c19, 20:38:48)이 푸시되자 8초 뒤 Vercel 프로덕션 배포가 새로 생겨 `Couldn't find any pages or app directory`로 실패함. 즉 Vercel 프로젝트의 Root Directory가 `apps/web-api`가 아니라 저장소 루트로 잡혀 있어서, (1) `apps/web-api/vercel.json`의 `git.deploymentEnabled:false`를 읽지 못하고, (2) 루트엔 앱이 없으니 빌드는 항상 실패함. 운영 서버엔 영향 없지만(실패 배포는 별칭을 안 바꿈) 푸시마다 배포 횟수를 소모해서 9/28의 "하루 100회 한도 초과" 재발 위험이 그대로 남아 있었음. 목록상 이전에도 같은 실패 배포가 여러 번 있었음.
 - **조치**: 저장소 루트에 같은 내용의 `vercel.json`(`{"git":{"deploymentEnabled":false}}`) 추가. 수동 배포(`apps/web-api`에서 `vercel deploy --prod`)는 그 폴더만 업로드하므로 루트 파일의 영향을 받지 않음.
+
+## 2026-09-29(계속2) — 하단 탭바 추가 (사용자 요청: "목업처럼 오늘/지난기록/새알림/설정 탭")
+
+- **문제**: `docs/mockup.html`엔 하단 탭바(오늘 / 지난 기록 / 새 알림 / 설정)가 있는데 실제 앱엔 없었음. 화면 이동이 각 화면 상단의 작은 글자 링크("오늘 할 일", "지난 기록", "배우자 초대 코드", "계정 만들기")뿐이었고, 설정 화면 자체가 없어서 아이 등록은 알림 작성 화면 맨 아래에, 계정 버튼은 모든 화면 상단에 흩어져 있었음.
+- **구현**:
+  - `src/components/BottomTabBar.tsx` 신설 — 목업의 아이콘(SVG 경로 그대로)·색(활성 `#1B64F2` / 비활성 `#9DBEF7`)·라벨 사용. 아이콘용으로 `react-native-svg@15.15.5` 설치(네이티브 모듈 → APK 재빌드 필요). 키보드가 뜨면 탭바를 숨김(`adjustResize`라 안 숨기면 입력창 위를 가림).
+  - `src/screens/SettingsScreen.tsx` 신설 — "언제 알려줄지"(`/api/reminder-time`의 실제 개인화 결과: "마감 N일 전(부터 매일) · 오후 N시" + 개인화 여부/근거 문구), 아이 정보 등록(`ChildConsentSection`을 작성 화면에서 이리로 이동, 동의 절차 그대로), 배우자 초대 코드, 계정(역할 표시 + 계정 만들기/로그아웃).
+  - `NoticeInputScreen`이 탭 상태에 `settings`를 추가하고 모든 탭 화면 아래에 탭바를 붙임. "새로 온 알림"은 목업에 탭이 없어 "오늘 할 일" 상단 링크로 유지(그 동안 "오늘" 탭 활성). 정리 결과 화면에선 목업처럼 "새 알림" 탭이 켜짐.
+  - 탭바와 중복되는 상단 링크/계정 버튼을 `TodayScreen`/`NoticeListScreen`/작성 화면에서 제거. `TodayScreen`엔 목업처럼 오늘 날짜와 완료 수(n/m) 표시, "새로 온 알림"·"배우자 초대" 링크만 남김.
+  - PRD 4-1/4-5와 탭 구성이 달라지는 부분은 `docs/06_prd.md` 4-5절에 갱신 노트로 기록("새 알림" 탭 = 작성, "새로 온 알림"은 하위 화면, 설정 탭 = PRD의 하단 격리 영역).
+- **작업 중 발견/수정한 버그 2건**:
+  1. **초안 유실** — "+ 새 알림 작성하기"(`resetToCompose`)가 작성 중이던 원문 초안까지 지웠음. 탭으로 오가다 "새 알림"을 누르면 쓰던 글이 날아가는 문제가 되므로, 초안은 유지하고 저장에 성공했을 때만 비우도록 변경(PRD 5-5: 입력하던 원문이 사라지면 안 됨).
+  2. **새 알림의 마감 알림 딥링크가 안 되던 문제** — 요약 직후 `scheduleReminders`가 state의 `noticeId`를 읽었는데, 방금 `setNoticeId`한 값은 그 시점 클로저에 아직 없어서 `notice_id: ""`로 예약됐음. 그 알림을 탭해도 해당 알림 화면으로 이동하지 못함(앱을 다시 열면 `TodayScreen`의 재동기화가 올바른 id로 덮어써서 가려져 있었음). noticeId를 인자로 직접 넘기도록 수정.
+  3. **(백엔드) 개인화 알림 시각이 9시간 어긋나던 문제** — `/api/reminder-time`이 `getHours()`로 시각을 뽑는데 Vercel 런타임은 UTC라, 밤 9시(KST)에 주로 여는 사람의 알림이 낮 12시로 잡힐 수 있었음(열람 3회 이상 쌓여 개인화가 켜진 뒤부터). `(getUTCHours() + 9) % 24`로 KST 기준 계산(한국은 서머타임 없음). `vercel deploy --prod`로 배포(`dpl_96Gd1G2r29AsuNLX9PEjxdSy5AkJ`) — 실수로 배포 명령을 두 번 실행해 동일 코드 배포가 2건 생김(둘 다 Ready, 최신 것이 별칭에 연결). 스모크 테스트: 무인증 `/api/reminder-time`·`/api/today`·`/api/children` → 401 정상.
+- 모바일 `tsc --noEmit`/`eslint`, 백엔드 `tsc --noEmit` 통과.

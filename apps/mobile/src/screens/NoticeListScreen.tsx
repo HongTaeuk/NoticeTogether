@@ -35,19 +35,9 @@ type Mode = "all" | "unread";
 export default function NoticeListScreen({
   mode,
   onSelectNotice,
-  onComposeNew,
-  onManageHousehold,
-  onViewToday,
-  accountLabel,
-  onAccountPress,
 }: {
   mode: Mode;
   onSelectNotice: (id: string) => void;
-  onComposeNew: () => void;
-  onManageHousehold: () => void;
-  onViewToday: () => void;
-  accountLabel: string;
-  onAccountPress: () => void;
 }) {
   const [notices, setNotices] = useState<NoticeSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,25 +73,10 @@ export default function NoticeListScreen({
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>{mode === "unread" ? "새로 온 알림" : "지난 기록"}</Text>
-        <TouchableOpacity onPress={onAccountPress}>
-          <Text style={styles.logoutText}>{accountLabel}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.navRow}>
-        <TouchableOpacity onPress={onViewToday}>
-          <Text style={styles.householdLinkText}>오늘 할 일로 돌아가기</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onManageHousehold}>
-          <Text style={styles.householdLinkText}>배우자 초대 코드 관리</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.composeButton} onPress={onComposeNew}>
-        <Text style={styles.composeButtonText}>+ 새 알림 작성하기</Text>
-      </TouchableOpacity>
+      <Text style={styles.title}>{mode === "unread" ? "새로 온 알림" : "지난 기록"}</Text>
+      <Text style={styles.subtitle}>
+        {mode === "unread" ? "아직 열어보지 않은 알림만 모았어요" : "지금까지 정리한 알림 전체 보기"}
+      </Text>
 
       {children.length > 1 && (
         <View style={styles.childFilterRow}>
@@ -149,7 +124,7 @@ export default function NoticeListScreen({
             {mode === "unread" ? "새로 온 알림이 없어요." : "아직 등록된 알림이 없어요."}
           </Text>
           <Text style={styles.emptySubText}>
-            {mode === "unread" ? "전부 확인했어요." : "위에서 첫 알림을 붙여넣어 보세요."}
+            {mode === "unread" ? "전부 확인했어요." : "아래 '새 알림'에서 첫 알림을 붙여넣어 보세요."}
           </Text>
         </View>
       ) : (
@@ -196,31 +171,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 20,
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
   title: {
     fontSize: 20,
     fontWeight: "700",
     color: "#0B1F4D",
   },
-  logoutText: {
-    fontSize: 12,
-    color: "#F23B3B",
-    fontWeight: "600",
-  },
-  navRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  subtitle: {
+    fontSize: 13,
+    color: "#3D5A9C",
+    marginTop: 4,
     marginBottom: 16,
-  },
-  householdLinkText: {
-    fontSize: 12,
-    color: "#1B64F2",
-    fontWeight: "600",
   },
   childFilterRow: {
     flexDirection: "row",
@@ -246,18 +206,6 @@ const styles = StyleSheet.create({
   },
   childChipTextSelected: {
     color: "#FFFFFF",
-  },
-  composeButton: {
-    backgroundColor: "#1B64F2",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  composeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
   },
   errorText: {
     color: "#F23B3B",

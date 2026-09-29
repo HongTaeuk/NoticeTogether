@@ -55,22 +55,23 @@ const ACTION_LABEL: Record<PartnerActionType, string> = {
  * "누가 뭐 했는지"(배우자 최근 조치 한 줄) → "전체 목록 펼쳐보기"(접힘) 순서의 위계.
  * 지금까지는 이 화면 자체가 없어서 알림을 하나씩 열어야만 체크리스트를 볼 수 있었다.
  */
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+function todayLabel(): string {
+  const d = new Date();
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${WEEKDAYS[d.getDay()]}요일`;
+}
+
 export default function TodayScreen({
   onOpenNotice,
   onComposeNew,
-  onViewHistory,
   onViewUnread,
   onManageHousehold,
-  accountLabel,
-  onAccountPress,
 }: {
   onOpenNotice: (noticeId: string) => void;
   onComposeNew: () => void;
-  onViewHistory: () => void;
   onViewUnread: () => void;
   onManageHousehold: () => void;
-  accountLabel: string;
-  onAccountPress: () => void;
 }) {
   const [urgentItems, setUrgentItems] = useState<TodayItem[]>([]);
   const [allItems, setAllItems] = useState<TodayItem[]>([]);
@@ -163,21 +164,23 @@ export default function TodayScreen({
       }
     >
       <View style={styles.headerRow}>
-        <Text style={styles.title}>오늘 할 일</Text>
-        <TouchableOpacity onPress={onAccountPress}>
-          <Text style={styles.logoutText}>{accountLabel}</Text>
-        </TouchableOpacity>
+        <View>
+          <Text style={styles.title}>오늘 할 일</Text>
+          <Text style={styles.dateText}>{todayLabel()}</Text>
+        </View>
+        {!loading && totalItems > 0 && (
+          <Text style={styles.progressText}>
+            {doneItems}/{totalItems}
+          </Text>
+        )}
       </View>
 
       <View style={styles.navRow}>
         <TouchableOpacity onPress={onViewUnread}>
           <Text style={styles.navLinkText}>새로 온 알림</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onViewHistory}>
-          <Text style={styles.navLinkText}>지난 기록</Text>
-        </TouchableOpacity>
         <TouchableOpacity onPress={onManageHousehold}>
-          <Text style={styles.navLinkText}>배우자 초대 코드</Text>
+          <Text style={styles.navLinkText}>배우자 초대</Text>
         </TouchableOpacity>
       </View>
 
@@ -333,10 +336,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#0B1F4D",
   },
-  logoutText: {
-    fontSize: 12,
-    color: "#F23B3B",
-    fontWeight: "600",
+  dateText: {
+    fontSize: 13,
+    color: "#3D5A9C",
+    marginTop: 2,
+  },
+  progressText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1B64F2",
   },
   navRow: {
     flexDirection: "row",

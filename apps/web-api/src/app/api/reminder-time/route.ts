@@ -6,6 +6,7 @@ import { resolveUser, AuthError } from "@/lib/auth/session";
 const DEFAULT_HOUR = 21; // PRD 7단계 기본값("예: 매일 21시")
 const DEFAULT_DAYS_BEFORE = [1]; // 기본값: 기한 하루 전 1회
 const MIN_SAMPLES = 3; // 이 정도는 쌓여야 "그 사람의 패턴"이라고 믿을 만하다고 봄
+const KST_OFFSET_HOURS = 9;
 
 // FR-4: "확인 빈도가 낮으면 주기를 늘리고, 높으면 줄인다"의 빈도 경계값(주당 열람 횟수).
 const HIGH_ENGAGEMENT_PER_WEEK = 5;
@@ -56,7 +57,9 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const hours = events.map((e) => new Date(e.created_at as string).getHours());
+  // Vercel 런타임은 UTC라 getHours()를 쓰면 한국 시간과 9시간 어긋난다(밤 9시 → 12시).
+  // 기기는 이 hour를 로컬(KST) 시각으로 예약하므로 KST 기준으로 계산한다. 한국은 서머타임이 없다.
+  const hours = events.map((e) => (new Date(e.created_at as string).getUTCHours() + KST_OFFSET_HOURS) % 24);
   const mostCommonHour = mode(hours);
   const daysBeforeDue = engagementToDaysBeforeDue(events.map((e) => e.created_at as string));
 

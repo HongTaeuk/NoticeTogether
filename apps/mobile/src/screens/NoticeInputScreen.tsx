@@ -27,8 +27,9 @@ import {
   getPersonalizedSchedule,
   scheduleReminderForItem,
 } from "../lib/reminderSync";
-import ChildConsentSection from "./ChildConsentSection";
+import BottomTabBar, { type MainTab } from "../components/BottomTabBar";
 import NoticeListScreen from "./NoticeListScreen";
+import SettingsScreen from "./SettingsScreen";
 import TodayScreen from "./TodayScreen";
 
 export default function NoticeInputScreen({
@@ -46,7 +47,7 @@ export default function NoticeInputScreen({
   deepLinkNoticeId?: string | null;
   onDeepLinkHandled?: () => void;
 }) {
-  const [tab, setTab] = useState<"today" | "compose" | "history" | "unread">("today");
+  const [tab, setTab] = useState<"today" | "compose" | "history" | "unread" | "settings">("today");
   const [rawText, setRawText] = useState("");
   const [notice, setNotice] = useState<{ raw_text: string; ai_summary: string | null } | null>(null);
   const [noticeChildName, setNoticeChildName] = useState<string | null>(null);
@@ -84,11 +85,15 @@ export default function NoticeInputScreen({
 
   // 해결검토 1번(다자녀 가정): 자녀가 2명 이상 등록돼 있으면 이 알림이 누구 것인지
   // 고를 수 있게 한다(1명뿐이면 물어볼 필요가 없으므로 묻지 않는다).
-  useEffect(() => {
+  function loadChildren() {
     authFetch("/api/children")
       .then((res) => res.json())
       .then((data) => setChildren(data.children ?? []))
       .catch(() => {});
+  }
+
+  useEffect(() => {
+    loadChildren();
   }, []);
 
   function updateRawText(text: string) {
@@ -100,6 +105,7 @@ export default function NoticeInputScreen({
     AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
   }
 
+  // 작성 중이던 초안(rawText)은 건드리지 않는다 — 탭을 오가다 초안이 날아가면 안 된다(PRD 5-5).
   function resetToCompose() {
     setNoticeId(null);
     setNotice(null);
@@ -109,8 +115,6 @@ export default function NoticeInputScreen({
     setItems([]);
     setActions([]);
     setPartnerNotViewed(null);
-    setRawText("");
-    clearDraft();
     setShowOriginal(false);
     setShowSummaryText(false);
     setError(null);
@@ -186,9 +190,10 @@ export default function NoticeInputScreen({
       }
       setNoticeId(noticeData.noticeId as string);
       setItems(noticeData.items as PersistedItem[]);
+      setRawText("");
       clearDraft();
       await loadNoticeDetail(noticeData.noticeId as string);
-      await scheduleReminders(noticeData.items as PersistedItem[]);
+      await scheduleReminders(noticeData.items as PersistedItem[], noticeData.noticeId as string);
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
@@ -216,6 +221,7 @@ export default function NoticeInputScreen({
       setSummarizeFailCount(0);
       setNoticeId(noticeData.noticeId as string);
       setItems(noticeData.items as PersistedItem[]);
+      setRawText("");
       clearDraft();
       await loadNoticeDetail(noticeData.noticeId as string);
     } catch (err) {
@@ -229,10 +235,12 @@ export default function NoticeInputScreen({
    * PRD 7~8단계: 기한이 있는 항목은 전날 밤에 "마감 임박" 알림을 예약한다(`lib/reminderSync.ts`
    * 공용 로직 — `TodayScreen`의 앱 진입 시 재동기화와 같은 규칙을 쓴다).
    */
-  async function scheduleReminders(newItems: PersistedItem[]) {
+  // noticeId는 인자로 받는다 — 방금 setNoticeId한 값은 이 렌더의 state에 아직 없어서 빈 값이 들어가
+  // 알림을 탭해도 해당 알림 화면으로 이동하지 못했다.
+  async function scheduleReminders(newItems: PersistedItem[], forNoticeId: string) {
     const schedule = await getPersonalizedSchedule();
     for (const item of newItems) {
-      await scheduleReminderForItem({ ...item, notice_id: noticeId ?? "" }, schedule);
+      await scheduleReminderForItem({ ...item, notice_id: forNoticeId }, schedule);
     }
   }
 
@@ -408,72 +416,67 @@ export default function NoticeInputScreen({
     }
   }
 
+  // "새로 온 알림"은 오늘 할 일에서 들어가는 하위 화면이라 오늘 탭을 켜둔다(목업엔 별도 탭이 없다).
+  const activeTab: MainTab = tab === "unread" ? "today" : tab;
+
+  function selectTab(next: MainTab) {
+    if (next === "compose") {
+      resetToCompose();
+      return;
+    }
+    setTab(next);
+  }
+
+  let content: React.ReactNode;
   if (tab === "today") {
-    return (
+    content = (
       <TodayScreen
         onOpenNotice={openExistingNotice}
         onComposeNew={resetToCompose}
-        onViewHistory={() => setTab("history")}
         onViewUnread={() => setTab("unread")}
-        accountLabel={accountLabel}
-        onAccountPress={onAccountPress}
         onManageHousehold={onManageHousehold}
       />
     );
-  }
-
-  if (tab === "unread") {
-    return (
+  } else if (tab === "unread" || tab === "history") {
+    content = (
       <NoticeListScreen
-        mode="unread"
+        key={tab}
+        mode={tab === "unread" ? "unread" : "all"}
         onSelectNotice={openExistingNotice}
-        onComposeNew={resetToCompose}
+      />
+    );
+  } else if (tab === "settings") {
+    content = (
+      <SettingsScreen
+        session={session}
         accountLabel={accountLabel}
         onAccountPress={onAccountPress}
         onManageHousehold={onManageHousehold}
-        onViewToday={() => setTab("today")}
+        onChildAdded={loadChildren}
       />
     );
-  }
-
-  if (tab === "history") {
-    return (
-      <NoticeListScreen
-        mode="all"
-        onSelectNotice={openExistingNotice}
-        onComposeNew={resetToCompose}
-        accountLabel={accountLabel}
-        onAccountPress={onAccountPress}
-        onManageHousehold={onManageHousehold}
-        onViewToday={() => setTab("today")}
-      />
-    );
+  } else {
+    content = renderCompose();
   }
 
   return (
+    <View style={styles.container}>
+      <View style={styles.container}>{content}</View>
+      <BottomTabBar active={activeTab} onSelect={selectTab} />
+    </View>
+  );
+
+  function renderCompose() {
+    return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "android" ? "height" : "padding"}
     >
     <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <View style={styles.roleSwitchRow}>
-        <Text style={styles.roleLabel}>{ROLE_LABEL[role]}(으)로 로그인됨</Text>
-        <TouchableOpacity onPress={onAccountPress}>
-          <Text style={styles.logoutText}>{accountLabel}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.tabRow}>
-        <Text style={styles.title}>{noticeId ? "이거 뭐야?" : "알림 붙여넣기"}</Text>
-        <View style={styles.tabLinkGroup}>
-          <TouchableOpacity onPress={() => setTab("today")}>
-            <Text style={styles.historyLinkText}>오늘 할 일</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setTab("history")}>
-            <Text style={styles.historyLinkText}>지난 기록</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Text style={styles.title}>{noticeId ? "이거 뭐야?" : "알림 붙여넣기"}</Text>
+      {!noticeId && (
+        <Text style={styles.subtitle}>학교/복지관에서 받은 문자나 알림 내용을 그대로 붙여넣으세요</Text>
+      )}
 
       {noticeId && (
         <TouchableOpacity onPress={resetToCompose} style={styles.newComposeButton}>
@@ -770,14 +773,10 @@ export default function NoticeInputScreen({
         </View>
       )}
 
-      {!noticeId && (
-        <ChildConsentSection
-          onChildAdded={(child) => setChildren((prev) => [...prev, child])}
-        />
-      )}
     </ScrollView>
     </KeyboardAvoidingView>
-  );
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -788,35 +787,11 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
-  roleSwitchRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  roleLabel: {
-    fontSize: 12,
-    color: "#3D5A9C",
-  },
-  logoutText: {
-    fontSize: 12,
-    color: "#F23B3B",
-    fontWeight: "600",
-  },
-  tabRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  tabLinkGroup: {
-    flexDirection: "row",
-  },
-  historyLinkText: {
+  subtitle: {
     fontSize: 13,
-    color: "#1B64F2",
-    fontWeight: "600",
-    marginLeft: 14,
+    color: "#3D5A9C",
+    lineHeight: 19,
+    marginBottom: 14,
   },
   newComposeButton: {
     alignSelf: "flex-start",
@@ -835,7 +810,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#0B1F4D",
-    marginBottom: 12,
+    marginBottom: 6,
   },
   devFillButton: {
     marginBottom: 8,
