@@ -173,3 +173,14 @@
 - **해결**: JS 번들이 내장된 release APK(`android/app/build/outputs/apk/release/app-release.apk`, 2026-09-28 19:42 빌드 — 이후 mobile 쪽 변경은 빌드 로그/스크린샷뿐이라 최신 코드와 동일)를 `adb install -r`로 덮어써 설치. debug/release 둘 다 같은 debug keystore로 서명돼 있어 삭제 없이 교체 가능 → 익명 계정 세션 등 앱 데이터 유지. 재실행 시 온보딩 화면이 정상 렌더링됨을 스크린샷으로 확인. 설치 파일도 폰의 `Download/NoticeTogether.apk`로 복사해 둠(재설치/다른 기기 공유용).
 - **부수 이슈**: 처음엔 adb에서 기기가 `unauthorized`로 떠서 설치 자체가 막혔음 — 안드로이드가 한동안 안 쓴 PC의 USB 디버깅 승인을 자동 취소한 것. 휴대폰에서 "USB 디버깅 권한 취소 → 재연결 → 허용"으로 해결.
 - **앞으로 지침**: 사용자가 PC 없이 쓰는 폰에는 항상 **release APK**를 설치한다. debug APK는 Metro를 띄워 둔 개발 중에만 쓰고, 실기기 확인용 설치가 끝나면 release로 되돌려 둔다. (Git Bash에서 `adb push`/`adb shell`에 `/sdcard/...` 경로를 쓰면 윈도우 경로로 변환돼 실패하므로 `MSYS_NO_PATHCONV=1`을 붙일 것.)
+
+## 2026-09-29(계속) — 설치된 앱이 Vercel 프로덕션을 쓰는 정식 버전인지 점검 (사용자 요청)
+
+- **점검 결과 — 정식 배포 버전 맞음**:
+  - 폰에 설치된 APK의 sha256이 로컬 `app-release.apk`와 동일(`0c5a6021…`), 패키지 플래그에 `DEBUGGABLE` 없음.
+  - APK에서 `assets/index.android.bundle`을 꺼내 확인 — 서버 주소는 `https://noticetogether-web-api-notice-together.vercel.app` 하나뿐이고 `localhost`/`10.0.2.2`/사설 IP 등 개발용 주소는 없음.
+  - 이 고정 도메인이 가리키는 배포는 `dpl_3ggd7Xmnr9yUr6PPFvcN935KddgM`(2026-09-28 20:13, Ready) — 마지막 백엔드 코드 커밋(2026-09-28 09:34)보다 이후라 최신 백엔드가 반영돼 있음.
+  - 라이브 스모크 테스트: 인증 없이 `GET /api/today`, `GET /api/notices` → 둘 다 `401 "로그인이 필요합니다."`(9/28 보안 수정 — 무인증 dev 가정 폴백 차단 — 이 프로덕션에 실제 반영돼 있음을 확인).
+  - 폰에서 온보딩 화면이 떴다는 것 자체가 Vercel의 `POST /api/auth/anonymous` 성공 증거(`App.tsx` 로직상 실패하면 가입 화면으로 감).
+- **발견한 문제 — `apps/web-api/vercel.json`의 자동배포 차단이 실제로는 안 먹고 있었음**: 방금 `process.md`만 고친 자동 커밋(3ed8c19, 20:38:48)이 푸시되자 8초 뒤 Vercel 프로덕션 배포가 새로 생겨 `Couldn't find any pages or app directory`로 실패함. 즉 Vercel 프로젝트의 Root Directory가 `apps/web-api`가 아니라 저장소 루트로 잡혀 있어서, (1) `apps/web-api/vercel.json`의 `git.deploymentEnabled:false`를 읽지 못하고, (2) 루트엔 앱이 없으니 빌드는 항상 실패함. 운영 서버엔 영향 없지만(실패 배포는 별칭을 안 바꿈) 푸시마다 배포 횟수를 소모해서 9/28의 "하루 100회 한도 초과" 재발 위험이 그대로 남아 있었음. 목록상 이전에도 같은 실패 배포가 여러 번 있었음.
+- **조치**: 저장소 루트에 같은 내용의 `vercel.json`(`{"git":{"deploymentEnabled":false}}`) 추가. 수동 배포(`apps/web-api`에서 `vercel deploy --prod`)는 그 폴더만 업로드하므로 루트 파일의 영향을 받지 않음.
