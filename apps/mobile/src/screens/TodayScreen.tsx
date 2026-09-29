@@ -17,6 +17,7 @@ import {
   scheduleReminderForItem,
 } from "../lib/reminderSync";
 import { CATEGORY_COLOR, type ChecklistCategory } from "../types/notice";
+import { formatKoreanDate } from "../lib/dateFormat";
 
 type TodayItem = {
   id: string;
@@ -258,7 +259,7 @@ export default function TodayScreen({
                   <Text style={[styles.urgentTitle, item.is_done && styles.urgentTitleDone]}>
                     {item.title}
                   </Text>
-                  {item.due_date && <Text style={styles.urgentDue}>{item.due_date}까지</Text>}
+                  {item.due_date && <Text style={styles.urgentDue}>{formatKoreanDate(item.due_date)}까지</Text>}
                 </View>
               </TouchableOpacity>
             ))
@@ -305,7 +306,7 @@ export default function TodayScreen({
                     <Text style={[styles.urgentTitle, item.is_done && styles.urgentTitleDone]}>
                       {item.title}
                     </Text>
-                    {item.due_date && <Text style={styles.urgentDue}>{item.due_date}까지</Text>}
+                    {item.due_date && <Text style={styles.urgentDue}>{formatKoreanDate(item.due_date)}까지</Text>}
                   </View>
                 </TouchableOpacity>
               ))}

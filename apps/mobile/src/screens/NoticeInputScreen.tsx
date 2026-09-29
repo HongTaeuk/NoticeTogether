@@ -24,10 +24,16 @@ import {
 } from "../types/notice";
 import {
   cancelReminderForItem,
+  computeReminderTimes,
   getPersonalizedSchedule,
   scheduleReminderForItem,
+  type ReminderSchedule,
 } from "../lib/reminderSync";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { formatKoreanDate, formatKoreanDateTime, parseYmd, toYmd } from "../lib/dateFormat";
+import { getAllReminderPrefs, setReminderPref, type ReminderPref } from "../lib/reminderPrefs";
 import BottomTabBar, { type MainTab } from "../components/BottomTabBar";
+import ReminderSheet from "../components/ReminderSheet";
 import { requestNotificationPermission } from "../lib/notificationPermission";
 import NoticeListScreen from "./NoticeListScreen";
 import SettingsScreen from "./SettingsScreen";
@@ -70,6 +76,12 @@ export default function NoticeInputScreen({
   const [summarizeFailCount, setSummarizeFailCount] = useState(0);
   const [children, setChildren] = useState<{ id: string; name: string }[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [reminderSchedule, setReminderSchedule] = useState<ReminderSchedule>({ hour: 21, daysBeforeDue: [1] });
+  const [reminderPrefs, setReminderPrefs] = useState<Record<string, ReminderPref>>({});
+  const [reminderSheetItemId, setReminderSheetItemId] = useState<string | null>(null);
+  const [reminderSavedItemId, setReminderSavedItemId] = useState<string | null>(null);
+  // 요약하는 순간 이미 서버에 저장되는데, 표시가 없어서 같은 알림을 여러 번 붙여넣는 일이 있었다.
+  const [savedJustNow, setSavedJustNow] = useState(false);
   const role = session.role;
   // 익명 계정은 "로그인 상태"라는 개념이 없으므로 로그아웃 대신 계정 만들기를 제안한다.
   const accountLabel = session.isAnonymous ? "계정 만들기" : "로그아웃";
@@ -97,6 +109,8 @@ export default function NoticeInputScreen({
     loadChildren();
     // FR-4: 마감 알림이 실제로 뜨려면 알림 권한이 있어야 한다. 이미 허용/영구 거부면 창이 뜨지 않는다.
     requestNotificationPermission().catch(() => {});
+    getPersonalizedSchedule().then(setReminderSchedule);
+    getAllReminderPrefs().then(setReminderPrefs);
   }, []);
 
   function updateRawText(text: string) {
@@ -118,6 +132,7 @@ export default function NoticeInputScreen({
     setItems([]);
     setActions([]);
     setPartnerNotViewed(null);
+    setSavedJustNow(false);
     setShowOriginal(false);
     setShowSummaryText(false);
     setError(null);
@@ -127,6 +142,7 @@ export default function NoticeInputScreen({
 
   async function openExistingNotice(id: string) {
     setTab("compose");
+    setSavedJustNow(false);
     setLoading(true);
     setError(null);
     setShowOriginal(false);
@@ -195,6 +211,7 @@ export default function NoticeInputScreen({
       setItems(noticeData.items as PersistedItem[]);
       setRawText("");
       clearDraft();
+      setSavedJustNow(true);
       await loadNoticeDetail(noticeData.noticeId as string);
       await scheduleReminders(noticeData.items as PersistedItem[], noticeData.noticeId as string);
     } catch (err) {
@@ -226,6 +243,7 @@ export default function NoticeInputScreen({
       setItems(noticeData.items as PersistedItem[]);
       setRawText("");
       clearDraft();
+      setSavedJustNow(true);
       await loadNoticeDetail(noticeData.noticeId as string);
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장에 실패했습니다.");
@@ -419,8 +437,48 @@ export default function NoticeInputScreen({
     }
   }
 
+  async function saveReminderPref(item: PersistedItem, pref: ReminderPref) {
+    setReminderSheetItemId(null);
+    try {
+      await setReminderPref(item.id, pref);
+      setReminderPrefs(await getAllReminderPrefs());
+      await cancelReminderForItem(item.id);
+      await scheduleReminderForItem({ ...item, notice_id: noticeId ?? "" }, reminderSchedule);
+      setReminderSavedItemId(item.id);
+      setTimeout(() => setReminderSavedItemId((cur) => (cur === item.id ? null : cur)), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "알림 설정 저장에 실패했습니다.");
+    }
+  }
+
+  function pickEditDueDate() {
+    DateTimePickerAndroid.open({
+      value: editDraft.dueDate ? parseYmd(editDraft.dueDate) : new Date(),
+      mode: "date",
+      onChange: (event, date) => {
+        if (event.type !== "set" || !date) return;
+        setEditDraft((d) => ({ ...d, dueDate: toYmd(date) }));
+      },
+    });
+  }
+
+  function reminderStatus(item: PersistedItem): string {
+    if (item.is_done) return "완료해서 알림을 보내지 않아요";
+    const pref = reminderPrefs[item.id] ?? { mode: "auto" };
+    if (pref.mode === "off") return "🔕 이 항목은 알리지 않아요";
+    const times = computeReminderTimes(item, reminderSchedule, pref);
+    if (times.length > 0) {
+      const first = formatKoreanDateTime(times[0].at);
+      const extra = times.length > 1 ? `부터 ${times.length}번` : "에";
+      return `🔔 ${first}${extra} 알려드려요${pref.mode === "custom" ? " (직접 정함)" : ""}`;
+    }
+    if (pref.mode === "custom") return "🔔 정한 알림 시각이 지났어요";
+    return item.due_date ? "알림 시각이 이미 지났어요" : "기한이 없어서 알림이 없어요";
+  }
+
   // "새로 온 알림"은 오늘 할 일에서 들어가는 하위 화면이라 오늘 탭을 켜둔다(목업엔 별도 탭이 없다).
   const activeTab: MainTab = tab === "unread" ? "today" : tab;
+  const reminderSheetItem = items.find((i) => i.id === reminderSheetItemId) ?? null;
 
   function selectTab(next: MainTab) {
     if (next === "compose") {
@@ -574,6 +632,15 @@ export default function NoticeInputScreen({
         </View>
       )}
 
+      {notice && savedJustNow && (
+        <View style={styles.savedBanner}>
+          <Text style={styles.savedBannerTitle}>✓ 저장했어요</Text>
+          <Text style={styles.savedBannerBody}>
+            "오늘 할 일"과 "지난 기록"에서 언제든 다시 볼 수 있어요. 항목마다 알림 시각을 확인하고, 필요하면 "알림 설정"에서 바꿔주세요.
+          </Text>
+        </View>
+      )}
+
       {notice && (
         <View style={styles.resultBox}>
           <View style={styles.resultHeader}>
@@ -633,13 +700,21 @@ export default function NoticeInputScreen({
                           value={editDraft.detail}
                           onChangeText={(text) => setEditDraft((d) => ({ ...d, detail: text }))}
                         />
-                        <TextInput
-                          style={styles.editInput}
-                          placeholder="기한 (YYYY-MM-DD, 선택)"
-                          placeholderTextColor="#9DBEF7"
-                          value={editDraft.dueDate}
-                          onChangeText={(text) => setEditDraft((d) => ({ ...d, dueDate: text }))}
-                        />
+                        <View style={styles.dueEditRow}>
+                          <TouchableOpacity style={styles.dueEditButton} onPress={pickEditDueDate}>
+                            <Text style={styles.dueEditLabel}>기한</Text>
+                            <Text style={styles.dueEditValue}>
+                              {editDraft.dueDate ? formatKoreanDate(editDraft.dueDate) : "날짜 고르기"}
+                            </Text>
+                          </TouchableOpacity>
+                          {editDraft.dueDate !== "" && (
+                            <TouchableOpacity
+                              onPress={() => setEditDraft((d) => ({ ...d, dueDate: "" }))}
+                            >
+                              <Text style={styles.dueClearText}>기한 없음</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
                         <View style={styles.editButtonRow}>
                           <TouchableOpacity onPress={() => setEditingItemId(null)}>
                             <Text style={styles.editCancelText}>취소</Text>
@@ -671,7 +746,9 @@ export default function NoticeInputScreen({
                             {item.title}
                           </Text>
                           {item.detail && <Text style={styles.itemDetail}>{item.detail}</Text>}
-                          {item.due_date && <Text style={styles.itemDue}>기한: {item.due_date}</Text>}
+                          {item.due_date && (
+                            <Text style={styles.itemDue}>기한: {formatKoreanDate(item.due_date)}</Text>
+                          )}
                           <View style={styles.itemFooterRow}>
                             {!item.is_edited_by_user && item.ai_confidence < 0.7 && (
                               // PRD 5-1 분기3: 확신도 낮은 항목의 표시를 누르면 원문으로 이동해서
@@ -706,6 +783,19 @@ export default function NoticeInputScreen({
                           </View>
                         </View>
                       </TouchableOpacity>
+                    )}
+
+                    {!isEditing && (
+                      <View style={styles.reminderRow}>
+                        <Text style={styles.reminderStatusText}>
+                          {reminderSavedItemId === item.id ? "✓ 알림 설정을 저장했어요" : reminderStatus(item)}
+                        </Text>
+                        {!item.is_done && (
+                          <TouchableOpacity onPress={() => setReminderSheetItemId(item.id)}>
+                            <Text style={styles.reminderSetText}>알림 설정</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
                     )}
 
                     {itemActions
@@ -776,11 +866,27 @@ export default function NoticeInputScreen({
         </View>
       )}
 
+      {notice && (
+        <TouchableOpacity style={styles.button} onPress={() => setTab("today")}>
+          <Text style={styles.buttonText}>완료</Text>
+        </TouchableOpacity>
+      )}
+
     </ScrollView>
+    <ReminderSheet
+      visible={reminderSheetItem !== null}
+      item={reminderSheetItem}
+      schedule={reminderSchedule}
+      pref={reminderSheetItem ? reminderPrefs[reminderSheetItem.id] ?? AUTO_PREF : AUTO_PREF}
+      onClose={() => setReminderSheetItemId(null)}
+      onSave={(pref) => reminderSheetItem && saveReminderPref(reminderSheetItem, pref)}
+    />
     </KeyboardAvoidingView>
     );
   }
 }
+
+const AUTO_PREF: ReminderPref = { mode: "auto" };
 
 const styles = StyleSheet.create({
   container: {
@@ -1073,6 +1179,77 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#1B64F2",
     fontWeight: "700",
+  },
+  savedBanner: {
+    marginTop: 16,
+    borderRadius: 12,
+    backgroundColor: "#F3F8FF",
+    padding: 14,
+  },
+  savedBannerTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1B64F2",
+  },
+  savedBannerBody: {
+    fontSize: 13,
+    color: "#3D5A9C",
+    lineHeight: 19,
+    marginTop: 4,
+  },
+  reminderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+    marginLeft: 32,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: "#F3F8FF",
+  },
+  reminderStatusText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#0B1F4D",
+    marginRight: 8,
+  },
+  reminderSetText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1B64F2",
+  },
+  dueEditRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  dueEditButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#C7DBFB",
+    backgroundColor: "#F3F8FF",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginRight: 10,
+  },
+  dueEditLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#3D5A9C",
+  },
+  dueEditValue: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1B64F2",
+    marginTop: 2,
+  },
+  dueClearText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#3D5A9C",
   },
   refreshButton: {
     marginTop: 8,

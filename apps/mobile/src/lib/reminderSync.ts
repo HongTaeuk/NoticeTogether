@@ -1,5 +1,7 @@
 import { authFetch } from "./apiClient";
 import { cancelReminder, scheduleReminder } from "../native/alarmScheduler";
+import { formatKoreanDate, parseYmd } from "./dateFormat";
+import { getReminderPref, type ReminderPref } from "./reminderPrefs";
 
 export type ReminderItem = {
   id: string;
@@ -21,8 +23,36 @@ const DEFAULT_SCHEDULE: ReminderSchedule = { hour: 21, daysBeforeDue: [1] };
 // 예약됐었는지(1회였는지 3회였는지) 몰라도 되게 하기 위한 상한선.
 const MAX_POSSIBLE_DAYS_BEFORE = [1, 2, 3];
 
-function reminderKey(itemId: string, daysBefore: number): string {
-  return `${itemId}#${daysBefore}`;
+const CUSTOM_SLOT = "custom";
+
+function reminderKey(itemId: string, slot: number | string): string {
+  return `${itemId}#${slot}`;
+}
+
+export type PlannedReminder = { at: Date; slot: number | string; daysBefore: number | null };
+
+/** 이 항목의 알림을 언제 울릴지(이미 지난 시각 제외). 예약과 화면 표시가 같은 계산을 쓴다. */
+export function computeReminderTimes(
+  item: Pick<ReminderItem, "due_date" | "is_done">,
+  schedule: ReminderSchedule,
+  pref: ReminderPref,
+): PlannedReminder[] {
+  if (item.is_done || pref.mode === "off") return [];
+  const now = Date.now();
+  if (pref.mode === "custom") {
+    const at = new Date(pref.at);
+    return at.getTime() > now ? [{ at, slot: CUSTOM_SLOT, daysBefore: null }] : [];
+  }
+  if (!item.due_date) return [];
+  return schedule.daysBeforeDue
+    .map((daysBefore) => {
+      const at = parseYmd(item.due_date!);
+      at.setDate(at.getDate() - daysBefore);
+      at.setHours(schedule.hour, 0, 0, 0);
+      return { at, slot: daysBefore, daysBefore };
+    })
+    .filter((r) => r.at.getTime() > now)
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 
 /**
@@ -48,22 +78,26 @@ export async function getPersonalizedHour(): Promise<number> {
   return (await getPersonalizedSchedule()).hour;
 }
 
+function reminderBody(item: ReminderItem, daysBefore: number | null): string {
+  if (!item.due_date) return `${item.title} — 챙길 시간이에요.`;
+  const due = formatKoreanDate(item.due_date);
+  if (daysBefore === null) return `${item.title} — ${due}까지예요.`;
+  const label = daysBefore === 1 ? "내일" : `${daysBefore}일 후`;
+  return `${item.title} — ${label}(${due})까지예요.`;
+}
+
 export async function scheduleReminderForItem(
   item: ReminderItem,
   schedule: ReminderSchedule,
 ): Promise<void> {
-  if (!item.due_date || item.is_done) return;
-  for (const daysBefore of schedule.daysBeforeDue) {
-    const due = new Date(`${item.due_date}T${String(schedule.hour).padStart(2, "0")}:00:00`);
-    due.setDate(due.getDate() - daysBefore);
-    if (due.getTime() <= Date.now()) continue;
-    const label = daysBefore === 1 ? "내일" : `${daysBefore}일 후`;
+  const pref = await getReminderPref(item.id);
+  for (const r of computeReminderTimes(item, schedule, pref)) {
     try {
       await scheduleReminder(
-        reminderKey(item.id, daysBefore),
-        due,
+        reminderKey(item.id, r.slot),
+        r.at,
         "마감이 다가와요",
-        `${item.title} — ${label}(${item.due_date})까지예요.`,
+        reminderBody(item, r.daysBefore),
         item.notice_id,
       );
     } catch (err) {
@@ -74,9 +108,9 @@ export async function scheduleReminderForItem(
 }
 
 export async function cancelReminderForItem(itemId: string): Promise<void> {
-  for (const daysBefore of MAX_POSSIBLE_DAYS_BEFORE) {
+  for (const slot of [...MAX_POSSIBLE_DAYS_BEFORE, CUSTOM_SLOT]) {
     try {
-      await cancelReminder(reminderKey(itemId, daysBefore));
+      await cancelReminder(reminderKey(itemId, slot));
     } catch (err) {
       console.warn("알림 취소 실패:", err);
     }

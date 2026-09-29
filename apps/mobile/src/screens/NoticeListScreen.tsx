@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
+import { formatKoreanDate } from "../lib/dateFormat";
 
 type NoticeSummary = {
   id: string;
@@ -154,7 +155,7 @@ export default function NoticeListScreen({
                   체크 {item.doneItems}/{item.totalItems}
                 </Text>
                 {item.nearestDueDate && (
-                  <Text style={styles.cardDue}>가까운 기한 {item.nearestDueDate}</Text>
+                  <Text style={styles.cardDue}>가까운 기한 {formatKoreanDate(item.nearestDueDate)}</Text>
                 )}
               </View>
             </TouchableOpacity>
