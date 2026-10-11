@@ -232,7 +232,7 @@ export function CollectionSheet({ visible, room, onClose }: { visible: boolean; 
             <View style={styles.shopText}>
               <View style={styles.dexTop}>
                 <Text style={styles.shopName}>{c.owned ? c.name : "???"}</Text>
-                <View style={[styles.gradeBadge, { backgroundColor: GRADE_TINT[c.grade] }]}>
+                <View style={[styles.gradeBadge, styles.dexBadge, { backgroundColor: c.owned ? GRADE_TINT[c.grade] : COLORS.white }]}>
                   <Text style={[styles.gradeText, { color: GRADE_INK[c.grade] }]}>
                     {GRADE_EMOJI[c.grade]} {GRADE_LABEL[c.grade]}
                   </Text>
@@ -362,7 +362,9 @@ const styles = StyleSheet.create({
   fine: { fontSize: 12, color: COLORS.muted, marginVertical: 12, textAlign: "center" },
   dexRow: { flexDirection: "row", alignItems: "center", borderRadius: 16, backgroundColor: COLORS.cream, padding: 10, marginBottom: 8 },
   dexRowLocked: { backgroundColor: COLORS.tint },
-  dexTop: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  dexTop: { flexDirection: "row", alignItems: "center" },
+  // 줄바꿈 배치(flexWrap)에서 안드로이드가 뱃지 폭을 잘못 재 "일반" 글자가 잘렸다 — 줄바꿈 없이 고정 폭으로 둔다.
+  dexBadge: { marginLeft: 8, flexShrink: 0 },
   dexStory: { fontSize: 13, color: COLORS.ink, marginTop: 3, lineHeight: 18 },
   dexDate: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
   gradeBadge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },

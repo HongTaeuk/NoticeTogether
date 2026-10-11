@@ -235,7 +235,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
           <TouchableOpacity style={styles.entry} onPress={() => setDexOpen(true)}>
             <Text style={styles.entryEmoji}>📖</Text>
             <View style={styles.entryText}>
-              <Text style={styles.entryValue}>{ownedCount}종</Text>
+              <Text style={styles.entryValue}>{ownedCount}개</Text>
               <Text style={styles.entryLabel}>선물 모음</Text>
             </View>
             <Text style={styles.entryArrow}>›</Text>
