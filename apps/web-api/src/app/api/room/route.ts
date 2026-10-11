@@ -28,7 +28,6 @@ type PatchBody = {
   rug?: string;
   wall?: string;
   floor?: string;
-  catSkin?: string;
   hidden?: string[];
   ceremonySeen?: string;
 };
@@ -52,7 +51,7 @@ export async function PATCH(req: NextRequest) {
   }
   const next: RoomState = { ...ctx.state };
 
-  const pick = (key: "rug" | "wall" | "floor" | "catSkin", category: string) => {
+  const pick = (key: "rug" | "wall" | "floor", category: string) => {
     const code = body[key];
     if (code === undefined) return null;
     const item = findShopItem(code);
@@ -65,7 +64,6 @@ export async function PATCH(req: NextRequest) {
     ["rug", "rug"],
     ["wall", "wall"],
     ["floor", "floor"],
-    ["catSkin", "skin"],
   ] as const) {
     const problem = pick(key, category);
     if (problem) return NextResponse.json({ error: problem }, { status: 400 });

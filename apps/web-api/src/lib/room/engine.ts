@@ -39,18 +39,31 @@ function seededRandom(seedText: string): () => number {
 export type Grant = { code: string; date: string; streak: number };
 
 /**
- * 챙긴 날마다 물건 하나. 뽑힌 등급을 다 모았으면 다른 등급으로 대신 준다(빈손으로 돌려보내지 않는다).
- * 전부 모았으면 더 주지 않는다.
+ * 선물은 오래 써야 모인다 — 준비한 날이 누적으로 이만큼 될 때마다 하나씩 온다. 간격이 점점 넓어져서
+ * 일주일에 3~4번 준비하면 9개를 다 모으는 데 4~5개월(한 학기 남짓)이 걸린다.
+ */
+export const GIFT_MILESTONES = [3, 7, 12, 18, 25, 33, 42, 52, 63];
+
+/** 다음 선물까지 몇 번 더 준비해야 하는지. 다 모았으면 null. */
+export function daysToNextGift(keptCount: number): number | null {
+  const next = GIFT_MILESTONES.find((m) => m > keptCount);
+  return next === undefined ? null : next - keptCount;
+}
+
+/**
+ * 준비한 날이 마일스톤에 닿는 날마다 선물 하나. 그날의 연속 기록으로 등급을 뽑고(연속일수록 희귀·전설↑),
+ * 뽑힌 등급을 다 모았으면 다른 등급으로 대신 준다(빈손으로 돌려보내지 않는다).
  */
 export function computeGrants(userId: string, keptDays: string[]): Grant[] {
   const owned = new Set<string>();
   const grants: Grant[] = [];
+  const milestones = new Set(GIFT_MILESTONES);
   let streak = 0;
   let prev: string | null = null;
-  for (const day of keptDays) {
+  for (const [index, day] of keptDays.entries()) {
     streak = prev && addDays(prev, 1) === day ? streak + 1 : 1;
     prev = day;
-    if (owned.size >= COLLECTIBLES.length) continue;
+    if (!milestones.has(index + 1) || owned.size >= COLLECTIBLES.length) continue;
 
     const rng = seededRandom(`${userId}:${day}`);
     const w = weightsFor(streak);
@@ -90,7 +103,6 @@ export type RoomState = {
   rug: string;
   wall: string;
   floor: string;
-  catSkin: string;
   hidden: string[];
   ceremonySeen: string | null;
 };
@@ -105,7 +117,6 @@ export function normalizeState(raw: unknown): RoomState {
     rug: typeof s.rug === "string" ? s.rug : DEFAULT_SELECTION.rug,
     wall: typeof s.wall === "string" ? s.wall : DEFAULT_SELECTION.wall,
     floor: typeof s.floor === "string" ? s.floor : DEFAULT_SELECTION.floor,
-    catSkin: typeof s.catSkin === "string" ? s.catSkin : DEFAULT_SELECTION.catSkin,
     hidden: strings(s.hidden),
     ceremonySeen: typeof s.ceremonySeen === "string" ? s.ceremonySeen : null,
   };

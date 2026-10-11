@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ResolvedUser } from "@/lib/auth/session";
 import { isMissingMigrationError } from "@/lib/household/members";
+import { COLLECTIBLES } from "./catalog";
 import { computeGrants, kstDate, normalizeState, type Grant, type RoomState } from "./engine";
 
 export type RoomContext = {
@@ -68,8 +69,9 @@ export async function loadRoomContext(supabase: SupabaseClient, resolved: Resolv
   }
 
   const grants = computeGrants(resolved.userId, keptDays);
-  // 물건을 다 모은 뒤에도 챙긴 날은 보람이 있어야 한다 — moa처럼 더 받을 물건이 없는 날은 별로 바꿔 준다.
-  const bonusStars = keptDays.length - grants.length;
+  // 선물을 다 모은 뒤에도 준비한 날은 보람이 있어야 한다 — 마지막 선물 이후 준비한 날마다 별 +1.
+  const lastGrantIndex = grants.length === COLLECTIBLES.length ? keptDays.indexOf(grants[grants.length - 1].date) : -1;
+  const bonusStars = lastGrantIndex >= 0 ? keptDays.length - 1 - lastGrantIndex : 0;
 
   return {
     keptDays,

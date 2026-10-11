@@ -1,7 +1,7 @@
 import type { ImageSourcePropType } from "react-native";
 
 /**
- * moa 마이룸의 방 그림(`frontend/public/room/*.png`)을 그대로 가져왔다. 파일은 표시 크기의 2배 해상도다.
+ * moa 마이룸의 방 그림(`frontend/public/room/*.png`) 중 가구·소품만 가져왔다(캐릭터는 두지 않는다). 파일은 표시 크기의 2배 해상도다.
  * 크기표(`IMGD`)도 moa 값 그대로 — 이 값으로 바닥에 발을 맞춘다.
  */
 export const ROOM_IMAGES: Record<string, ImageSourcePropType> = {
@@ -17,39 +17,14 @@ export const ROOM_IMAGES: Record<string, ImageSourcePropType> = {
   sofa: require("../assets/room/sofa.png"),
   table: require("../assets/room/table.png"),
   yarn: require("../assets/room/yarn.png"),
-  catsit: require("../assets/room/catsit.png"),
-  catsit_gray: require("../assets/room/catsit_gray.png"),
-  catsit_cheese: require("../assets/room/catsit_cheese.png"),
-  catsit_choco: require("../assets/room/catsit_choco.png"),
-  catsit_calico: require("../assets/room/catsit_calico.png"),
-  catnap: require("../assets/room/catnap.png"),
-  catnap_gray: require("../assets/room/catnap_gray.png"),
-  catnap_cheese: require("../assets/room/catnap_cheese.png"),
-  catnap_choco: require("../assets/room/catnap_choco.png"),
-  catnap_calico: require("../assets/room/catnap_calico.png"),
-  catread: require("../assets/room/catread.png"),
-  catread_gray: require("../assets/room/catread_gray.png"),
-  catread_cheese: require("../assets/room/catread_cheese.png"),
-  catread_choco: require("../assets/room/catread_choco.png"),
-  catread_calico: require("../assets/room/catread_calico.png"),
-  catlounge: require("../assets/room/catlounge.png"),
-  catlounge_gray: require("../assets/room/catlounge_gray.png"),
-  catlounge_cheese: require("../assets/room/catlounge_cheese.png"),
-  catlounge_choco: require("../assets/room/catlounge_choco.png"),
-  catlounge_calico: require("../assets/room/catlounge_calico.png"),
 };
 
 export const IMGD: Record<string, [number, number]> = {
   lamp: [33, 72], plant: [31, 44], frame: [23, 42], shelf: [43, 89],
   bed: [87, 70], mood: [14, 16], sofa: [64, 60], table: [40, 43],
   rug: [104, 53], rug2: [104, 53], bowl: [25, 16], yarn: [19, 26],
-  catsit: [28, 41], catnap: [28, 28], catread: [34, 49], catlounge: [28, 28],
 };
 
-/** 고양이 그림 파일 — 자세가 크기와 자리를 정하고, 털색은 같은 그림의 다른 칠이다(moa와 같은 규칙). */
-export function catImage(pose: string, skin: string): ImageSourcePropType {
-  return ROOM_IMAGES[skin === "cat" ? pose : `${pose}_${skin}`] ?? ROOM_IMAGES[pose];
-}
 
 /** 벽 두 면 색. moa는 벽지를 아직 못 그렸다 — 여기서는 실제로 바뀐다. */
 export const WALLS: Record<string, { back: string; side: string }> = {

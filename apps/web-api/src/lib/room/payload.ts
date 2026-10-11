@@ -1,5 +1,5 @@
 import { COLLECTIBLES, SHOP, findShopItem } from "./catalog";
-import { currentStreak, kstDate, type RoomState } from "./engine";
+import { currentStreak, daysToNextGift, kstDate, type RoomState } from "./engine";
 import type { RoomContext } from "./load";
 
 export function isOwned(state: RoomState, code: string): boolean {
@@ -26,13 +26,15 @@ export function roomPayload(ctx: RoomContext) {
     bonusStars: ctx.bonusStars,
     keptDays: ctx.keptDays.slice(-62),
     keptToday: ctx.keptDays.includes(today),
+    keptTotal: ctx.keptDays.length,
+    daysToNextGift: daysToNextGift(ctx.keptDays.length),
     streak: currentStreak(ctx.keptDays, today),
     collectibles: COLLECTIBLES.map((c) => {
       const g = grantByCode.get(c.code);
       return { ...c, owned: !!g, date: g?.date ?? null, hidden: state.hidden.includes(c.code) };
     }),
     shop: SHOP.map((s) => ({ ...s, owned: isOwned(state, s.code) })),
-    selection: { rug: state.rug, wall: state.wall, floor: state.floor, catSkin: state.catSkin },
+    selection: { rug: state.rug, wall: state.wall, floor: state.floor },
     ceremony,
   };
 }

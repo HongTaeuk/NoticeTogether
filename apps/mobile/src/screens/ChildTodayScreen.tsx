@@ -44,7 +44,8 @@ export default function ChildTodayScreen({
 }) {
   const [items, setItems] = useState<TodayItem[]>([]);
   const [shares, setShares] = useState<ShareMessage[]>([]);
-  const [stars, setStars] = useState(0);
+  // 불러오기 전엔 null — "⭐ 0"을 먼저 보이면 별이 사라진 것처럼 읽힌다.
+  const [stars, setStars] = useState<number | null>(null);
   const [showDone, setShowDone] = useState(false);
   const [celebrate, setCelebrate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,7 +140,7 @@ export default function ChildTodayScreen({
         <View style={styles.headerTop}>
           <Text style={styles.hello}>{name}, 안녕! 👋</Text>
           <View style={styles.starBadge}>
-            <Text style={styles.starBadgeText}>⭐ {stars}</Text>
+            <Text style={styles.starBadgeText}>⭐ {stars ?? "…"}</Text>
           </View>
         </View>
         <Text style={styles.headerSub}>

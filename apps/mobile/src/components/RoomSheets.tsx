@@ -54,12 +54,11 @@ function Sheet({ visible, title, onClose, children }: { visible: boolean; title:
   );
 }
 
-type DecoTab = "furn" | "prop" | "bg" | "char";
+type DecoTab = "furn" | "prop" | "bg";
 const DECO_TABS: { key: DecoTab; label: string }[] = [
   { key: "furn", label: "가구" },
   { key: "prop", label: "소품" },
   { key: "bg", label: "배경" },
-  { key: "char", label: "캐릭터" },
 ];
 const FURN_CODES = ["sofa", "table", "shelf"];
 const PROP_CODES = ["lamp", "frame", "plant", "bowl", "yarn", "mood"];
@@ -67,7 +66,7 @@ const PROP_CODES = ["lamp", "frame", "plant", "bowl", "yarn", "mood"];
 type DecoCell = { key: string; name: string; glyph: string; owned: boolean; on: boolean; onPress: () => void; hint?: string };
 
 /**
- * 꾸미기 — moa `DecoSheet`. 가구·소품은 **켜고 끄기**(여러 개를 함께 놓는다), 배경·캐릭터는 **하나 고르기**.
+ * 꾸미기 — moa `DecoSheet`를 바탕으로 했다. 가구·소품은 **켜고 끄기**(여러 개를 함께 둔다), 러그·배경은 **하나 고르기**.
  * 잠긴 칸을 숨기지 않는다: 무엇이 남았는지 보여야 모을 마음이 생긴다.
  */
 export function DecoSheet({
@@ -81,7 +80,7 @@ export function DecoSheet({
   room: RoomData;
   onClose: () => void;
   onToggle: (code: string) => void;
-  onChoose: (field: "rug" | "wall" | "floor" | "catSkin", code: string) => void;
+  onChoose: (field: "rug" | "wall" | "floor", code: string) => void;
 }) {
   const [tab, setTab] = useState<DecoTab>("furn");
   const byCode = new Map(room.collectibles.map((c) => [c.code, c]));
@@ -94,10 +93,10 @@ export function DecoSheet({
       owned: c.owned,
       on: c.owned && !c.hidden,
       onPress: () => onToggle(code),
-      hint: c.owned ? undefined : "챙긴 날에 와요",
+      hint: c.owned ? undefined : "준비한 날 와요",
     };
   };
-  const shopCell = (s: RoomShopItem, field: "rug" | "wall" | "floor" | "catSkin"): DecoCell => ({
+  const shopCell = (s: RoomShopItem, field: "rug" | "wall" | "floor"): DecoCell => ({
     key: s.code,
     name: s.name,
     glyph: s.glyph,
@@ -116,13 +115,11 @@ export function DecoSheet({
     ];
   } else if (tab === "prop") {
     cells = PROP_CODES.map(collectibleCell);
-  } else if (tab === "bg") {
+  } else {
     cells = [
       ...room.shop.filter((s) => s.category === "wall").map((s) => shopCell(s, "wall")),
       ...room.shop.filter((s) => s.category === "floor").map((s) => shopCell(s, "floor")),
     ];
-  } else {
-    cells = room.shop.filter((s) => s.category === "skin").map((s) => shopCell(s, "catSkin"));
   }
 
   return (
@@ -135,7 +132,7 @@ export function DecoSheet({
         ))}
       </View>
       <Text style={styles.sheetHint}>
-        {tab === "furn" || tab === "prop" ? "눌러서 방에 놓거나 치워요. 치워도 도감에는 남아요." : "하나를 골라요. 잠긴 건 별 상점에서 데려와요."}
+        {tab === "furn" || tab === "prop" ? "눌러서 방에 두거나 치워요. 치워도 선물 모음에는 남아요." : "하나를 골라요. 잠긴 건 별 상점에서 데려와요."}
       </Text>
       <ScrollView style={styles.gridScroll} contentContainerStyle={styles.grid}>
         {cells.map((c) => (
@@ -167,7 +164,6 @@ const SHOP_SECTIONS: { category: RoomShopItem["category"]; label: string }[] = [
   { category: "rug", label: "러그" },
   { category: "wall", label: "벽지" },
   { category: "floor", label: "바닥" },
-  { category: "skin", label: "냥이 털색" },
 ];
 
 /** 별 상점 — 별은 방 꾸미기 전용이다. 산 것은 바로 방에 적용된다. */
@@ -218,17 +214,17 @@ export function ShopSheet({
               })}
           </View>
         ))}
-        <Text style={styles.fine}>별은 준비물을 챙기고 체크하거나, 가족에게 칭찬 스티커를 받으면 모여요.</Text>
+        <Text style={styles.fine}>별은 알림장 준비물을 챙기고 "챙겼어요!"를 누르거나, 가족에게 칭찬 스티커를 받으면 모여요.</Text>
       </ScrollView>
     </Sheet>
   );
 }
 
-/** 도감 — 챙긴 날마다 도착한 물건의 기록. 아직 못 만난 칸도 "???"로 남겨 둔다. */
+/** 선물 모음 — 알림을 준비한 날마다 받은 선물의 기록. 아직 못 받은 칸도 "???"로 남겨 둔다. */
 export function CollectionSheet({ visible, room, onClose }: { visible: boolean; room: RoomData; onClose: () => void }) {
   const owned = room.collectibles.filter((c) => c.owned).length;
   return (
-    <Sheet visible={visible} title={`도감 · ${owned}/${room.collectibles.length}종`} onClose={onClose}>
+    <Sheet visible={visible} title={`선물 모음 · ${owned}/${room.collectibles.length}개`} onClose={onClose}>
       <ScrollView style={styles.listScroll}>
         {room.collectibles.map((c) => (
           <View key={c.code} style={[styles.dexRow, !c.owned && styles.dexRowLocked]}>
@@ -242,7 +238,7 @@ export function CollectionSheet({ visible, room, onClose }: { visible: boolean; 
                   </Text>
                 </View>
               </View>
-              <Text style={styles.dexStory}>{c.owned ? c.story : "준비물을 챙긴 날에 만날 수 있어요."}</Text>
+              <Text style={styles.dexStory}>{c.owned ? c.story : "알림 준비물을 챙긴 날 받을 수 있어요."}</Text>
               {c.owned && c.date && <Text style={styles.dexDate}>{formatKoreanDate(c.date)}에 도착</Text>}
             </View>
           </View>
@@ -275,11 +271,11 @@ export function CeremonyModal({
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.ceremonyBackdrop}>
         <View style={styles.ceremonyCard}>
-          <Text style={styles.ceremonyKicker}>{ceremony.date === today ? "오늘 잘 챙겼어요!" : "잘 챙긴 날의 선물이에요"}</Text>
+          <Text style={styles.ceremonyKicker}>{ceremony.date === today ? "오늘 준비물을 다 챙겼구나!" : "알림을 준비한 날 받은 선물이에요"}</Text>
           <Animated.View style={[styles.ceremonyHero, { transform: [{ scale }] }]}>
             <ItemThumb glyph={ceremony.glyph} size={120} />
           </Animated.View>
-          <Text style={styles.ceremonyTitle}>새 물건이 도착했어요</Text>
+          <Text style={styles.ceremonyTitle}>알림 선물이 왔어요 🎁</Text>
           <View style={[styles.gradeBadge, styles.ceremonyBadge, { backgroundColor: GRADE_TINT[ceremony.grade] }]}>
             <Text style={[styles.gradeText, { color: GRADE_INK[ceremony.grade] }]}>
               {GRADE_EMOJI[ceremony.grade]} {ceremony.name} · {GRADE_LABEL[ceremony.grade]}
@@ -287,7 +283,7 @@ export function CeremonyModal({
           </View>
           <Text style={styles.ceremonyStory}>{ceremony.story}</Text>
           <TouchableOpacity style={styles.ceremonyButton} onPress={onClose}>
-            <Text style={styles.ceremonyButtonText}>방에 놓기</Text>
+            <Text style={styles.ceremonyButtonText}>내 방에 두기</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -317,9 +313,9 @@ const styles = StyleSheet.create({
   tabChipTextOn: { color: COLORS.white },
   sheetHint: { fontSize: 12, color: COLORS.muted, marginBottom: 10 },
   gridScroll: { flexGrow: 0 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingBottom: 6 },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 10, paddingBottom: 6 },
   cell: {
-    width: "30.5%",
+    width: "31.5%",
     alignItems: "center",
     borderRadius: 18,
     borderWidth: 2,

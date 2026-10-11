@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import IsoRoom, { CAT_ACT_LABEL, type CatAct } from "../components/IsoRoom";
+import IsoRoom from "../components/IsoRoom";
 import { CeremonyModal, CollectionSheet, DecoSheet, ShopSheet } from "../components/RoomSheets";
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
@@ -9,19 +9,18 @@ import { josa } from "../lib/josa";
 import type { RoomData } from "../types/room";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
-/** 방 물건을 누르면 나오는 한 줄 — 방을 "예쁜 그림"이 아니라 "챙겨서 모은 것"으로 읽히게 한다(moa objInfo). */
+/** 방 물건을 누르면 나오는 한 줄 — 방을 "예쁜 그림"이 아니라 "알림을 준비해서 받은 선물"로 읽히게 한다. */
 const BASE_INFO: Record<string, string> = {
-  bed: "포근한 침대 — 냥이가 제일 좋아하는 자리예요",
-  rug: "핑크 러그 — 방 가운데를 포근하게",
-  rug2: "민트 러그 — 방 가운데를 산뜻하게",
-  cat: "냥이 — 오늘도 방을 지키며 기다리고 있어요",
+  bed: "포근한 침대 — 내일 준비를 마치고 푹 자는 곳이에요",
+  rug: "핑크 러그 — 가족이 둘러앉는 방 가운데예요",
+  rug2: "민트 러그 — 방 가운데를 산뜻하게 바꿔 줘요",
 };
 
 const DOW = ["월", "화", "수", "목", "금", "토", "일"];
 
 /**
- * 아이의 "내 방" — moa 마이룸을 옮겼다. 준비물을 챙긴 날마다 물건이 도착해 아이소메트릭 방이 채워지고,
- * 별로 러그·벽지·바닥·냥이 털색을 바꾼다. 물건·별 계산은 서버가 하고(같은 날은 같은 결과),
+ * 아이의 "내 방" — moa 마이룸을 옮겼다. 알림 준비물을 챙긴 날마다 선물이 도착해 아이소메트릭 방이 채워지고,
+ * 별로 러그·벽지·바닥을 바꾼다. 선물·별 계산은 서버가 하고(같은 날은 같은 결과),
  * 이 화면은 보여 주고 고르기만 한다.
  */
 export default function MyRoomScreen({ session }: { session: Session }) {
@@ -36,8 +35,6 @@ export default function MyRoomScreen({ session }: { session: Session }) {
   const [dexOpen, setDexOpen] = useState(false);
   const [pop, setPop] = useState<string | null>(null);
   const [ceremony, setCeremony] = useState<RoomData["ceremony"]>(null);
-  // 들어올 때 한 번 정한다 — 렌더마다 뽑으면 냥이가 방 안을 순간이동한다.
-  const [actSeed] = useState(() => Math.random());
 
   const load = useCallback(async () => {
     setError(null);
@@ -86,13 +83,6 @@ export default function MyRoomScreen({ session }: { session: Session }) {
     [room],
   );
 
-  const act: CatAct = useMemo(() => {
-    const acts: CatAct[] = ["nap", "rug"];
-    if (visible.has("shelf")) acts.push("read");
-    if (visible.has("sofa")) acts.push("sofa");
-    return acts[Math.floor(actSeed * acts.length)];
-  }, [visible, actSeed]);
-
   const week = useMemo(() => {
     if (!room) return [];
     const today = parseYmd(room.today);
@@ -110,7 +100,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
   if (!room) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>{error ?? "냥이가 방을 정리하는 중이에요…"}</Text>
+        <Text style={styles.loadingText}>{error ?? "방을 정리하는 중이에요…"}</Text>
         {error && (
           <TouchableOpacity style={styles.retry} onPress={load}>
             <Text style={styles.retryText}>다시 불러오기</Text>
@@ -122,7 +112,6 @@ export default function MyRoomScreen({ session }: { session: Session }) {
 
   const name = session.displayName?.trim() || "나";
   const ownedCount = room.collectibles.filter((c) => c.owned).length;
-  const allCollected = ownedCount === room.collectibles.length;
   const monthPrefix = room.today.slice(0, 7);
   const keptThisMonth = room.keptDays.filter((d) => d.startsWith(monthPrefix)).length;
   const info = (key: string) =>
@@ -168,13 +157,11 @@ export default function MyRoomScreen({ session }: { session: Session }) {
             rug={room.selection.rug}
             wall={room.selection.wall}
             floor={room.selection.floor}
-            catSkin={room.selection.catSkin}
-            act={act}
             editing={editing}
             onPick={(k) => setPop(info(k))}
             onRugSlot={() => setEditing(true)}
           />
-          <Text style={styles.caption}>물건 하나하나가 챙긴 하루예요 · 냥이는 {CAT_ACT_LABEL[act]}</Text>
+          <Text style={styles.caption}>알림을 꾸준히 준비하면 이 방에 선물이 하나씩 놓여요</Text>
           {pop && (
             <View style={styles.pop}>
               <Text style={styles.popText}>{pop}</Text>
@@ -192,7 +179,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
         <View style={styles.hero}>
           <View style={styles.streakRow}>
             <Text style={styles.streakText}>
-              {room.streak > 0 ? `🔥 ${room.streak}일 연속 챙기는 중` : "🌱 오늘부터 다시 시작해요"}
+              {room.streak > 0 ? `🔥 ${room.streak}일 연속 알림 준비 중` : "🌱 오늘 알림부터 함께 준비해요"}
             </Text>
             <Text style={styles.streakSub}>이번 달 {keptThisMonth}일</Text>
           </View>
@@ -213,26 +200,33 @@ export default function MyRoomScreen({ session }: { session: Session }) {
               </View>
             ))}
           </View>
-          <Text style={styles.promise}>
-            {room.keptToday
-              ? "오늘도 챙겼어요! 내일도 챙기면 또 선물이 와요"
-              : allCollected
-                ? "오늘 준비물을 챙기면 보너스 별 +1"
-                : "오늘 준비물을 챙기면 방에 새 물건이 도착해요"}
-          </Text>
+          {room.daysToNextGift !== null ? (
+            <View style={styles.giftBox}>
+              <Text style={styles.giftText}>
+                🎁 다음 선물까지 준비 <Text style={styles.giftCount}>{room.daysToNextGift}번</Text> 남았어요
+              </Text>
+              <Text style={styles.giftSub}>
+                {room.keptToday ? "오늘 준비 완료! 내일 알림도 함께 챙겨요" : "오늘 알림 준비물을 챙기면 한 걸음 가까워져요"}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.promise}>
+              {room.keptToday ? "오늘 준비 완료! 선물을 다 모았어요" : "선물을 다 모았어요! 오늘 준비하면 보너스 별 +1"}
+            </Text>
+          )}
         </View>
 
         <View style={styles.assetRow}>
           <Asset value={`⭐ ${room.stars.balance}`} label="쓸 수 있는 별" />
-          <Asset value={`${ownedCount}/${room.collectibles.length}`} label="모은 물건" />
-          <Asset value={`${room.streak}일`} label="연속 챙김" />
-          <Asset value={`${room.keptDays.length}일`} label="챙긴 날" />
+          <Asset value={`${ownedCount}/${room.collectibles.length}`} label="받은 선물" />
+          <Asset value={`${room.streak}일`} label="연속 준비" />
+          <Asset value={`${room.keptDays.length}일`} label="준비한 날" />
         </View>
 
         <View style={styles.entryRow}>
           <TouchableOpacity style={styles.entry} onPress={() => setShopOpen(true)} disabled={room.needsMigration}>
             <Text style={styles.entryEmoji}>🛍️</Text>
-            <View style={styles.flex}>
+            <View style={styles.entryText}>
               <Text style={styles.entryValue}>⭐ {room.stars.balance}</Text>
               <Text style={styles.entryLabel}>별 상점</Text>
             </View>
@@ -240,22 +234,22 @@ export default function MyRoomScreen({ session }: { session: Session }) {
           </TouchableOpacity>
           <TouchableOpacity style={styles.entry} onPress={() => setDexOpen(true)}>
             <Text style={styles.entryEmoji}>📖</Text>
-            <View style={styles.flex}>
+            <View style={styles.entryText}>
               <Text style={styles.entryValue}>{ownedCount}종</Text>
-              <Text style={styles.entryLabel}>도감</Text>
+              <Text style={styles.entryLabel}>선물 모음</Text>
             </View>
             <Text style={styles.entryArrow}>›</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.howCard}>
-          <Text style={styles.howTitle}>별과 물건은 이렇게 모여요</Text>
-          <Text style={styles.howLine}>🎒 준비물을 챙기고 "챙겼어요"를 누르면 ⭐ 1개</Text>
-          <Text style={styles.howLine}>📅 처음 챙긴 날마다 방에 물건이 하나씩 도착해요</Text>
-          <Text style={styles.howLine}>🔥 여러 날 연속으로 챙기면 희귀·전설 물건이 잘 나와요</Text>
+          <Text style={styles.howTitle}>별과 선물은 이렇게 받아요</Text>
+          <Text style={styles.howLine}>🎒 알림장 준비물을 챙기고 "챙겼어요!"를 누르면 ⭐ 1개</Text>
+          <Text style={styles.howLine}>🎁 알림을 준비한 날이 3·7·12일… 쌓일 때마다 선물이 와요</Text>
+          <Text style={styles.howLine}>🔥 며칠 연속으로 준비하면 희귀·전설 선물이 잘 나와요</Text>
           <Text style={styles.howLine}>💌 가족이 칭찬 스티커를 보내 주면 ⭐ 1개</Text>
           <Text style={styles.howCount}>
-            지금까지 챙긴 것 {room.checkedItems}개 · 받은 스티커 {room.stickersReceived}개
+            지금까지 챙긴 준비물 {room.checkedItems}개 · 받은 스티커 {room.stickersReceived}개
             {room.bonusStars > 0 ? ` · 보너스 ${room.bonusStars}개` : ""} · 쓴 별 {room.stars.spent}개
           </Text>
         </View>
@@ -283,7 +277,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
           if (ok) {
             const item = room.shop.find((s) => s.code === code);
             setShopOpen(false);
-            setPop(`${josa(item?.name ?? "새 물건", "을/를")} 데려와서 방에 바로 적용했어요!`);
+            setPop(`${josa(item?.name ?? "새 선물", "을/를")} 데려와서 방에 바로 적용했어요!`);
           }
         }}
       />
@@ -318,7 +312,7 @@ const styles = StyleSheet.create({
   retry: { marginTop: 12, backgroundColor: COLORS.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10 },
   retryText: { fontFamily: FONT_DISPLAY, color: COLORS.white, fontSize: 15 },
   scene: {
-    backgroundColor: "#E2EFFC",
+    backgroundColor: COLORS.sunSoft,
     alignItems: "center",
     paddingTop: 14,
     paddingBottom: 12,
@@ -333,7 +327,7 @@ const styles = StyleSheet.create({
   editButtonOn: { backgroundColor: COLORS.primary },
   editText: { fontFamily: FONT_DISPLAY, fontSize: 14, color: COLORS.ink },
   editTextOn: { color: COLORS.white },
-  caption: { fontSize: 12, color: COLORS.skyInk, marginTop: 2 },
+  caption: { fontSize: 12, color: COLORS.sunInk, marginTop: 2 },
   pop: {
     position: "absolute",
     bottom: 40,
@@ -369,6 +363,10 @@ const styles = StyleSheet.create({
   dayLabel: { fontSize: 11, color: COLORS.muted, marginTop: 4, fontWeight: "700" },
   dayLabelToday: { color: COLORS.primary },
   promise: { fontSize: 13, color: COLORS.ink, marginTop: 12, textAlign: "center" },
+  giftBox: { marginTop: 14, backgroundColor: COLORS.sunSoft, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12, alignItems: "center" },
+  giftText: { fontFamily: FONT_DISPLAY, fontSize: 16, color: COLORS.sunInk },
+  giftCount: { fontFamily: FONT_DISPLAY, fontSize: 18, color: COLORS.ink },
+  giftSub: { fontSize: 12, color: COLORS.sunInk, marginTop: 3 },
   assetRow: { flexDirection: "row", gap: 8, marginHorizontal: 16, marginTop: 12 },
   asset: { flex: 1, backgroundColor: COLORS.white, borderRadius: 16, paddingVertical: 12, alignItems: "center" },
   assetValue: { fontFamily: FONT_DISPLAY, fontSize: 17, color: COLORS.ink },
@@ -385,6 +383,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   entryEmoji: { fontSize: 26 },
+  entryText: { flex: 1 },
   entryValue: { fontFamily: FONT_DISPLAY, fontSize: 17, color: COLORS.ink },
   entryLabel: { fontSize: 12, color: COLORS.sunInk, fontWeight: "700" },
   entryArrow: { fontSize: 20, color: COLORS.sunInk },

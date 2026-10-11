@@ -13,7 +13,7 @@ export type RoomCollectible = {
 export type RoomShopItem = {
   code: string;
   name: string;
-  category: "rug" | "wall" | "floor" | "skin";
+  category: "rug" | "wall" | "floor";
   glyph: string;
   price: number;
   owned: boolean;
@@ -28,9 +28,12 @@ export type RoomData = {
   bonusStars: number;
   keptDays: string[];
   keptToday: boolean;
+  keptTotal: number;
+  /** 다음 선물까지 몇 번 더 준비해야 하는지. 다 모았으면 null. */
+  daysToNextGift: number | null;
   streak: number;
   collectibles: RoomCollectible[];
   shop: RoomShopItem[];
-  selection: { rug: string; wall: string; floor: string; catSkin: string };
+  selection: { rug: string; wall: string; floor: string };
   ceremony: (Omit<RoomCollectible, "owned" | "hidden"> & { date: string }) | null;
 };

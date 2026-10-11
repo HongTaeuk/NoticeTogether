@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
   if (item.category === "rug") next.rug = item.code;
   if (item.category === "wall") next.wall = item.code;
   if (item.category === "floor") next.floor = item.code;
-  if (item.category === "skin") next.catSkin = item.code;
 
   await saveRoomState(supabase, resolved.userId, next);
   return NextResponse.json(roomPayload({ ...ctx, state: next }));
