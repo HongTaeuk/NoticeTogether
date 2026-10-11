@@ -16,12 +16,13 @@ import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
 import {
   CATEGORY_COLOR,
-  ROLE_LABEL,
+  memberName,
   type ItemAction,
   type PersistedItem,
   type Role,
   type SummarizeResult,
 } from "../types/notice";
+import { COLORS, FONT_DISPLAY } from "../theme";
 import {
   cancelReminderForItem,
   computeReminderTimes,
@@ -35,6 +36,7 @@ import { getAllReminderPrefs, setReminderPref, type ReminderPref } from "../lib/
 import BottomTabBar, { type MainTab } from "../components/BottomTabBar";
 import ReminderSheet from "../components/ReminderSheet";
 import { requestNotificationPermission } from "../lib/notificationPermission";
+import FamilyTalkScreen from "./FamilyTalkScreen";
 import NoticeListScreen from "./NoticeListScreen";
 import SettingsScreen from "./SettingsScreen";
 import TodayScreen from "./TodayScreen";
@@ -54,7 +56,7 @@ export default function NoticeInputScreen({
   deepLinkNoticeId?: string | null;
   onDeepLinkHandled?: () => void;
 }) {
-  const [tab, setTab] = useState<"today" | "compose" | "history" | "unread" | "settings">("today");
+  const [tab, setTab] = useState<MainTab | "unread">("today");
   const [rawText, setRawText] = useState("");
   const [notice, setNotice] = useState<{ raw_text: string; ai_summary: string | null } | null>(null);
   const [noticeChildName, setNoticeChildName] = useState<string | null>(null);
@@ -63,7 +65,8 @@ export default function NoticeInputScreen({
   const [noticeId, setNoticeId] = useState<string | null>(null);
   const [items, setItems] = useState<PersistedItem[]>([]);
   const [actions, setActions] = useState<ItemAction[]>([]);
-  const [userRoleById, setUserRoleById] = useState<Record<string, Role>>({});
+  const [userNameById, setUserNameById] = useState<Record<string, string>>({});
+  const [talkNotice, setTalkNotice] = useState<{ id: string; label: string } | null>(null);
   const [partnerNotViewed, setPartnerNotViewed] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [noteSaveStatus, setNoteSaveStatus] = useState<Record<string, "saving" | "saved">>({});
@@ -306,23 +309,24 @@ export default function NoticeInputScreen({
     setEasyExplanationsExpanded(false);
     setItems(data.items as PersistedItem[]);
     setActions(data.actions as ItemAction[]);
-    const roleMap: Record<string, Role> = {};
-    for (const u of data.users as { id: string; role: Role }[]) {
-      roleMap[u.id] = u.role;
+    const nameMap: Record<string, string> = {};
+    for (const u of data.users as { id: string; role: Role; display_name: string | null }[]) {
+      nameMap[u.id] = memberName(u.role, u.display_name);
     }
-    setUserRoleById(roleMap);
+    setUserNameById(nameMap);
 
-    // PRD 5-2 분기7: 배우자는 있지만 아직 이 알림을 한 번도 안 열어봤을 때를 구분해서 보여준다.
+    // PRD 5-2 분기7: 다른 양육자(엄마·아빠·조부모 등)가 아직 이 알림을 안 열어봤으면 중립적으로 알려준다.
+    // 아이는 알림 상세 화면을 쓰지 않으므로 대상에서 뺀다.
     const householdMembers = (data.householdMembers ?? []) as {
       id: string;
       role: Role;
       display_name: string | null;
     }[];
     const viewedUserIds = new Set((data.viewedUserIds ?? []) as string[]);
-    const partner = householdMembers.find((m) => m.id !== session.userId);
-    setPartnerNotViewed(
-      partner && !viewedUserIds.has(partner.id) ? partner.display_name ?? ROLE_LABEL[partner.role] : null,
-    );
+    const notViewed = householdMembers
+      .filter((m) => m.id !== session.userId && m.role !== "child" && !viewedUserIds.has(m.id))
+      .map((m) => memberName(m.role, m.display_name));
+    setPartnerNotViewed(notViewed.length > 0 ? notViewed.join(", ") : null);
 
     // PRD 5단계: 배너 미리보기가 아니라 실제로 화면에 펼쳐본 이 시점에만 열람을 기록한다.
     // (다른 보호자가 먼저 열었다면 서버가 자동으로 partner_view_confirmed로 기록한다.)
@@ -485,6 +489,7 @@ export default function NoticeInputScreen({
       resetToCompose();
       return;
     }
+    if (next === "talk") setTalkNotice(null);
     setTab(next);
   }
 
@@ -504,6 +509,15 @@ export default function NoticeInputScreen({
         key={tab}
         mode={tab === "unread" ? "unread" : "all"}
         onSelectNotice={openExistingNotice}
+      />
+    );
+  } else if (tab === "talk") {
+    content = (
+      <FamilyTalkScreen
+        session={session}
+        noticeId={talkNotice?.id}
+        noticeLabel={talkNotice?.label}
+        onClearNotice={() => setTalkNotice(null)}
       />
     );
   } else if (tab === "settings") {
@@ -596,7 +610,7 @@ export default function NoticeInputScreen({
           <TextInput
             style={styles.input}
             placeholder="학교/복지관 알림 원문을 여기에 붙여넣으세요"
-            placeholderTextColor="#7FA8F5"
+            placeholderTextColor="#8FC9A5"
             multiline
             value={rawText}
             onChangeText={updateRawText}
@@ -658,7 +672,7 @@ export default function NoticeInputScreen({
 
           {partnerNotViewed && (
             <Text style={styles.partnerNotViewedText}>
-              {partnerNotViewed}님은 아직 이 알림을 못 본 것 같아요
+              아직 이 알림을 못 본 가족: {partnerNotViewed}
             </Text>
           )}
 
@@ -689,14 +703,14 @@ export default function NoticeInputScreen({
                         <TextInput
                           style={styles.editInput}
                           placeholder="제목"
-                          placeholderTextColor="#9DBEF7"
+                          placeholderTextColor="#A6D9B8"
                           value={editDraft.title}
                           onChangeText={(text) => setEditDraft((d) => ({ ...d, title: text }))}
                         />
                         <TextInput
                           style={styles.editInput}
                           placeholder="상세 내용 (선택)"
-                          placeholderTextColor="#9DBEF7"
+                          placeholderTextColor="#A6D9B8"
                           value={editDraft.detail}
                           onChangeText={(text) => setEditDraft((d) => ({ ...d, detail: text }))}
                         />
@@ -802,7 +816,7 @@ export default function NoticeInputScreen({
                       .filter((a) => a.note)
                       .map((a) => (
                         <Text key={a.id} style={styles.noteText}>
-                          💬 {ROLE_LABEL[userRoleById[a.user_id] ?? "primary"]}: {a.note}
+                          💬 {userNameById[a.user_id] ?? "가족"}: {a.note}
                         </Text>
                       ))}
 
@@ -810,7 +824,7 @@ export default function NoticeInputScreen({
                       <TextInput
                         style={styles.noteInput}
                         placeholder="한마디 남기기 (예: 다 챙겼어요)"
-                        placeholderTextColor="#9DBEF7"
+                        placeholderTextColor="#A6D9B8"
                         value={noteDrafts[item.id] ?? ""}
                         onChangeText={(text) =>
                           setNoteDrafts((prev) => ({ ...prev, [item.id]: text }))
@@ -856,9 +870,19 @@ export default function NoticeInputScreen({
                 </View>
               )}
 
+              <TouchableOpacity
+                style={styles.talkButton}
+                onPress={() => {
+                  if (!noticeId) return;
+                  setTalkNotice({ id: noticeId, label: notice.ai_summary ?? "이 알림" });
+                  setTab("talk");
+                }}
+              >
+                <Text style={styles.talkButtonText}>💬 이 알림 이야기 나누기 (결과·느낀 점)</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={refreshFromServer} style={styles.refreshButton}>
                 <Text style={styles.refreshButtonText}>
-                  같이 확인하기 (상대방이 체크한 내용 새로고침)
+                  같이 확인하기 (가족이 체크한 내용 새로고침)
                 </Text>
               </TouchableOpacity>
             </>
@@ -891,14 +915,14 @@ const AUTO_PREF: ReminderPref = { mode: "auto" };
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cream,
   },
   content: {
     padding: 20,
   },
   subtitle: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     lineHeight: 19,
     marginBottom: 14,
   },
@@ -908,17 +932,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: "#F3F8FF",
+    backgroundColor: "#F1FAF3",
   },
   newComposeButtonText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 13,
     fontWeight: "700",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0B1F4D",
+    fontSize: 26,
+    fontFamily: FONT_DISPLAY,
+    color: "#3A2E1F",
     marginBottom: 6,
   },
   devFillButton: {
@@ -927,34 +951,34 @@ const styles = StyleSheet.create({
   },
   devFillButtonText: {
     fontSize: 11,
-    color: "#F2871B",
+    color: "#F58A1F",
     fontWeight: "600",
   },
   input: {
     minHeight: 140,
-    borderWidth: 1,
-    borderColor: "#C7DBFB",
-    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#CFE8D6",
+    borderRadius: 18,
     padding: 14,
     fontSize: 15,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     textAlignVertical: "top",
-    backgroundColor: "#F3F8FF",
+    backgroundColor: "#FFFFFF",
   },
   button: {
     marginTop: 14,
-    backgroundColor: "#1B64F2",
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: "#13854A",
+    borderRadius: 18,
+    paddingVertical: 15,
     alignItems: "center",
   },
   buttonDisabled: {
-    backgroundColor: "#9DBEF7",
+    backgroundColor: "#A6D9B8",
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 18,
+    fontFamily: FONT_DISPLAY,
   },
   loadingRow: {
     flexDirection: "row",
@@ -963,7 +987,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     marginTop: 12,
-    color: "#F23B3B",
+    color: "#E8503A",
     fontSize: 14,
   },
   fallbackBox: {
@@ -979,7 +1003,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   fallbackButton: {
-    backgroundColor: "#F2871B",
+    backgroundColor: "#F58A1F",
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: "center",
@@ -991,10 +1015,11 @@ const styles = StyleSheet.create({
   },
   resultBox: {
     marginTop: 20,
-    borderWidth: 1,
-    borderColor: "#C7DBFB",
-    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#CFE8D6",
+    borderRadius: 22,
     padding: 16,
+    backgroundColor: "#FFFFFF",
   },
   resultHeader: {
     flexDirection: "row",
@@ -1003,12 +1028,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   resultTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0B1F4D",
+    fontSize: 18,
+    fontFamily: FONT_DISPLAY,
+    color: "#3A2E1F",
   },
   toggleText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -1017,25 +1042,25 @@ const styles = StyleSheet.create({
   // 이미 보조 텍스트에 쓰던 muted blue를 회색 대용으로 쓴다.
   partnerNotViewedText: {
     fontSize: 12,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     fontWeight: "500",
     marginBottom: 10,
   },
   summaryText: {
     fontSize: 15,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginBottom: 14,
     lineHeight: 22,
   },
   summaryToggleText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 13,
     fontWeight: "600",
     marginBottom: 14,
   },
   originalText: {
     fontSize: 14,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     lineHeight: 21,
   },
   itemCard: {
@@ -1047,7 +1072,7 @@ const styles = StyleSheet.create({
   },
   noteText: {
     fontSize: 12,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     marginTop: 4,
     marginLeft: 32,
   },
@@ -1060,15 +1085,15 @@ const styles = StyleSheet.create({
   noteInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#C7DBFB",
+    borderColor: "#CFE8D6",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
     fontSize: 12,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
   },
   noteSendText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 12,
     fontWeight: "600",
     marginLeft: 8,
@@ -1078,14 +1103,14 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
     marginTop: 1,
   },
   checkboxChecked: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   checkboxMark: {
     color: "#FFFFFF",
@@ -1110,20 +1135,20 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
   },
   itemTitleDone: {
     textDecorationLine: "line-through",
-    color: "#7FA8F5",
+    color: "#8FC9A5",
   },
   itemDetail: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     marginTop: 2,
   },
   itemDue: {
     fontSize: 13,
-    color: "#F23B3B",
+    color: "#E8503A",
     marginTop: 2,
   },
   itemFooterRow: {
@@ -1134,22 +1159,22 @@ const styles = StyleSheet.create({
   },
   confidenceText: {
     fontSize: 11,
-    color: "#1B64F2",
+    color: "#13854A",
     marginRight: 12,
   },
   confidenceTextLow: {
-    color: "#F2871B",
+    color: "#F58A1F",
     fontWeight: "700",
   },
   editedBadge: {
     fontSize: 11,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     fontWeight: "700",
     marginRight: 12,
   },
   editLinkText: {
     fontSize: 12,
-    color: "#1B64F2",
+    color: "#13854A",
     fontWeight: "600",
   },
   editBox: {
@@ -1157,12 +1182,12 @@ const styles = StyleSheet.create({
   },
   editInput: {
     borderWidth: 1,
-    borderColor: "#C7DBFB",
+    borderColor: "#CFE8D6",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 13,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginBottom: 6,
   },
   editButtonRow: {
@@ -1171,29 +1196,31 @@ const styles = StyleSheet.create({
   },
   editCancelText: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     fontWeight: "600",
     marginRight: 16,
   },
   editSaveText: {
     fontSize: 13,
-    color: "#1B64F2",
+    color: "#13854A",
     fontWeight: "700",
   },
   savedBanner: {
     marginTop: 16,
-    borderRadius: 12,
-    backgroundColor: "#F3F8FF",
+    borderRadius: 18,
+    backgroundColor: COLORS.sunSoft,
+    borderWidth: 2,
+    borderColor: COLORS.sun,
     padding: 14,
   },
   savedBannerTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#1B64F2",
+    color: "#13854A",
   },
   savedBannerBody: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     lineHeight: 19,
     marginTop: 4,
   },
@@ -1206,19 +1233,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 10,
-    backgroundColor: "#F3F8FF",
+    backgroundColor: "#F1FAF3",
   },
   reminderStatusText: {
     flex: 1,
     fontSize: 12,
     fontWeight: "600",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginRight: 8,
   },
   reminderSetText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#1B64F2",
+    color: "#13854A",
   },
   dueEditRow: {
     flexDirection: "row",
@@ -1228,8 +1255,8 @@ const styles = StyleSheet.create({
   dueEditButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#C7DBFB",
-    backgroundColor: "#F3F8FF",
+    borderColor: "#CFE8D6",
+    backgroundColor: "#F1FAF3",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -1238,33 +1265,45 @@ const styles = StyleSheet.create({
   dueEditLabel: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#3D5A9C",
+    color: "#7A5F33",
   },
   dueEditValue: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#1B64F2",
+    color: "#13854A",
     marginTop: 2,
   },
   dueClearText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#3D5A9C",
+    color: "#7A5F33",
   },
   refreshButton: {
     marginTop: 8,
     alignItems: "center",
     paddingVertical: 10,
   },
+  talkButton: {
+    marginTop: 10,
+    backgroundColor: COLORS.sunSoft,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  talkButtonText: {
+    fontFamily: FONT_DISPLAY,
+    fontSize: 15,
+    color: COLORS.sunInk,
+  },
   refreshButtonText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 13,
     fontWeight: "600",
   },
   childTagText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#1B64F2",
+    color: "#13854A",
     marginBottom: 8,
   },
   childPickerRow: {
@@ -1274,7 +1313,7 @@ const styles = StyleSheet.create({
   },
   childChip: {
     borderWidth: 1,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1282,10 +1321,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   childChipSelected: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   childChipText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 12,
     fontWeight: "600",
   },
@@ -1315,7 +1354,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   easyExplanationText: {
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     fontSize: 13,
     marginTop: 2,
   },

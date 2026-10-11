@@ -28,3 +28,13 @@ export function formatKoreanTime(date: Date): string {
 export function formatKoreanDateTime(date: Date): string {
   return `${formatKoreanDate(date)} ${formatKoreanTime(date)}`;
 }
+
+/** 대화 말풍선용: 오늘이면 "오후 3:05", 아니면 "10월 3일". */
+export function formatMessageTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() !== now.toDateString()) return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, "0");
+  return `${h < 12 ? "오전" : "오후"} ${h % 12 === 0 ? 12 : h % 12}:${m}`;
+}

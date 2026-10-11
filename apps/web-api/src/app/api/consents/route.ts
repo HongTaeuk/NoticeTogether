@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import type { DevRole } from "@/lib/supabase/devSeed";
 import { resolveUser, AuthError } from "@/lib/auth/session";
+import { forbidChild } from "@/lib/household/members";
 
 const CONSENT_TYPES = ["child_info", "disability_info", "ai_processing"] as const;
 type ConsentType = (typeof CONSENT_TYPES)[number];
@@ -39,6 +40,8 @@ export async function POST(req: NextRequest) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     throw err;
   }
+  const childBlock = forbidChild(resolved);
+  if (childBlock) return childBlock;
   const { userId } = resolved;
   const supabase = getSupabaseServerClient();
 

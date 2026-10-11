@@ -7,8 +7,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import NoticeInputScreen from './src/screens/NoticeInputScreen';
+import ChildHomeScreen from './src/screens/ChildHomeScreen';
+import { COLORS } from './src/theme';
 import AuthScreen from './src/screens/AuthScreen';
 import OnboardingIntroScreen from './src/screens/OnboardingIntroScreen';
 import HouseholdSetupScreen from './src/screens/HouseholdSetupScreen';
@@ -20,6 +23,9 @@ import { clearSession, loadSession, saveSession, type Session } from './src/lib/
 import { getInitialNoticeId, subscribeNoticeDeepLink } from './src/native/deepLink';
 
 type Screen = 'loading' | 'auth' | 'onboarding-intro' | 'household-setup' | 'main';
+
+// 혼자 쓰는 동안 앱을 열 때마다 가족 연결 화면이 뜨면 매번 "나중에 하기"를 눌러야 한다 — 한 번만 자동으로 보여준다.
+const HOUSEHOLD_PROMPT_SEEN_KEY = 'noticetogether:householdPromptSeen';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -91,7 +97,7 @@ function App() {
     await startAnonymousSession(false);
   }
 
-  // PRD 5-2 분기 5: 배우자가 아직 없으면(보호자 1명뿐이면) 목록 대신 초대 화면을 채운다.
+  // PRD 5-2 분기 5: 아직 혼자뿐이면(가족이 연결 안 됐으면) 처음 한 번은 가족 연결 화면을 보여준다.
   async function refreshHouseholdState(current: Session) {
     try {
       const res = await authFetch('/api/auth/me');
@@ -106,12 +112,16 @@ function App() {
         accessToken: tokens?.accessToken ?? current.accessToken,
         refreshToken: tokens?.refreshToken ?? current.refreshToken,
         role: data.user.role,
+        displayName: data.user.displayName ?? current.displayName ?? null,
+        childId: data.user.childId ?? null,
         householdId: data.household.id,
         inviteCode: data.household.inviteCode,
       };
       await saveSession(updated);
       setSession(updated);
-      setScreen((data.members?.length ?? 1) < 2 ? 'household-setup' : 'main');
+      const alone = (data.members?.length ?? 1) < 2;
+      const promptSeen = (await AsyncStorage.getItem(HOUSEHOLD_PROMPT_SEEN_KEY).catch(() => null)) === '1';
+      setScreen(alone && !promptSeen && updated.role !== 'child' ? 'household-setup' : 'main');
     } catch {
       setSession(current);
       setScreen('main');
@@ -140,7 +150,7 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.cream }}>
         <NetworkBanner />
         {screen === 'loading' && <SplashLogo />}
         {screen === 'auth' && (
@@ -160,12 +170,17 @@ function App() {
               const merged = { ...session, ...update };
               setSession(merged);
               saveSession(merged);
+              AsyncStorage.setItem(HOUSEHOLD_PROMPT_SEEN_KEY, '1').catch(() => {});
               setScreen('main');
             }}
-            onContinue={() => setScreen('main')}
+            onContinue={() => {
+              AsyncStorage.setItem(HOUSEHOLD_PROMPT_SEEN_KEY, '1').catch(() => {});
+              setScreen('main');
+            }}
           />
         )}
-        {screen === 'main' && session && (
+        {screen === 'main' && session && session.role === 'child' && <ChildHomeScreen session={session} />}
+        {screen === 'main' && session && session.role !== 'child' && (
           <NoticeInputScreen
             session={session}
             onLogout={handleLogout}

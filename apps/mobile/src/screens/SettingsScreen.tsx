@@ -6,17 +6,19 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
+import { COLORS, FONT_DISPLAY } from "../theme";
 import {
   isNotificationEnabled,
   openAppSettings,
   requestNotificationPermission,
 } from "../lib/notificationPermission";
-import { ROLE_LABEL } from "../types/notice";
+import { memberName, ROLE_LABEL, type Role } from "../types/notice";
 import ChildConsentSection from "./ChildConsentSection";
 
 type ReminderInfo = {
@@ -57,6 +59,36 @@ export default function SettingsScreen({
 }) {
   const [reminder, setReminder] = useState<ReminderInfo | null>(null);
   const [notificationsOn, setNotificationsOn] = useState(true);
+  const [members, setMembers] = useState<{ id: string; role: string; display_name: string | null }[]>([]);
+  const [nameDraft, setNameDraft] = useState(session.displayName ?? "");
+  const [nameSaved, setNameSaved] = useState(false);
+
+  const loadMembers = useCallback(() => {
+    authFetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setMembers(data.members ?? []);
+        if (data.user?.displayName) setNameDraft(data.user.displayName);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    loadMembers();
+  }, [loadMembers]);
+
+  async function saveMyName() {
+    const res = await authFetch("/api/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify({ displayName: nameDraft }),
+    }).catch(() => null);
+    if (res?.ok) {
+      setNameSaved(true);
+      setTimeout(() => setNameSaved(false), 1500);
+      loadMembers();
+    }
+  }
 
   const refreshNotificationStatus = useCallback(() => {
     isNotificationEnabled().then(setNotificationsOn);
@@ -135,10 +167,53 @@ export default function SettingsScreen({
 
         <ChildConsentSection onChildAdded={onChildAdded} />
 
-        <Text style={styles.sectionTitle}>가족</Text>
+        <Text style={styles.sectionTitle}>우리 가족</Text>
+        <View style={styles.card}>
+          {members.length === 0 ? (
+            <Text style={styles.cardBody}>가족 정보를 불러오는 중이에요…</Text>
+          ) : (
+            members.map((m) => (
+              <View key={m.id} style={styles.memberRow}>
+                <Text style={styles.memberEmoji}>{m.role === "child" ? "🧒" : "🧑"}</Text>
+                <Text style={styles.memberName}>
+                  {memberName(m.role, m.display_name)}
+                  {m.id === session.userId ? " (나)" : ""}
+                </Text>
+                <View style={[styles.roleChip, m.role === "child" && styles.roleChipChild]}>
+                  <Text style={styles.roleChipText}>{ROLE_LABEL[m.role as Role] ?? "양육자"}</Text>
+                </View>
+              </View>
+            ))
+          )}
+          {members.length === 1 && (
+            <Text style={[styles.cardBody, styles.cardBodySpaced]}>
+              아직 혼자예요. 다른 양육자(엄마·아빠·조부모 등)나 아이에게 초대 코드를 보내 보세요.
+            </Text>
+          )}
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.rowLabel}>가족 안에서 불리는 내 호칭</Text>
+          <View style={styles.nameEditRow}>
+            <TextInput
+              style={styles.nameInput}
+              placeholder="예: 엄마, 할머니"
+              placeholderTextColor={COLORS.primarySoft}
+              value={nameDraft}
+              onChangeText={setNameDraft}
+              maxLength={20}
+            />
+            <TouchableOpacity
+              style={[styles.nameSaveButton, !nameDraft.trim() && styles.nameSaveButtonDisabled]}
+              onPress={saveMyName}
+              disabled={!nameDraft.trim()}
+            >
+              <Text style={styles.nameSaveText}>{nameSaved ? "저장됨" : "저장"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
         <TouchableOpacity style={styles.card} onPress={onManageHousehold}>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>배우자 초대 코드</Text>
+            <Text style={styles.rowLabel}>가족 초대 코드</Text>
             <Text style={styles.linkText}>보기 · 입력</Text>
           </View>
         </TouchableOpacity>
@@ -148,7 +223,7 @@ export default function SettingsScreen({
           <Text style={styles.rowLabel}>{ROLE_LABEL[session.role]}(으)로 사용 중</Text>
           {session.isAnonymous && (
             <Text style={[styles.cardBody, styles.cardBodySpaced]}>
-              지금은 가입 없이 쓰고 있어요. 휴대폰을 바꾸거나 배우자와 함께 쓰려면 계정을 만들어두세요.
+              가입하지 않아도 초대 코드로 가족과 함께 쓸 수 있어요. 휴대폰을 바꿀 때를 대비해 계정을 만들어둘 수도 있어요.
             </Text>
           )}
           <TouchableOpacity onPress={onAccountPress} style={styles.accountButton}>
@@ -170,28 +245,58 @@ export default function SettingsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cream,
   },
   content: {
     padding: 20,
     paddingBottom: 32,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0B1F4D",
+    fontSize: 26,
+    fontFamily: FONT_DISPLAY,
+    color: COLORS.ink,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#3D5A9C",
+    fontSize: 17,
+    fontFamily: FONT_DISPLAY,
+    color: COLORS.muted,
     marginTop: 22,
     marginBottom: 8,
   },
-  card: {
-    borderWidth: 1,
-    borderColor: "#C7DBFB",
+  memberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  memberEmoji: { fontSize: 22, marginRight: 10 },
+  memberName: { flex: 1, fontSize: 15, fontWeight: "700", color: COLORS.ink },
+  roleChip: {
+    backgroundColor: COLORS.tint,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  roleChipChild: { backgroundColor: COLORS.sunSoft },
+  roleChipText: { fontSize: 12, fontWeight: "700", color: COLORS.ink },
+  nameEditRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
+  nameInput: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: COLORS.line,
     borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 15,
+    color: COLORS.ink,
+    marginRight: 8,
+  },
+  nameSaveButton: { backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
+  nameSaveButtonDisabled: { backgroundColor: COLORS.primarySoft },
+  nameSaveText: { fontFamily: FONT_DISPLAY, color: COLORS.white, fontSize: 15 },
+  card: {
+    borderWidth: 2,
+    borderColor: "#CFE8D6",
+    borderRadius: 18,
     padding: 14,
     marginBottom: 10,
     backgroundColor: "#FFFFFF",
@@ -214,7 +319,7 @@ const styles = StyleSheet.create({
   warningButton: {
     marginTop: 10,
     alignSelf: "flex-start",
-    backgroundColor: "#F2871B",
+    backgroundColor: "#F58A1F",
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -225,8 +330,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   cardTinted: {
-    backgroundColor: "#F3F8FF",
-    borderColor: "#F3F8FF",
+    backgroundColor: "#F1FAF3",
+    borderColor: "#F1FAF3",
   },
   row: {
     flexDirection: "row",
@@ -236,16 +341,16 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
   },
   rowValue: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#1B64F2",
+    color: "#13854A",
   },
   cardBody: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     lineHeight: 19,
   },
   cardBodySpaced: {
@@ -254,7 +359,7 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#1B64F2",
+    color: "#13854A",
   },
   accountButton: {
     marginTop: 12,
@@ -263,9 +368,9 @@ const styles = StyleSheet.create({
   accountButtonText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#1B64F2",
+    color: "#13854A",
   },
   accountButtonTextLogout: {
-    color: "#F23B3B",
+    color: "#E8503A",
   },
 });

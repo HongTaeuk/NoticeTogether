@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
 import { formatKoreanDate } from "../lib/dateFormat";
+import { COLORS, FONT_DISPLAY } from "../theme";
 
 type NoticeSummary = {
   id: string;
@@ -114,7 +115,7 @@ export default function NoticeListScreen({
 
       {loading ? (
         <View style={styles.loadingBox}>
-          <ActivityIndicator color="#1B64F2" />
+          <ActivityIndicator color="#13854A" />
           <Text style={styles.loadingText}>
             {mode === "unread" ? "새로 온 알림을 불러오는 중이에요" : "지난 알림을 불러오는 중이에요"}
           </Text>
@@ -169,17 +170,17 @@ export default function NoticeListScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cream,
     padding: 20,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0B1F4D",
+    fontSize: 26,
+    fontFamily: FONT_DISPLAY,
+    color: "#3A2E1F",
   },
   subtitle: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     marginTop: 4,
     marginBottom: 16,
   },
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   },
   childChip: {
     borderWidth: 1,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -198,10 +199,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   childChipSelected: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   childChipText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 12,
     fontWeight: "600",
   },
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   errorText: {
-    color: "#F23B3B",
+    color: "#E8503A",
     fontSize: 13,
     marginBottom: 10,
   },
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
   },
   emptyBox: {
     marginTop: 60,
@@ -229,16 +230,16 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginBottom: 6,
   },
   emptySubText: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
   },
   card: {
     borderWidth: 1,
-    borderColor: "#C7DBFB",
+    borderColor: "#CFE8D6",
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
@@ -253,14 +254,14 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
     marginRight: 8,
     marginTop: 6,
   },
   cardSummary: {
     flex: 1,
     fontSize: 14,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     lineHeight: 20,
   },
   cardMetaRow: {
@@ -269,12 +270,12 @@ const styles = StyleSheet.create({
   },
   cardMeta: {
     fontSize: 12,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     fontWeight: "600",
   },
   cardDue: {
     fontSize: 12,
-    color: "#F23B3B",
+    color: "#E8503A",
     fontWeight: "600",
   },
 });

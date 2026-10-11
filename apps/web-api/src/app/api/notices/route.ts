@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import type { DevRole } from "@/lib/supabase/devSeed";
 import { resolveUser, AuthError } from "@/lib/auth/session";
+import { forbidChild } from "@/lib/household/members";
 import type { ChecklistItemDraft } from "@/lib/ai/summarize";
 import { explainJargonTerms } from "@/lib/ai/explainJargon";
 
@@ -34,6 +35,8 @@ export async function POST(req: NextRequest) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     throw err;
   }
+  const childBlock = forbidChild(resolved);
+  if (childBlock) return childBlock;
   const { householdId, userId: createdBy } = resolved;
   const supabase = getSupabaseServerClient();
 

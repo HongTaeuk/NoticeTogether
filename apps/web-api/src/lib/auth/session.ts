@@ -13,7 +13,7 @@ export class AuthError extends Error {
 export type ResolvedUser = {
   userId: string;
   householdId: string;
-  role: DevRole;
+  role: DevRole | "child";
 };
 
 /**
@@ -67,6 +67,6 @@ export async function resolveUserFromToken(accessToken: string): Promise<Resolve
   return {
     userId: userRow.id as string,
     householdId: userRow.household_id as string,
-    role: userRow.role as DevRole,
+    role: userRow.role as ResolvedUser["role"],
   };
 }

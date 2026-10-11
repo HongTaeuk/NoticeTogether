@@ -177,7 +177,7 @@ function Option({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(11,31,77,0.42)",
+    backgroundColor: "rgba(58,46,31,0.45)",
   },
   sheet: {
     backgroundColor: "#FFFFFF",
@@ -191,23 +191,23 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#C7DBFB",
+    backgroundColor: "#CFE8D6",
     marginBottom: 14,
   },
   title: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
   },
   itemTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginTop: 6,
   },
   dueText: {
     fontSize: 13,
-    color: "#F23B3B",
+    color: "#E8503A",
     marginTop: 2,
     marginBottom: 4,
   },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   optionTextBox: {
     flex: 1,
@@ -239,11 +239,11 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
   },
   optionDescription: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     marginTop: 2,
   },
   pickerRow: {
@@ -254,8 +254,8 @@ const styles = StyleSheet.create({
   pickerButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#C7DBFB",
-    backgroundColor: "#F3F8FF",
+    borderColor: "#CFE8D6",
+    backgroundColor: "#F1FAF3",
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -264,17 +264,17 @@ const styles = StyleSheet.create({
   pickerLabel: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#3D5A9C",
+    color: "#7A5F33",
   },
   pickerValue: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#1B64F2",
+    color: "#13854A",
     marginTop: 2,
   },
   errorText: {
     fontSize: 12,
-    color: "#F23B3B",
+    color: "#E8503A",
     marginLeft: 34,
     marginTop: 4,
   },
@@ -290,19 +290,19 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     borderWidth: 1.5,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     marginRight: 10,
   },
   cancelText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 15,
     fontWeight: "700",
   },
   saveButton: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   saveButtonDisabled: {
-    backgroundColor: "#9DBEF7",
+    backgroundColor: "#A6D9B8",
   },
   saveText: {
     color: "#FFFFFF",

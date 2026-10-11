@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { authFetch } from "../lib/apiClient";
+import { FONT_DISPLAY } from "../theme";
 
 type Child = {
   id: string;
@@ -120,14 +121,14 @@ export default function ChildConsentSection({
       <TextInput
         style={styles.input}
         placeholder="자녀 이름"
-        placeholderTextColor="#9DBEF7"
+        placeholderTextColor="#A6D9B8"
         value={name}
         onChangeText={setName}
       />
       <TextInput
         style={styles.input}
         placeholder="출생연도 (선택, 예: 2018)"
-        placeholderTextColor="#9DBEF7"
+        placeholderTextColor="#A6D9B8"
         keyboardType="number-pad"
         value={birthYear}
         onChangeText={setBirthYear}
@@ -135,7 +136,7 @@ export default function ChildConsentSection({
       <TextInput
         style={styles.input}
         placeholder="장애 유형 (해당 시에만, 별도 동의 필요)"
-        placeholderTextColor="#9DBEF7"
+        placeholderTextColor="#A6D9B8"
         value={disabilityType}
         onChangeText={setDisabilityType}
       />
@@ -193,36 +194,37 @@ function CheckRow({
 const styles = StyleSheet.create({
   box: {
     marginTop: 24,
-    borderWidth: 1,
-    borderColor: "#C7DBFB",
-    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#CFE8D6",
+    borderRadius: 18,
     padding: 16,
+    backgroundColor: "#FFFFFF",
   },
   title: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0B1F4D",
+    fontSize: 18,
+    fontFamily: FONT_DISPLAY,
+    color: "#3A2E1F",
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 12,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     marginBottom: 12,
     lineHeight: 18,
   },
   childRow: {
     fontSize: 13,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#C7DBFB",
+    borderColor: "#CFE8D6",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 13,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginBottom: 8,
   },
   checkRow: {
@@ -235,13 +237,13 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8,
   },
   checkboxChecked: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   checkboxMark: {
     color: "#FFFFFF",
@@ -250,23 +252,23 @@ const styles = StyleSheet.create({
   },
   checkLabel: {
     fontSize: 12,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     flex: 1,
   },
   errorText: {
-    color: "#F23B3B",
+    color: "#E8503A",
     fontSize: 12,
     marginBottom: 8,
   },
   submitButton: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: "center",
     marginTop: 4,
   },
   submitButtonDisabled: {
-    backgroundColor: "#9DBEF7",
+    backgroundColor: "#A6D9B8",
   },
   submitButtonText: {
     color: "#FFFFFF",

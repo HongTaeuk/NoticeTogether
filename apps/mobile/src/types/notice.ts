@@ -14,7 +14,8 @@ export type SummarizeResult = {
   items: ChecklistItemDraft[];
 };
 
-export type Role = "primary" | "secondary";
+// primary/secondary = 양육자(정보를 도맡는 쪽/아닌 쪽, 원칙 3의 자동 렌더링 기준), child = 아이.
+export type Role = "primary" | "secondary" | "child";
 
 export type PersistedItem = {
   id: string;
@@ -37,9 +38,21 @@ export type ItemAction = {
 };
 
 export const CATEGORY_COLOR: Record<ChecklistCategory, string> = {
-  준비물: "#1B64F2", // blue
-  제출서류: "#F2871B", // orange
-  기한: "#F23B3B", // red
+  준비물: "#13854A",
+  제출서류: "#F58A1F",
+  기한: "#E8503A",
 };
 
-export const ROLE_LABEL: Record<Role, string> = { primary: "보호자 1", secondary: "보호자 2" };
+export const CATEGORY_EMOJI: Record<ChecklistCategory, string> = {
+  준비물: "🎒",
+  제출서류: "📄",
+  기한: "⏰",
+};
+
+// 부부만이 아니라 조부모 등 다양한 양육 환경이 있어서 "보호자 1/2" 대신 역할만 부르고, 호칭이 있으면 호칭을 쓴다.
+export const ROLE_LABEL: Record<Role, string> = { primary: "양육자", secondary: "양육자", child: "아이" };
+
+export function memberName(role: Role | string | null | undefined, displayName: string | null | undefined): string {
+  if (displayName && displayName.trim()) return displayName.trim();
+  return role === "child" ? "아이" : "양육자";
+}

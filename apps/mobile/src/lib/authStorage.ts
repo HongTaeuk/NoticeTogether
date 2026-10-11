@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type Role = "primary" | "secondary";
+export type Role = "primary" | "secondary" | "child";
 
 export type Session = {
   accessToken: string;
@@ -11,6 +11,8 @@ export type Session = {
   householdId: string;
   inviteCode: string;
   isAnonymous?: boolean;
+  /** 아이 계정일 때, 양육자가 등록해 둔 자녀 정보와의 연결(그 아이 알림만 골라 보여줄 때 쓴다). */
+  childId?: string | null;
 };
 
 const STORAGE_KEY = "noticetogether:session";

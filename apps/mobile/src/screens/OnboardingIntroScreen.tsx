@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { COLORS, FONT_DISPLAY } from "../theme";
 
 type Slide = {
   emoji: string;
@@ -19,9 +20,14 @@ const SLIDES: Slide[] = [
     subtitle: "원문이 궁금하면 언제든 '학교에서 온 그대로 보기'로 대조해볼 수 있어요.",
   },
   {
-    emoji: "🤝",
-    title: "배우자와 함께\n확인하고 나눠 맡아요",
-    subtitle: "누가 뭘 했는지 서로 볼 수 있어서, 같은 걸 두 번 챙기거나 놓치는 일이 줄어요.",
+    emoji: "👨‍👩‍👧‍👦",
+    title: "양육자와 아이가\n한 가족으로 함께 봐요",
+    subtitle: "엄마·아빠·조부모 누구든, 아이까지 초대 코드 하나로 연결돼요. 가입은 필요 없어요.",
+  },
+  {
+    emoji: "💬",
+    title: "알림장 결과를 두고\n아이와 이야기 나눠요",
+    subtitle: "아이가 챙기면 별을 받고 '내 방'을 꾸며요. 양육자는 아이를 위해 한 일을 나눌 수 있어요.",
   },
 ];
 
@@ -74,23 +80,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cream,
   },
   emoji: {
-    fontSize: 48,
+    fontSize: 64,
     marginBottom: 20,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#0B1F4D",
+    fontSize: 27,
+    fontFamily: FONT_DISPLAY,
+    color: "#3A2E1F",
     textAlign: "center",
-    lineHeight: 32,
+    lineHeight: 38,
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 14,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     textAlign: "center",
     marginBottom: 24,
   },
@@ -102,31 +108,31 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#C7DBFB",
+    backgroundColor: "#CFE8D6",
     marginHorizontal: 4,
   },
   dotActive: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
     width: 20,
   },
   button: {
-    backgroundColor: "#1B64F2",
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 48,
+    backgroundColor: "#13854A",
+    borderRadius: 18,
+    paddingVertical: 15,
+    paddingHorizontal: 56,
     alignItems: "center",
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 19,
+    fontFamily: FONT_DISPLAY,
   },
   skipButton: {
     marginTop: 16,
     padding: 8,
   },
   skipButtonText: {
-    color: "#3D5A9C",
+    color: "#7A5F33",
     fontSize: 13,
     fontWeight: "600",
   },

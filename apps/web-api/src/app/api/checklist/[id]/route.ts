@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import type { DevRole } from "@/lib/supabase/devSeed";
 import { resolveUser, AuthError } from "@/lib/auth/session";
+import { forbidChild } from "@/lib/household/members";
 
 type ToggleBody = {
   // isDone을 생략하면 체크 상태는 그대로 두고 note만 남긴다("한마디" 전용 액션).
@@ -41,6 +42,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     throw err;
+  }
+  // 아이도 체크·한마디는 할 수 있지만, AI가 뽑은 내용(제목·기한) 수정은 양육자만 한다.
+  if (hasEdit) {
+    const childBlock = forbidChild(resolved);
+    if (childBlock) return childBlock;
   }
   const { userId } = resolved;
   const supabase = getSupabaseServerClient();

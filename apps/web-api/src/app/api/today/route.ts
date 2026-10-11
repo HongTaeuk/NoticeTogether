@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import type { DevRole } from "@/lib/supabase/devSeed";
 import { resolveUser, AuthError } from "@/lib/auth/session";
+import { memberLabel } from "@/lib/household/members";
 
 const URGENT_WINDOW_DAYS = 2; // PRD 4-2: "지금 해야 할 것" = 기한이 임박한 항목만
 
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
     (i) => !i.is_done && i.due_date && i.due_date >= todayStr && i.due_date <= windowEndStr,
   );
 
-  // PRD "OO(배우자)가 뭐 했지?": 나 아닌 다른 가구 구성원이 가장 최근에 남긴 조치 한 줄.
+  // PRD "OO가 뭐 했지?": 나 아닌 다른 가족 구성원(양육자·아이)이 가장 최근에 남긴 조치 한 줄.
   const itemIds = allItems.map((i) => i.id as string);
   let recentPartnerAction = null;
   if (itemIds.length > 0) {
@@ -100,7 +101,7 @@ export async function GET(req: NextRequest) {
         .maybeSingle();
       const item = allItems.find((i) => i.id === action.checklist_item_id);
       recentPartnerAction = {
-        displayName: actor?.display_name ?? (actor?.role === "primary" ? "보호자 1" : "보호자 2"),
+        displayName: memberLabel(actor?.role as string | undefined, actor?.display_name as string | null),
         action: action.action,
         note: action.note,
         itemTitle: item?.title ?? null,

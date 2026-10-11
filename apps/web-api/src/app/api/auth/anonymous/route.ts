@@ -7,8 +7,7 @@ import { createHouseholdForUser } from "@/lib/household/createHouseholdForUser";
  * 자동으로 호출해서(사용자가 아무것도 입력하지 않아도) Supabase 익명 계정 + 혼자만의
  * 가정을 만든다. 나중에 `/api/auth/upgrade`(이메일/구글)로 같은 계정을 그대로
  * "정식 계정"으로 승격할 수 있다 — user id가 바뀌지 않으므로 가정/알림/체크 데이터가
- * 그대로 유지된다. 배우자를 초대하려면(다른 기기와 동기화) 결국 승격이 필요하지만,
- * 혼자 쓰는 동안에는 가입 자체가 필요 없다.
+ * 그대로 유지된다. 가족(다른 양육자·아이)과 연결하는 것도 가입 없이 초대 코드(`/api/auth/join`)로 된다.
  */
 export async function POST() {
   const supabase = getSupabaseServerClient();

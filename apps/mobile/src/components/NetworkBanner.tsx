@@ -26,7 +26,7 @@ export default function NetworkBanner() {
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: "#F23B3B",
+    backgroundColor: "#E8503A",
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",

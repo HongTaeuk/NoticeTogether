@@ -18,6 +18,7 @@ import {
 } from "../lib/reminderSync";
 import { CATEGORY_COLOR, type ChecklistCategory } from "../types/notice";
 import { formatKoreanDate } from "../lib/dateFormat";
+import { COLORS, FONT_DISPLAY } from "../theme";
 
 type TodayItem = {
   id: string;
@@ -164,25 +165,29 @@ export default function TodayScreen({
         />
       }
     >
-      <View style={styles.headerRow}>
-        <View>
-          <Text style={styles.title}>오늘 할 일</Text>
-          <Text style={styles.dateText}>{todayLabel()}</Text>
+      <View style={styles.headerCard}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>오늘 할 일</Text>
+            <Text style={styles.dateText}>{todayLabel()}</Text>
+          </View>
+          {!loading && totalItems > 0 && (
+            <View style={styles.progressBadge}>
+              <Text style={styles.progressText}>
+                {doneItems}/{totalItems}
+              </Text>
+            </View>
+          )}
         </View>
-        {!loading && totalItems > 0 && (
-          <Text style={styles.progressText}>
-            {doneItems}/{totalItems}
-          </Text>
-        )}
-      </View>
 
-      <View style={styles.navRow}>
-        <TouchableOpacity onPress={onViewUnread}>
-          <Text style={styles.navLinkText}>새로 온 알림</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onManageHousehold}>
-          <Text style={styles.navLinkText}>배우자 초대</Text>
-        </TouchableOpacity>
+        <View style={styles.navRow}>
+          <TouchableOpacity style={styles.navPill} onPress={onViewUnread}>
+            <Text style={styles.navLinkText}>📬 새로 온 알림</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navPill} onPress={onManageHousehold}>
+            <Text style={styles.navLinkText}>👨‍👩‍👧 가족 초대</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TouchableOpacity style={styles.composeButton} onPress={onComposeNew}>
@@ -224,7 +229,7 @@ export default function TodayScreen({
 
       {loading ? (
         <View style={styles.loadingBox}>
-          <ActivityIndicator color="#1B64F2" />
+          <ActivityIndicator color="#13854A" />
           <Text style={styles.loadingText}>오늘 할 일을 정리하는 중이에요</Text>
         </View>
       ) : (
@@ -321,10 +326,16 @@ export default function TodayScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cream,
   },
   content: {
     padding: 20,
+  },
+  headerCard: {
+    backgroundColor: COLORS.sun,
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 16,
   },
   headerRow: {
     flexDirection: "row",
@@ -333,29 +344,40 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0B1F4D",
+    fontSize: 26,
+    fontFamily: FONT_DISPLAY,
+    color: COLORS.ink,
   },
   dateText: {
-    fontSize: 13,
-    color: "#3D5A9C",
+    fontSize: 14,
+    color: COLORS.sunInk,
     marginTop: 2,
   },
+  progressBadge: {
+    backgroundColor: COLORS.white,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
   progressText: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#1B64F2",
+    fontSize: 18,
+    fontFamily: FONT_DISPLAY,
+    color: COLORS.primary,
   },
   navRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
+    gap: 8,
+  },
+  navPill: {
+    backgroundColor: COLORS.white,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   navLinkText: {
-    fontSize: 12,
-    color: "#1B64F2",
-    fontWeight: "600",
+    fontSize: 13,
+    color: COLORS.ink,
+    fontWeight: "700",
   },
   childFilterRow: {
     flexDirection: "row",
@@ -364,7 +386,7 @@ const styles = StyleSheet.create({
   },
   childChip: {
     borderWidth: 1,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -372,10 +394,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   childChipSelected: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   childChipText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 12,
     fontWeight: "600",
   },
@@ -383,19 +405,19 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   composeButton: {
-    backgroundColor: "#1B64F2",
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: 18,
+    paddingVertical: 14,
     alignItems: "center",
     marginBottom: 20,
   },
   composeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
+    color: COLORS.white,
+    fontSize: 17,
+    fontFamily: FONT_DISPLAY,
   },
   errorText: {
-    color: "#F23B3B",
+    color: "#E8503A",
     fontSize: 13,
     marginBottom: 10,
   },
@@ -406,17 +428,17 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#0B1F4D",
+    fontSize: 18,
+    fontFamily: FONT_DISPLAY,
+    color: COLORS.ink,
     marginBottom: 10,
   },
   emptyText: {
     fontSize: 13,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     marginBottom: 16,
   },
   urgentRow: {
@@ -429,13 +451,13 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#1B64F2",
+    borderColor: "#13854A",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
   },
   checkboxChecked: {
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
   },
   checkboxMark: {
     color: "#FFFFFF",
@@ -459,15 +481,15 @@ const styles = StyleSheet.create({
   urgentTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#0B1F4D",
+    color: "#3A2E1F",
   },
   urgentTitleDone: {
     textDecorationLine: "line-through",
-    color: "#7FA8F5",
+    color: "#8FC9A5",
   },
   urgentDue: {
     fontSize: 12,
-    color: "#F23B3B",
+    color: "#E8503A",
     marginTop: 2,
   },
   partnerBox: {
@@ -475,11 +497,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: "#F3F8FF",
+    backgroundColor: "#F1FAF3",
   },
   partnerLineText: {
     fontSize: 13,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
   },
   expandRow: {
     alignItems: "center",
@@ -488,7 +510,7 @@ const styles = StyleSheet.create({
   },
   expandText: {
     fontSize: 13,
-    color: "#1B64F2",
+    color: "#13854A",
     fontWeight: "600",
   },
 });

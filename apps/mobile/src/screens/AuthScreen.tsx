@@ -159,7 +159,7 @@ export default function AuthScreen({
       <Text style={styles.subtitle}>
         {mode === "signup"
           ? isUpgrade
-            ? "계정을 만들어두면 다른 기기에서도, 배우자와도 이어서 쓸 수 있어요"
+            ? "계정을 만들어두면 휴대폰을 바꿔도 지금 기록을 그대로 이어서 쓸 수 있어요"
             : "가입하고 우리 가정을 만들어보세요"
           : "다시 로그인하기"}
       </Text>
@@ -168,7 +168,7 @@ export default function AuthScreen({
         <TextInput
           style={styles.input}
           placeholder="이름 (선택)"
-          placeholderTextColor="#9DBEF7"
+          placeholderTextColor="#A6D9B8"
           value={displayName}
           onChangeText={setDisplayName}
         />
@@ -176,7 +176,7 @@ export default function AuthScreen({
       <TextInput
         style={styles.input}
         placeholder="이메일"
-        placeholderTextColor="#9DBEF7"
+        placeholderTextColor="#A6D9B8"
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -185,7 +185,7 @@ export default function AuthScreen({
       <TextInput
         style={styles.input}
         placeholder="비밀번호 (8자 이상)"
-        placeholderTextColor="#9DBEF7"
+        placeholderTextColor="#A6D9B8"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -256,48 +256,48 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   backButtonText: {
-    color: "#3D5A9C",
+    color: "#7A5F33",
     fontSize: 13,
     fontWeight: "600",
   },
   logo: {
     fontSize: 26,
     fontWeight: "800",
-    color: "#1B64F2",
+    color: "#13854A",
     textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: "#3D5A9C",
+    color: "#7A5F33",
     textAlign: "center",
     marginBottom: 28,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#C7DBFB",
+    borderColor: "#CFE8D6",
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     marginBottom: 10,
-    backgroundColor: "#F3F8FF",
+    backgroundColor: "#F1FAF3",
   },
   errorText: {
-    color: "#F23B3B",
+    color: "#E8503A",
     fontSize: 13,
     marginBottom: 10,
   },
   button: {
     marginTop: 6,
-    backgroundColor: "#1B64F2",
+    backgroundColor: "#13854A",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
   },
   buttonDisabled: {
-    backgroundColor: "#9DBEF7",
+    backgroundColor: "#A6D9B8",
   },
   buttonText: {
     color: "#FFFFFF",
@@ -312,13 +312,13 @@ const styles = StyleSheet.create({
   googleButton: {
     marginTop: 10,
     borderWidth: 1,
-    borderColor: "#C7DBFB",
+    borderColor: "#CFE8D6",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
   },
   googleButtonText: {
-    color: "#0B1F4D",
+    color: "#3A2E1F",
     fontSize: 15,
     fontWeight: "700",
   },
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   switchModeText: {
-    color: "#1B64F2",
+    color: "#13854A",
     fontSize: 13,
     fontWeight: "600",
   },
