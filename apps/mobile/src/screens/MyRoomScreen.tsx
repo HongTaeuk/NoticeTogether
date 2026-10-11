@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authFetch } from "../lib/apiClient";
+import { josa } from "../lib/josa";
 import type { Session } from "../lib/authStorage";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
@@ -134,7 +135,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
       <View style={styles.goalCard}>
         {nextItem ? (
           <Text style={styles.goalText}>
-            ⭐ {nextItem.need - total}개만 더 모으면 {nextItem.emoji} {nextItem.name}을(를) 만날 수 있어요!
+            ⭐ {nextItem.need - total}개만 더 모으면 {nextItem.emoji} {josa(nextItem.name, "을/를")} 만날 수 있어요!
           </Text>
         ) : (
           <Text style={styles.goalText}>🏅 모든 친구를 다 모았어요! 정말 대단해요!</Text>
@@ -207,9 +208,9 @@ const styles = StyleSheet.create({
   goalCard: { backgroundColor: COLORS.white, borderRadius: 16, borderWidth: 2, borderColor: COLORS.line, padding: 12, marginTop: 12 },
   goalText: { fontSize: 14, fontWeight: "700", color: COLORS.ink, textAlign: "center" },
   sectionTitle: { fontFamily: FONT_DISPLAY, fontSize: 20, color: COLORS.ink, marginTop: 20, marginBottom: 10 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 10 },
   cell: {
-    width: "22.5%",
+    width: "23.5%",
     alignItems: "center",
     backgroundColor: COLORS.white,
     borderRadius: 16,

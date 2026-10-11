@@ -14,6 +14,7 @@ import {
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
 import { formatMessageTime } from "../lib/dateFormat";
+import { josa } from "../lib/josa";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 type MessageKind = "message" | "share" | "sticker";
@@ -234,7 +235,7 @@ function MessageBubble({ message, mine, showNotice }: { message: FamilyMessage; 
   if (message.kind === "share") {
     return (
       <View style={styles.shareCard}>
-        <Text style={styles.shareTitle}>💛 {message.authorName}(이)가 아이를 위해 한 일</Text>
+        <Text style={styles.shareTitle}>💛 {josa(message.authorName, "이/가")} 아이를 위해 한 일</Text>
         <Text style={styles.shareBody}>{message.body}</Text>
         {noticeLine}
         <Text style={styles.time}>{formatMessageTime(message.createdAt)}</Text>

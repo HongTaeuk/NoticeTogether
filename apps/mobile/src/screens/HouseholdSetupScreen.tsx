@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
+import { josa } from "../lib/josa";
 import type { Role, Session } from "../lib/authStorage";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
@@ -154,7 +155,7 @@ export default function HouseholdSetupScreen({ session, onJoined, onContinue }: 
             <Text style={styles.question}>누구로 참여할까요?</Text>
             <View style={styles.choiceRow}>
               <ChoiceCard
-                emoji="🧑"
+                emoji="👩‍👧"
                 label="양육자예요"
                 hint="엄마·아빠·조부모 등"
                 selected={memberType === "caregiver"}
@@ -242,7 +243,7 @@ export default function HouseholdSetupScreen({ session, onJoined, onContinue }: 
             disabled={!canJoin}
           >
             <Text style={styles.joinButtonText}>
-              {busy ? "연결하는 중..." : chosenName ? `${chosenName}(으)로 가족 연결하기` : "가족 연결하기"}
+              {busy ? "연결하는 중..." : chosenName ? `${josa(chosenName, "으로/로")} 가족 연결하기` : "가족 연결하기"}
             </Text>
           </TouchableOpacity>
         )}

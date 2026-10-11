@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } 
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
 import { parseYmd } from "../lib/dateFormat";
+import { josa } from "../lib/josa";
 import { cancelReminderForItem, resyncAllReminders } from "../lib/reminderSync";
 import { CATEGORY_EMOJI, type ChecklistCategory } from "../types/notice";
 import { COLORS, FONT_DISPLAY } from "../theme";
@@ -87,6 +88,11 @@ export default function ChildTodayScreen({
 
   async function setDone(item: TodayItem, done: boolean) {
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_done: done } : i)));
+    // 아이에게는 바로 반응해야 한다 — 서버 응답(수 초)을 기다리지 않고 먼저 축하하고, 실패하면 되돌린다.
+    if (done) {
+      setCelebrate(item.title);
+      setTimeout(() => setCelebrate((cur) => (cur === item.title ? null : cur)), 3000);
+    }
     try {
       const res = await authFetch(`/api/checklist/${item.id}`, {
         method: "PATCH",
@@ -95,8 +101,6 @@ export default function ChildTodayScreen({
       if (!res.ok) throw new Error("저장하지 못했어요. 다시 눌러 주세요.");
       if (done) {
         await cancelReminderForItem(item.id);
-        setCelebrate(item.title);
-        setTimeout(() => setCelebrate(null), 2500);
         authFetch("/api/stars")
           .then((r) => r.json())
           .then((s) => typeof s?.stars === "number" && setStars(s.stars))
@@ -106,6 +110,7 @@ export default function ChildTodayScreen({
       }
     } catch (err) {
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_done: item.is_done } : i)));
+      setCelebrate(null);
       setError(err instanceof Error ? err.message : "저장하지 못했어요.");
     }
   }
@@ -150,7 +155,9 @@ export default function ChildTodayScreen({
 
       {shares.map((s) => (
         <View key={s.id} style={styles.shareCard}>
-          <Text style={styles.shareTitle}>💛 {s.authorName}(이)가 {name}을(를) 위해</Text>
+          <Text style={styles.shareTitle}>
+            💛 {josa(s.authorName, "이/가")} {josa(name, "을/를")} 위해
+          </Text>
           <Text style={styles.shareBody}>{s.body}</Text>
         </View>
       ))}

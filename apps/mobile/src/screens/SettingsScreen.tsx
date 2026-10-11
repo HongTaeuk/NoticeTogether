@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
+import { josa } from "../lib/josa";
 import type { Session } from "../lib/authStorage";
 import { COLORS, FONT_DISPLAY } from "../theme";
 import {
@@ -220,7 +221,7 @@ export default function SettingsScreen({
 
         <Text style={styles.sectionTitle}>계정</Text>
         <View style={styles.card}>
-          <Text style={styles.rowLabel}>{ROLE_LABEL[session.role]}(으)로 사용 중</Text>
+          <Text style={styles.rowLabel}>{josa(ROLE_LABEL[session.role], "으로/로")} 사용 중</Text>
           {session.isAnonymous && (
             <Text style={[styles.cardBody, styles.cardBodySpaced]}>
               가입하지 않아도 초대 코드로 가족과 함께 쓸 수 있어요. 휴대폰을 바꿀 때를 대비해 계정을 만들어둘 수도 있어요.
