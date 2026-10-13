@@ -9,7 +9,8 @@ export function josa(word: string, pair: JosaPair): string {
   const code = trimmed.charCodeAt(trimmed.length - 1);
   const isHangul = code >= 0xac00 && code <= 0xd7a3;
   const final = isHangul ? (code - 0xac00) % 28 : 0;
-  const [withFinal, withoutFinal] = pair.split("/");
+  // 나머지는 "받침 있을 때/없을 때" 순서인데 "와/과"만 반대("과"가 받침 있을 때)라 바꿔 읽는다.
+  const [withFinal, withoutFinal] = pair === "와/과" ? ["과", "와"] : pair.split("/");
   // "으로/로"는 ㄹ 받침(8)일 때도 "로"를 쓴다.
   const useWithFinal = pair === "으로/로" ? final !== 0 && final !== 8 : final !== 0;
   return trimmed + (useWithFinal ? withFinal : withoutFinal);

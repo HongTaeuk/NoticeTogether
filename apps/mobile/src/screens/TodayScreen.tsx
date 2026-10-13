@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import AnimatedCheckMark from "../components/AnimatedCheckMark";
+import SchoolFeedCard from "../components/SchoolFeedCard";
 import { authFetch } from "../lib/apiClient";
 import {
   cancelReminderForItem,
@@ -69,11 +70,13 @@ export default function TodayScreen({
   onComposeNew,
   onViewUnread,
   onManageHousehold,
+  onManageSchool,
 }: {
   onOpenNotice: (noticeId: string) => void;
   onComposeNew: () => void;
   onViewUnread: () => void;
   onManageHousehold: () => void;
+  onManageSchool: () => void;
 }) {
   const [urgentItems, setUrgentItems] = useState<TodayItem[]>([]);
   const [allItems, setAllItems] = useState<TodayItem[]>([]);
@@ -84,6 +87,8 @@ export default function TodayScreen({
   const [error, setError] = useState<string | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  // 당겨서 새로고침할 때 학교 게시판도 다시 확인하게 한다.
+  const [schoolSyncKey, setSchoolSyncKey] = useState(0);
 
   const load = useCallback(async () => {
     setError(null);
@@ -160,6 +165,7 @@ export default function TodayScreen({
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);
+            setSchoolSyncKey((k) => k + 1);
             load();
           }}
         />
@@ -189,6 +195,8 @@ export default function TodayScreen({
           </TouchableOpacity>
         </View>
       </View>
+
+      <SchoolFeedCard syncKey={schoolSyncKey} onNewNotices={load} onManage={onManageSchool} />
 
       <TouchableOpacity style={styles.composeButton} onPress={onComposeNew}>
         <Text style={styles.composeButtonText}>+ 새 알림 작성하기</Text>

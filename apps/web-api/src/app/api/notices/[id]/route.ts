@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import { resolveUser, AuthError } from "@/lib/auth/session";
 import type { DevRole } from "@/lib/supabase/devSeed";
+import { loadNoticeSources } from "@/lib/school/sources";
 
 // Pull 기반 동기화(PRD FR-2): 앱이 열릴 때마다 이 엔드포인트를 다시 호출해서
 // 상대 보호자가 그 사이 체크/메모한 내용을 가져온다. 실시간 push는 쓰지 않는다.
@@ -43,7 +44,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "이 알림에 접근할 권한이 없습니다." }, { status: 403 });
   }
   const noticeChild = notice.children as unknown as { name: string } | null;
-  const noticeOut = { ...notice, children: undefined, childName: noticeChild?.name ?? null };
+  const sources = await loadNoticeSources(supabase, [id]);
+  const noticeOut = { ...notice, children: undefined, childName: noticeChild?.name ?? null, source: sources.get(id) ?? null };
 
   const { data: items, error: itemsError } = await supabase
     .from("checklist_items")

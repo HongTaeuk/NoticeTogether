@@ -15,6 +15,7 @@ import { COLORS } from './src/theme';
 import AuthScreen from './src/screens/AuthScreen';
 import OnboardingIntroScreen from './src/screens/OnboardingIntroScreen';
 import HouseholdSetupScreen from './src/screens/HouseholdSetupScreen';
+import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
 import NetworkBanner from './src/components/NetworkBanner';
 import SplashLogo from './src/components/SplashLogo';
 import { API_BASE_URL } from './src/config/api';
@@ -22,7 +23,14 @@ import { authFetch, getCurrentTokens, setAuthTokens, setOnSessionExpired } from 
 import { clearSession, loadSession, saveSession, type Session } from './src/lib/authStorage';
 import { getInitialNoticeId, subscribeNoticeDeepLink } from './src/native/deepLink';
 
-type Screen = 'loading' | 'auth' | 'onboarding-intro' | 'household-setup' | 'main';
+type Screen =
+  | 'loading'
+  | 'auth'
+  | 'onboarding-intro'
+  | 'school-onboarding'
+  | 'school-settings'
+  | 'household-setup'
+  | 'main';
 
 // 혼자 쓰는 동안 앱을 열 때마다 가족 연결 화면이 뜨면 매번 "나중에 하기"를 눌러야 한다 — 한 번만 자동으로 보여준다.
 const HOUSEHOLD_PROMPT_SEEN_KEY = 'noticetogether:householdPromptSeen';
@@ -160,8 +168,15 @@ function App() {
             onBack={session ? () => setScreen('main') : undefined}
           />
         )}
+        {/* 첫 실행: 소개 → "아이 학교를 연결할까요?"(건너뛸 수 있음) → 가족 연결 */}
         {screen === 'onboarding-intro' && session && (
-          <OnboardingIntroScreen onNext={() => refreshHouseholdState(session)} />
+          <OnboardingIntroScreen onNext={() => setScreen('school-onboarding')} />
+        )}
+        {screen === 'school-onboarding' && session && (
+          <SchoolSetupScreen mode="onboarding" onDone={() => refreshHouseholdState(session)} />
+        )}
+        {screen === 'school-settings' && session && (
+          <SchoolSetupScreen mode="settings" onDone={() => setScreen('main')} />
         )}
         {screen === 'household-setup' && session && (
           <HouseholdSetupScreen
@@ -185,6 +200,7 @@ function App() {
             session={session}
             onLogout={handleLogout}
             onManageHousehold={() => setScreen('household-setup')}
+            onManageSchool={() => setScreen('school-settings')}
             onManageAccount={() => setScreen('auth')}
             deepLinkNoticeId={deepLinkNoticeId}
             onDeepLinkHandled={() => setDeepLinkNoticeId(null)}

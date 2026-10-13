@@ -20,6 +20,8 @@ import {
   requestNotificationPermission,
 } from "../lib/notificationPermission";
 import { memberName, ROLE_LABEL, type Role } from "../types/notice";
+import { loadSchoolStatus } from "../lib/schoolFeed";
+import type { SchoolStatus } from "../types/school";
 import ChildConsentSection from "./ChildConsentSection";
 
 type ReminderInfo = {
@@ -50,12 +52,14 @@ export default function SettingsScreen({
   accountLabel,
   onAccountPress,
   onManageHousehold,
+  onManageSchool,
   onChildAdded,
 }: {
   session: Session;
   accountLabel: string;
   onAccountPress: () => void;
   onManageHousehold: () => void;
+  onManageSchool: () => void;
   onChildAdded: () => void;
 }) {
   const [reminder, setReminder] = useState<ReminderInfo | null>(null);
@@ -63,6 +67,11 @@ export default function SettingsScreen({
   const [members, setMembers] = useState<{ id: string; role: string; display_name: string | null }[]>([]);
   const [nameDraft, setNameDraft] = useState(session.displayName ?? "");
   const [nameSaved, setNameSaved] = useState(false);
+  const [school, setSchool] = useState<SchoolStatus | null>(null);
+
+  useEffect(() => {
+    loadSchoolStatus().then(setSchool);
+  }, []);
 
   const loadMembers = useCallback(() => {
     authFetch("/api/auth/me")
@@ -165,6 +174,23 @@ export default function SettingsScreen({
             </Text>
           </View>
         )}
+
+        <Text style={styles.sectionTitle}>우리 학교</Text>
+        <TouchableOpacity style={styles.card} onPress={onManageSchool}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>
+              {school?.linked ? `🏫 ${school.school?.name ?? "연결된 학교"}` : "🏫 아직 연결 안 함"}
+            </Text>
+            <Text style={styles.linkText}>{school?.linked ? "보기 · 바꾸기" : "연결하기"}</Text>
+          </View>
+          <Text style={[styles.cardBody, styles.cardBodySpaced]}>
+            {school?.linked
+              ? school.supported
+                ? "학교 홈페이지 가정통신문을 알아서 가져와요."
+                : "이 학교 홈페이지는 아직 자동으로 읽지 못해요."
+              : "연결하면 학교 홈페이지에 올라오는 가정통신문을 알아서 가져와 정리해요."}
+          </Text>
+        </TouchableOpacity>
 
         <ChildConsentSection onChildAdded={onChildAdded} />
 

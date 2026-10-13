@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -22,6 +23,7 @@ import {
   type Role,
   type SummarizeResult,
 } from "../types/notice";
+import type { NoticeSource } from "../types/school";
 import { COLORS, FONT_DISPLAY } from "../theme";
 import {
   cancelReminderForItem,
@@ -45,6 +47,7 @@ export default function NoticeInputScreen({
   session,
   onLogout,
   onManageHousehold,
+  onManageSchool,
   onManageAccount,
   deepLinkNoticeId,
   onDeepLinkHandled,
@@ -52,6 +55,7 @@ export default function NoticeInputScreen({
   session: Session;
   onLogout: () => void;
   onManageHousehold: () => void;
+  onManageSchool: () => void;
   onManageAccount: () => void;
   deepLinkNoticeId?: string | null;
   onDeepLinkHandled?: () => void;
@@ -60,6 +64,7 @@ export default function NoticeInputScreen({
   const [rawText, setRawText] = useState("");
   const [notice, setNotice] = useState<{ raw_text: string; ai_summary: string | null } | null>(null);
   const [noticeChildName, setNoticeChildName] = useState<string | null>(null);
+  const [noticeSource, setNoticeSource] = useState<NoticeSource | null>(null);
   const [easyExplanations, setEasyExplanations] = useState<{ term: string; explanation: string }[]>([]);
   const [easyExplanationsExpanded, setEasyExplanationsExpanded] = useState(false);
   const [noticeId, setNoticeId] = useState<string | null>(null);
@@ -130,6 +135,7 @@ export default function NoticeInputScreen({
     setNoticeId(null);
     setNotice(null);
     setNoticeChildName(null);
+    setNoticeSource(null);
     setEasyExplanations([]);
     setEasyExplanationsExpanded(false);
     setItems([]);
@@ -302,6 +308,7 @@ export default function NoticeInputScreen({
     }
     setNotice(data.notice as { raw_text: string; ai_summary: string | null });
     setNoticeChildName((data.notice as { childName?: string | null })?.childName ?? null);
+    setNoticeSource((data.notice as { source?: NoticeSource | null })?.source ?? null);
     setEasyExplanations(
       (data.notice as { easy_explanations?: { term: string; explanation: string }[] | null })
         ?.easy_explanations ?? [],
@@ -501,6 +508,7 @@ export default function NoticeInputScreen({
         onComposeNew={resetToCompose}
         onViewUnread={() => setTab("unread")}
         onManageHousehold={onManageHousehold}
+        onManageSchool={onManageSchool}
       />
     );
   } else if (tab === "unread" || tab === "history") {
@@ -527,6 +535,7 @@ export default function NoticeInputScreen({
         accountLabel={accountLabel}
         onAccountPress={onAccountPress}
         onManageHousehold={onManageHousehold}
+        onManageSchool={onManageSchool}
         onChildAdded={loadChildren}
       />
     );
@@ -669,6 +678,16 @@ export default function NoticeInputScreen({
           </View>
 
           {noticeChildName && <Text style={styles.childTagText}>👤 {noticeChildName}</Text>}
+
+          {noticeSource && (
+            <TouchableOpacity style={styles.sourceRow} onPress={() => Linking.openURL(noticeSource.url).catch(() => {})}>
+              <Text style={styles.sourceText} numberOfLines={2}>
+                🏫 {noticeSource.boardLabel ?? "학교 홈페이지"}
+                {noticeSource.postedOn ? ` · ${formatKoreanDate(noticeSource.postedOn)}` : ""}
+              </Text>
+              <Text style={styles.sourceLink}>학교 홈페이지에서 보기 ›</Text>
+            </TouchableOpacity>
+          )}
 
           {partnerNotViewed && (
             <Text style={styles.partnerNotViewedText}>
@@ -1306,6 +1325,15 @@ const styles = StyleSheet.create({
     color: "#13854A",
     marginBottom: 8,
   },
+  sourceRow: {
+    backgroundColor: COLORS.sky,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    marginBottom: 10,
+  },
+  sourceText: { fontSize: 13, fontWeight: "700", color: COLORS.skyInk },
+  sourceLink: { fontSize: 13, fontWeight: "800", color: COLORS.skyInk, marginTop: 3 },
   childPickerRow: {
     flexDirection: "row",
     flexWrap: "wrap",

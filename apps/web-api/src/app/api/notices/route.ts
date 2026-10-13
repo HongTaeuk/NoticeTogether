@@ -5,6 +5,7 @@ import { resolveUser, AuthError } from "@/lib/auth/session";
 import { forbidChild } from "@/lib/household/members";
 import type { ChecklistItemDraft } from "@/lib/ai/summarize";
 import { explainJargonTerms } from "@/lib/ai/explainJargon";
+import { loadNoticeSources } from "@/lib/school/sources";
 
 type CreateNoticeBody = {
   rawText: string;
@@ -170,6 +171,7 @@ export async function GET(req: NextRequest) {
         .in("event_type", ["notice_opened", "partner_view_confirmed"])
     : { data: [] };
   const openedByMe = new Set((myOpens ?? []).map((e) => e.notice_id as string));
+  const sources = await loadNoticeSources(supabase, noticeIds);
 
   const summarized = (notices ?? []).map((n) => {
     const items = (n.checklist_items ?? []) as { id: string; is_done: boolean; due_date: string | null }[];
@@ -184,6 +186,7 @@ export async function GET(req: NextRequest) {
       hasOpened: openedByMe.has(n.id as string),
       childId: n.child_id,
       childName: child?.name ?? null,
+      source: sources.get(n.id as string) ?? null,
     };
   });
 
