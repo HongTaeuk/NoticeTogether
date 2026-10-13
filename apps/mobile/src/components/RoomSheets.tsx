@@ -9,6 +9,19 @@ import { COLORS, FONT_DISPLAY } from "../theme";
 const GRADE_TINT: Record<string, string> = { COMMON: COLORS.tint, RARE: COLORS.sky, EPIC: COLORS.sunSoft };
 const GRADE_INK: Record<string, string> = { COMMON: COLORS.primary, RARE: COLORS.skyInk, EPIC: COLORS.sunInk };
 
+/**
+ * 등급 뱃지. 이모지와 글자를 한 Text("🍀 일반")로 두면 태블릿에서 잠긴 일반 칸만 글자가 그려지지 않았다
+ * (자리는 잡히는데 "일반"만 빈칸) — 이모지와 글자를 따로 그린다.
+ */
+function GradeBadge({ grade, label, bg, style }: { grade: string; label: string; bg: string; style?: object }) {
+  return (
+    <View style={[styles.gradeBadge, style, { backgroundColor: bg }]}>
+      <Text style={styles.gradeEmoji}>{GRADE_EMOJI[grade]}</Text>
+      <Text style={[styles.gradeText, { color: GRADE_INK[grade] }]}>{label}</Text>
+    </View>
+  );
+}
+
 /** 물건 그림 한 칸 — PNG가 있으면 그림, 벽지·바닥이면 색 견본, 아직 없으면 자물쇠. */
 export function ItemThumb({ glyph, size, locked }: { glyph: string; size: number; locked?: boolean }) {
   if (locked) {
@@ -232,11 +245,12 @@ export function CollectionSheet({ visible, room, onClose }: { visible: boolean; 
             <View style={styles.shopText}>
               <View style={styles.dexTop}>
                 <Text style={styles.shopName}>{c.owned ? c.name : "???"}</Text>
-                <View style={[styles.gradeBadge, styles.dexBadge, { backgroundColor: c.owned ? GRADE_TINT[c.grade] : COLORS.white }]}>
-                  <Text style={[styles.gradeText, { color: GRADE_INK[c.grade] }]}>
-                    {GRADE_EMOJI[c.grade]} {GRADE_LABEL[c.grade]}
-                  </Text>
-                </View>
+                <GradeBadge
+                  grade={c.grade}
+                  label={GRADE_LABEL[c.grade]}
+                  bg={c.owned ? GRADE_TINT[c.grade] : COLORS.white}
+                  style={styles.dexBadge}
+                />
               </View>
               <Text style={styles.dexStory}>{c.owned ? c.story : "알림 준비물을 챙긴 날 받을 수 있어요."}</Text>
               {c.owned && c.date && <Text style={styles.dexDate}>{formatKoreanDate(c.date)}에 도착</Text>}
@@ -276,11 +290,12 @@ export function CeremonyModal({
             <ItemThumb glyph={ceremony.glyph} size={120} />
           </Animated.View>
           <Text style={styles.ceremonyTitle}>알림 선물이 왔어요 🎁</Text>
-          <View style={[styles.gradeBadge, styles.ceremonyBadge, { backgroundColor: GRADE_TINT[ceremony.grade] }]}>
-            <Text style={[styles.gradeText, { color: GRADE_INK[ceremony.grade] }]}>
-              {GRADE_EMOJI[ceremony.grade]} {ceremony.name} · {GRADE_LABEL[ceremony.grade]}
-            </Text>
-          </View>
+          <GradeBadge
+            grade={ceremony.grade}
+            label={`${ceremony.name} · ${GRADE_LABEL[ceremony.grade]}`}
+            bg={GRADE_TINT[ceremony.grade]}
+            style={styles.ceremonyBadge}
+          />
           <Text style={styles.ceremonyStory}>{ceremony.story}</Text>
           <TouchableOpacity style={styles.ceremonyButton} onPress={onClose}>
             <Text style={styles.ceremonyButtonText}>내 방에 두기</Text>
@@ -367,7 +382,8 @@ const styles = StyleSheet.create({
   dexBadge: { marginLeft: 8, flexShrink: 0 },
   dexStory: { fontSize: 13, color: COLORS.ink, marginTop: 3, lineHeight: 18 },
   dexDate: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
-  gradeBadge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  gradeBadge: { flexDirection: "row", alignItems: "center", borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  gradeEmoji: { fontSize: 11, marginRight: 3 },
   gradeText: { fontSize: 11, fontWeight: "800" },
   ceremonyBackdrop: { flex: 1, backgroundColor: "rgba(58,46,31,0.55)", alignItems: "center", justifyContent: "center", padding: 24 },
   ceremonyCard: { width: "100%", maxWidth: 420, backgroundColor: COLORS.white, borderRadius: 28, padding: 24, alignItems: "center" },
