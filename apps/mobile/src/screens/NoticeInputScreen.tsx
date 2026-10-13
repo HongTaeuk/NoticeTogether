@@ -24,6 +24,8 @@ import {
   type SummarizeResult,
 } from "../types/notice";
 import type { NoticeSource } from "../types/school";
+import SchoolPostMedia from "../components/SchoolPostMedia";
+import { postSituation } from "../lib/schoolMessages";
 import { COLORS, FONT_DISPLAY } from "../theme";
 import {
   cancelReminderForItem,
@@ -687,6 +689,14 @@ export default function NoticeInputScreen({
               </Text>
               <Text style={styles.sourceLink}>학교 홈페이지에서 보기 ›</Text>
             </TouchableOpacity>
+          )}
+          {noticeSource && !showOriginal && (
+            <SchoolPostMedia
+              images={noticeSource.images ?? []}
+              files={noticeSource.files ?? []}
+              pageUrl={noticeSource.url}
+              note={items.length === 0 ? postSituation((noticeSource.images ?? []).length, (noticeSource.files ?? []).length, !/그림으로|글로 올라와 있지 않아요/.test(notice.ai_summary ?? "")) : null}
+            />
           )}
 
           {partnerNotViewed && (

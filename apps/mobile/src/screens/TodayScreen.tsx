@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 } from "react-native";
 import AnimatedCheckMark from "../components/AnimatedCheckMark";
 import SchoolFeedCard from "../components/SchoolFeedCard";
+import RunnerLoading from "../components/RunnerLoading";
 import { authFetch } from "../lib/apiClient";
 import {
   cancelReminderForItem,
@@ -236,10 +236,7 @@ export default function TodayScreen({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {loading ? (
-        <View style={styles.loadingBox}>
-          <ActivityIndicator color="#13854A" />
-          <Text style={styles.loadingText}>오늘 할 일을 정리하는 중이에요</Text>
-        </View>
+        <RunnerLoading compact steps={["오늘 할 일을 챙기러 달려가는 중!", "준비물을 하나씩 모으는 중이에요"]} />
       ) : (
         <>
           <Text style={styles.sectionTitle}>지금 해야 할 것</Text>

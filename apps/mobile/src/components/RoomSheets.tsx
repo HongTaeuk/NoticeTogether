@@ -3,7 +3,7 @@ import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpac
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatKoreanDate } from "../lib/dateFormat";
 import { ArtThumb } from "./room/roomArt";
-import type { RoomData, RoomShopItem } from "../types/room";
+import type { DailyGift, RoomData, RoomShopItem } from "../types/room";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 const GRADE_LABEL: Record<string, string> = { COMMON: "일반", RARE: "희귀", EPIC: "전설" };
@@ -25,7 +25,7 @@ function GradeBadge({ grade, label, bg, style }: { grade: string; label: string;
 }
 
 /** 물건 그림 한 칸 — 선물·러그는 그 그림, 벽지·바닥은 견본, 아직 없으면 자물쇠. */
-export function ItemThumb({ glyph, size, locked }: { glyph: string; size: number; locked?: boolean }) {
+export function ItemThumb({ glyph, size, locked, level }: { glyph: string; size: number; locked?: boolean; level?: number }) {
   if (locked) {
     return (
       <View style={[styles.thumbBox, { width: size, height: size }]}>
@@ -35,7 +35,7 @@ export function ItemThumb({ glyph, size, locked }: { glyph: string; size: number
   }
   return (
     <View style={[styles.thumbBox, { width: size, height: size }]}>
-      <ArtThumb glyph={glyph} size={size * 0.9} />
+      <ArtThumb glyph={glyph} size={size * 0.9} level={level} />
     </View>
   );
 }
@@ -59,16 +59,17 @@ function Sheet({ visible, title, onClose, children }: { visible: boolean; title:
   );
 }
 
-type DecoTab = "furn" | "prop" | "bg";
+type DecoTab = "furn" | "prop" | "toy" | "bg";
 const DECO_TABS: { key: DecoTab; label: string }[] = [
   { key: "furn", label: "가구" },
   { key: "prop", label: "소품" },
+  { key: "toy", label: "장난감" },
   { key: "bg", label: "배경" },
 ];
 const FURN_CODES = ["shelf", "desk", "easel", "tent"];
 const PROP_CODES = ["plant", "clock", "board", "bag", "garland"];
 
-type DecoCell = { key: string; name: string; glyph: string; owned: boolean; on: boolean; onPress: () => void; hint?: string };
+type DecoCell = { key: string; name: string; glyph: string; owned: boolean; on: boolean; onPress: () => void; hint?: string; level?: number };
 
 /**
  * 꾸미기. 가구·소품은 **켜고 끄기**(여러 개를 함께 둔다), 러그·배경은 **하나 고르기**.
@@ -98,7 +99,8 @@ export function DecoSheet({
       owned: c.owned,
       on: c.owned && !c.hidden,
       onPress: () => onToggle(code),
-      hint: c.owned ? undefined : "준비한 날 와요",
+      hint: c.owned ? undefined : "준비하면 와요",
+      level: room.levels?.[code],
     };
   };
   const shopCell = (s: RoomShopItem, field: "rug" | "wall" | "floor"): DecoCell => ({
@@ -115,11 +117,21 @@ export function DecoSheet({
   if (tab === "furn") {
     cells = [
       ...room.shop.filter((s) => s.category === "rug").map((s) => shopCell(s, "rug")),
-      { key: "bed", name: "포근한 침대", glyph: "bed", owned: true, on: true, onPress: () => {} },
+      { key: "bed", name: "포근한 침대", glyph: "bed", owned: true, on: true, onPress: () => {}, level: room.levels?.bed },
       ...FURN_CODES.map(collectibleCell),
     ];
   } else if (tab === "prop") {
     cells = PROP_CODES.map(collectibleCell);
+  } else if (tab === "toy") {
+    cells = (room.decor ?? []).map((d) => ({
+      key: d.code,
+      name: d.name,
+      glyph: d.glyph,
+      owned: d.owned,
+      on: d.owned && !d.hidden,
+      onPress: () => onToggle(d.code),
+      hint: d.owned ? undefined : `⭐ ${d.price} · 매일 선물`,
+    }));
   } else {
     cells = [
       ...room.shop.filter((s) => s.category === "wall").map((s) => shopCell(s, "wall")),
@@ -137,7 +149,11 @@ export function DecoSheet({
         ))}
       </View>
       <Text style={styles.sheetHint}>
-        {tab === "furn" || tab === "prop" ? "눌러서 방에 두거나 치워요. 치워도 선물 모음에는 남아요." : "하나를 골라요. 잠긴 건 별 상점에서 데려와요."}
+        {tab === "bg"
+          ? "하나를 골라요. 잠긴 건 별 상점에서 데려와요."
+          : tab === "toy"
+            ? "매일 처음 들어올 때 받는 선물이나 별 상점에서 데려와요. 눌러서 두거나 치워요."
+            : "눌러서 방에 두거나 치워요. 아직 없는 건 준비한 날 선물로 오거나 별 상점에서 살 수 있어요."}
       </Text>
       <ScrollView style={styles.gridScroll} contentContainerStyle={styles.grid}>
         {cells.map((c) => (
@@ -153,7 +169,7 @@ export function DecoSheet({
                 <Text style={styles.checkText}>✓</Text>
               </View>
             )}
-            <ItemThumb glyph={c.glyph} size={52} locked={!c.owned} />
+            <ItemThumb glyph={c.glyph} size={52} locked={!c.owned} level={c.level} />
             <Text style={styles.cellName} numberOfLines={1}>
               {c.name}
             </Text>
@@ -166,6 +182,9 @@ export function DecoSheet({
 }
 
 const SHOP_SECTIONS: { category: RoomShopItem["category"]; label: string }[] = [
+  { category: "upgrade", label: "업그레이드" },
+  { category: "furniture", label: "가구·소품" },
+  { category: "decor", label: "장난감" },
   { category: "rug", label: "러그" },
   { category: "wall", label: "벽지" },
   { category: "floor", label: "바닥" },
@@ -198,7 +217,7 @@ export function ShopSheet({
                 const short = s.price - balance;
                 return (
                   <View key={s.code} style={styles.shopRow}>
-                    <ItemThumb glyph={s.glyph} size={52} />
+                    <ItemThumb glyph={s.glyph} size={52} level={s.level} />
                     <View style={styles.shopText}>
                       <Text style={styles.shopName}>{s.name}</Text>
                       <Text style={styles.shopPrice}>⭐ {s.price}</Text>
@@ -298,7 +317,106 @@ export function CeremonyModal({
   );
 }
 
+/**
+ * 매일 첫 접속 선물 — 흔들리는 선물 상자를 눌러 열면 별이나 장난감이 나온다.
+ * 무엇이 나올지는 서버가 정한다(눌러서 여는 순간 POST /api/room/daily). 하루에 한 번.
+ */
+export function DailyGiftModal({
+  visible,
+  onOpen,
+  onClose,
+}: {
+  visible: boolean;
+  onOpen: () => Promise<DailyGift | null>;
+  onClose: () => void;
+}) {
+  const [opened, setOpened] = useState<DailyGift | null>(null);
+  const [opening, setOpening] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const wobble = useRef(new Animated.Value(0)).current;
+  const pop = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    if (!visible) return;
+    setOpened(null);
+    setFailed(false);
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(wobble, { toValue: 1, duration: 120, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: -1, duration: 240, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: 0, duration: 120, useNativeDriver: true }),
+        Animated.delay(700),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [visible, wobble]);
+
+  async function open() {
+    if (opening || opened) return;
+    setOpening(true);
+    const gift = await onOpen().catch(() => null);
+    setOpening(false);
+    if (!gift) {
+      setFailed(true);
+      return;
+    }
+    pop.setValue(0.3);
+    setOpened(gift);
+    Animated.spring(pop, { toValue: 1, friction: 4, tension: 90, useNativeDriver: true }).start();
+  }
+
+  if (!visible) return null;
+  const rotate = wobble.interpolate({ inputRange: [-1, 1], outputRange: ["-10deg", "10deg"] });
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.ceremonyBackdrop}>
+        <View style={styles.ceremonyCard}>
+          <Text style={styles.ceremonyKicker}>오늘도 와 줬구나!</Text>
+          {!opened ? (
+            <>
+              <TouchableOpacity activeOpacity={0.8} onPress={open} accessibilityLabel="선물 상자 열기">
+                <Animated.Text style={[styles.giftBox, { transform: [{ rotate }] }]}>🎁</Animated.Text>
+              </TouchableOpacity>
+              <Text style={styles.ceremonyTitle}>오늘의 첫 방문 선물</Text>
+              <Text style={styles.ceremonyStory}>
+                {failed ? "선물을 열지 못했어요. 인터넷을 확인하고 다시 눌러 주세요." : opening ? "상자를 여는 중…" : "상자를 눌러 열어 보세요"}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Animated.View style={[styles.ceremonyHero, { transform: [{ scale: pop }] }]}>
+                {opened.kind === "stars" ? (
+                  <Text style={styles.giftStars}>⭐ +{opened.amount}</Text>
+                ) : (
+                  <ItemThumb glyph={opened.glyph} size={120} />
+                )}
+              </Animated.View>
+              <Text style={styles.ceremonyTitle}>{opened.kind === "stars" ? `별 ${opened.amount}개를 받았어요` : `${opened.name}이(가) 왔어요`}</Text>
+              <Text style={styles.ceremonyStory}>
+                {opened.kind === "stars" ? "별을 모아 별 상점에서 가구를 사거나 업그레이드해 보세요." : "내 방에 바로 놓아 뒀어요. 꾸미기에서 옮겨 둘 수 있어요."}
+              </Text>
+              <TouchableOpacity style={styles.ceremonyButton} onPress={onClose}>
+                <Text style={styles.ceremonyButtonText}>고마워요!</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {!opened && (
+            <TouchableOpacity style={styles.laterButton} onPress={onClose}>
+              <Text style={styles.laterText}>나중에 열기</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
+  giftBox: { fontSize: 96, marginVertical: 14, textAlign: "center" },
+  giftStars: { fontFamily: FONT_DISPLAY, fontSize: 40, color: COLORS.sunInk },
+  laterButton: { marginTop: 12, padding: 6 },
+  laterText: { fontSize: 13, fontWeight: "700", color: COLORS.muted },
   backdrop: { flex: 1, backgroundColor: "rgba(58,46,31,0.45)" },
   sheet: {
     backgroundColor: COLORS.white,

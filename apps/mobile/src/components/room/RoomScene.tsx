@@ -1,6 +1,6 @@
 import React from "react";
 import Svg, { Circle, Ellipse, G, Line, Polygon, Rect } from "react-native-svg";
-import { FLOORS, Garland, ITEM_ART, OUT, WALLS, WallPattern } from "./roomArt";
+import { FLOORS, Garland, ITEM_ART, OUT, UpgradeOverlay, WALLS, WallPattern } from "./roomArt";
 
 /**
  * 아이의 방 — 정면에서 본 인형의 집. 초록 지붕 아래 방 한 칸에 받은 선물(물건)이 하나씩 놓인다.
@@ -30,6 +30,18 @@ const FRONT_SPOTS: Spot[] = [
   { code: "tent", x: 333, y: 294 },
 ];
 const RUG_AT = { x: 200, y: 278 };
+
+// 작은 장난감 자리 — 침대 위 곰인형, 침대와 책상 사이 로봇, 러그 위 쿠션, 앞줄 블록·미니카·공.
+const DECOR_BACK: Spot[] = [
+  { code: "teddy", x: 190, y: 200 },
+  { code: "robot", x: 229, y: 226 },
+];
+const DECOR_RUG: Spot[] = [{ code: "cushion", x: 200, y: 268 }];
+const DECOR_FRONT: Spot[] = [
+  { code: "blocks", x: 142, y: 289 },
+  { code: "car", x: 186, y: 290 },
+  { code: "ball", x: 226, y: 288 },
+];
 
 function floorShapes(floor: string): React.ReactElement[] {
   const fl = FLOORS[floor] ?? FLOORS.floor_beige;
@@ -89,7 +101,10 @@ export default function RoomScene({
   editing,
   onPick,
   onRugSlot,
+  levels = {},
 }: {
+  /** 업그레이드 단계(bed·window·desk·shelf, 없으면 1). */
+  levels?: Record<string, number>;
   width: number;
   /** 방에 보이는 선물 코드(받았고 치우지 않은 것). */
   visible: Set<string>;
@@ -108,6 +123,7 @@ export default function RoomScene({
     visible.has(s.code) && ITEM_ART[s.code] ? (
       <G key={s.code} x={s.x} y={s.y} onPress={() => onPick(s.code)}>
         {ITEM_ART[s.code].draw()}
+        <UpgradeOverlay code={s.code} level={levels[s.code] ?? 1} />
       </G>
     ) : null;
 
@@ -164,6 +180,7 @@ export default function RoomScene({
       )}
       <G x={166} y={158} onPress={() => onPick("window")}>
         {ITEM_ART.window.draw()}
+        <UpgradeOverlay code="window" level={levels.window ?? 1} />
       </G>
       {WALL_SPOTS.map(place)}
 
@@ -171,7 +188,9 @@ export default function RoomScene({
       {BACK_SPOTS.slice(0, 1).map(place)}
       <G x={166} y={228} onPress={() => onPick("bed")}>
         {ITEM_ART.bed.draw()}
+        <UpgradeOverlay code="bed" level={levels.bed ?? 1} />
       </G>
+      {DECOR_BACK.map(place)}
       {BACK_SPOTS.slice(1).map(place)}
 
       {/* 러그 */}
@@ -192,8 +211,11 @@ export default function RoomScene({
         />
       )}
 
+      {DECOR_RUG.map(place)}
+
       {/* 앞쪽 바닥 */}
       {FRONT_SPOTS.map(place)}
+      {DECOR_FRONT.map(place)}
     </Svg>
   );
 }

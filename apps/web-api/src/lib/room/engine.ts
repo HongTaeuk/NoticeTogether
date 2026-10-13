@@ -1,4 +1,4 @@
-import { COLLECTIBLES, DEFAULT_SELECTION, type Collectible, type Grade } from "./catalog";
+import { COLLECTIBLES, DECOR, DEFAULT_SELECTION, type Collectible, type Decor, type Grade } from "./catalog";
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -105,6 +105,12 @@ export type RoomState = {
   floor: string;
   hidden: string[];
   ceremonySeen: string | null;
+  /** 업그레이드 단계(없으면 1). */
+  levels: Record<string, number>;
+  /** 매일 첫 접속 선물을 마지막으로 받은 날(한국 날짜). */
+  dailySeen: string | null;
+  /** 매일 선물로 받은 별 합계. */
+  dailyStars: number;
 };
 
 /** DB의 jsonb는 아이 기기가 보낸 값이 섞일 수 있어서, 읽을 때마다 모양을 바로잡는다. */
@@ -119,5 +125,28 @@ export function normalizeState(raw: unknown): RoomState {
     floor: typeof s.floor === "string" ? s.floor : DEFAULT_SELECTION.floor,
     hidden: strings(s.hidden),
     ceremonySeen: typeof s.ceremonySeen === "string" ? s.ceremonySeen : null,
+    levels: Object.fromEntries(
+      Object.entries(s.levels && typeof s.levels === "object" ? s.levels : {}).filter(
+        (e): e is [string, number] => typeof e[1] === "number" && e[1] >= 1 && e[1] <= 3,
+      ),
+    ),
+    dailySeen: typeof s.dailySeen === "string" ? s.dailySeen : null,
+    dailyStars: typeof s.dailyStars === "number" && s.dailyStars >= 0 ? Math.floor(s.dailyStars) : 0,
   };
+}
+
+export type DailyGift = { kind: "stars"; amount: number } | { kind: "item"; code: string; name: string; glyph: string };
+
+/**
+ * 오늘의 첫 접속 선물 — 같은 아이·같은 날이면 늘 같은 결과(결정론). 대부분 별 1~3개, 가끔(30%) 아직 없는 작은 장난감.
+ */
+export function dailyGiftFor(userId: string, today: string, owned: string[]): DailyGift {
+  const rng = seededRandom(`${userId}:daily:${today}`);
+  const roll = rng();
+  const left: Decor[] = DECOR.filter((d) => !owned.includes(d.code));
+  if (roll < 0.3 && left.length > 0) {
+    const d = left[Math.floor(rng() * left.length)];
+    return { kind: "item", code: d.code, name: d.name, glyph: d.glyph };
+  }
+  return { kind: "stars", amount: 1 + Math.floor(rng() * 3) };
 }

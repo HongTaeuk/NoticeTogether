@@ -46,3 +46,41 @@ export const DEFAULT_SELECTION = { rug: "rug", wall: "wall_sky", floor: "floor_b
 export function findShopItem(code: string): ShopItem | undefined {
   return SHOP.find((s) => s.code === code);
 }
+
+// ── 2026-10-13 확장: 매일 선물 · 별로 사는 가구 · 업그레이드 (사용자 요청) ──
+
+/** 마일스톤 선물(가구·소품)도 별로 미리 살 수 있다. 등급이 높을수록 비싸다. */
+export const COLLECTIBLE_PRICE: Record<Grade, number> = { COMMON: 15, RARE: 30, EPIC: 60 };
+/** 이미 산 물건이 마일스톤 선물로 다시 나오면 빈손 대신 별로 바꿔 준다. */
+export const DUPLICATE_STARS: Record<Grade, number> = { COMMON: 5, RARE: 10, EPIC: 20 };
+
+export type Decor = { code: string; name: string; glyph: string; price: number; story: string };
+
+/** 작은 장난감 — 매일 첫 접속 선물로 오거나 별 상점에서 산다. */
+export const DECOR: Decor[] = [
+  { code: "teddy", name: "포근한 곰인형", glyph: "teddy", price: 12, story: "준비물을 다 챙긴 밤에 꼭 안고 자요." },
+  { code: "ball", name: "운동회 공", glyph: "ball", price: 10, story: "운동회 날을 기다리며 데굴데굴 굴러요." },
+  { code: "blocks", name: "블록 탑", glyph: "blocks", price: 10, story: "준비도 블록처럼 하나씩 차곡차곡 쌓아요." },
+  { code: "robot", name: "알림 지킴이 로봇", glyph: "robot", price: 14, story: "알림을 놓치지 않게 지켜 주는 씩씩한 로봇이에요." },
+  { code: "car", name: "빨간 미니카", glyph: "car", price: 10, story: "등굣길처럼 부릉부릉 신나게 달려요." },
+  { code: "cushion", name: "별 쿠션", glyph: "cushion", price: 12, story: "가족과 이야기 나눌 때 폭신하게 앉아요." },
+];
+
+export function findDecor(code: string): Decor | undefined {
+  return DECOR.find((d) => d.code === code);
+}
+
+/** 별로 꾸밀 수 있는 큰 물건의 단계(1단계는 처음 모습). */
+export type Upgradable = { code: string; name: string; levels: string[] };
+export const UPGRADABLE: Upgradable[] = [
+  { code: "bed", name: "포근한 침대", levels: ["기본 침대", "별 이불과 하트 베개", "꼬마전구 캐노피 침대"] },
+  { code: "window", name: "햇살 창문", levels: ["기본 창문", "꽃 화분 창틀", "반짝 별 커튼"] },
+  { code: "desk", name: "공부 책상", levels: ["기본 책상", "지구본과 의자", "트로피 책상"] },
+  { code: "shelf", name: "동화 책장", levels: ["기본 책장", "책이 가득한 책장", "꼬마전구 책장"] },
+];
+export const UPGRADE_PRICE: Record<number, number> = { 2: 20, 3: 40 };
+export const MAX_LEVEL = 3;
+
+export function findUpgradable(code: string): Upgradable | undefined {
+  return UPGRADABLE.find((u) => u.code === code);
+}

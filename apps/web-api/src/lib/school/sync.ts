@@ -17,7 +17,6 @@ export const SCHOOL_MIGRATION_MESSAGE = "학교 연결을 쓰려면 DB 업데이
 const LIST_REFRESH_MS = 30 * 60 * 1000;
 const DISCOVER_RETRY_MS = 24 * 60 * 60 * 1000;
 const FIRST_WINDOW_DAYS = 14; // 처음 연결할 때 최근 2주 글까지 가져온다
-const MAX_DELIVER_PER_CALL = 4;
 const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_BYTES = 12 * 1024 * 1024;
 const MAX_TEXT = 14000;
@@ -138,7 +137,8 @@ export function boardStatuses(boards: BoardRow[]): BoardStatus[] {
   return boards.map((b) => ({
     label: b.label,
     kind: b.kind,
-    supported: (SUPPORTED_FAMILIES as string[]).includes(b.family),
+    // 형식은 알아도 로그인 뒤에 있는 게시판(광주 일부)은 받을 수 없으니 "지원"으로 세지 않는다.
+    supported: (SUPPORTED_FAMILIES as string[]).includes(b.family) && !/로그인/.test(b.last_error ?? ""),
     lastCheckedAt: b.last_checked_at,
     error: b.last_error,
   }));
@@ -187,7 +187,9 @@ async function ensureReady(db: Db, school: SchoolRow, board: BoardRow, post: Pos
   try {
     const detail = await fetchDetail(board, { postKey: post.post_key, url: post.url });
     const parts: string[] = [];
-    const attachments: { name: string; url: string; size: number | null; chars: number }[] = [];
+    // 첨부 정보와 함께 본문 그림 주소도 같은 칸(attachments)에 kind:"image"로 둔다 — 그림으로만 올린 안내를 앱에서 바로 보여 주려고.
+    const attachments: ({ name: string; url: string; size: number | null; chars: number } | { kind: "image"; url: string })[] =
+      detail.images.map((url) => ({ kind: "image" as const, url }));
     for (const att of detail.attachments.slice(0, MAX_ATTACHMENTS)) {
       let chars = 0;
       if (!att.size || att.size <= MAX_ATTACHMENT_BYTES) {
@@ -215,7 +217,10 @@ async function ensureReady(db: Db, school: SchoolRow, board: BoardRow, post: Pos
     const ai = readable
       ? await summarizeNotice(composed)
       : {
-          summary: `${post.title} — 안내 내용이 그림으로만 올라와 있어요. '학교 홈페이지에서 보기'로 확인해 주세요.`,
+          summary:
+            detail.images.length > 0
+              ? `${post.title} — 안내가 그림으로 올라와 있어요. 아래 그림에서 확인해 주세요.`
+              : `${post.title} — 안내 내용이 글로 올라와 있지 않아요. '학교 홈페이지에서 보기'로 확인해 주세요.`,
           items: [] as ChecklistItemDraft[],
         };
     const update = { body_text: composed, attachments, ai_summary: ai.summary || post.title, ai_items: ai.items, status: "ready", error: null };
@@ -265,58 +270,135 @@ async function deliver(db: Db, householdId: string, post: PostRow): Promise<bool
   return true;
 }
 
+/** 게시판을 (필요하면) 찾고, 30분이 지난 게시판 목록을 새로 읽는다. */
+async function refreshSchool(db: Db, school: SchoolRow): Promise<{ boards: BoardRow[]; usable: BoardRow[] }> {
+  let boards = await ensureBoards(db, school);
+  const usableOf = (list: BoardRow[]) =>
+    list.filter((b) => (SUPPORTED_FAMILIES as string[]).includes(b.family) && (b.kind !== "weekly" || forMyGrade(b.label, school.grade)));
+  const now = Date.now();
+  const due = usableOf(boards).filter((b) => !b.last_checked_at || now - Date.parse(b.last_checked_at) > LIST_REFRESH_MS);
+  await Promise.all(due.map((b) => refreshList(db, b)));
+  if (due.length > 0) boards = await loadBoards(db, school.school_code);
+  return { boards, usable: usableOf(boards) };
+}
+
+/** 이 가정이 아직 받지 않은 글(기간·학년 조건에 맞는 것). 오래된 글부터 — 목록에서 새 글이 맨 위에 오게. */
+async function undeliveredPosts(db: Db, school: SchoolRow, usable: BoardRow[], since: string): Promise<PostRow[]> {
+  if (usable.length === 0) return [];
+  const { data: postData } = await db
+    .from("school_posts")
+    .select("id, board_id, post_key, title, posted_on, url, body_text, ai_summary, ai_items, status")
+    .in(
+      "board_id",
+      usable.map((b) => b.id),
+    )
+    .gte("posted_on", since)
+    .order("posted_on", { ascending: true })
+    .limit(80);
+  const posts = (postData ?? []) as PostRow[];
+  if (posts.length === 0) return [];
+  const { data: existing } = await db
+    .from("notices")
+    .select("source_post_id")
+    .eq("household_id", school.household_id)
+    .in(
+      "source_post_id",
+      posts.map((p) => p.id),
+    );
+  const have = new Set((existing ?? []).map((n) => n.source_post_id as string));
+  // 같은 글이 학교 게시판 두 곳(예: 가정통신문 + 교육청 소식)에 함께 올라오기도 한다 — 제목·날짜가 같으면 한 번만.
+  const keyOf = (p: PostRow) => `${p.title.replace(/\s+/g, "")}|${p.posted_on ?? ""}`;
+  const seen = new Set(posts.filter((p) => have.has(p.id)).map(keyOf));
+  const out: PostRow[] = [];
+  for (const p of posts) {
+    if (have.has(p.id)) continue;
+    const k = keyOf(p);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    if (forMyGrade(p.title, school.grade)) out.push(p);
+  }
+  return out;
+}
+
+const PARALLEL = 3; // 학교 서버·AI에 한꺼번에 너무 많이 보내지 않을 만큼만 동시에
+const MAX_PREPARE_PER_CALL = 6;
+
+/** 준비 안 된 글을 3개씩 동시에 준비하고(상세·첨부·AI 요약), deliverTo가 있으면 그 가정에 넣는다. */
+async function prepareAndDeliver(
+  db: Db,
+  school: SchoolRow,
+  boards: BoardRow[],
+  posts: PostRow[],
+  deadline: number,
+  deliverTo: string | null,
+): Promise<number> {
+  const boardById = new Map(boards.map((b) => [b.id, b]));
+  let delivered = 0;
+  let tried = 0;
+  for (let i = 0; i < posts.length && tried < MAX_PREPARE_PER_CALL && Date.now() < deadline; i += PARALLEL) {
+    const batch = posts.slice(i, i + PARALLEL);
+    tried += batch.length;
+    const results = await Promise.all(
+      batch.map(async (post) => {
+        const board = boardById.get(post.board_id);
+        if (!board) return false;
+        const ready = await ensureReady(db, school, board, post);
+        return !!ready && !!deliverTo && (await deliver(db, deliverTo, ready));
+      }),
+    );
+    delivered += results.filter(Boolean).length;
+  }
+  return delivered;
+}
+
+function windowStart(fromIso: string): string {
+  return new Date(Date.parse(fromIso) - FIRST_WINDOW_DAYS * 86400000).toISOString().slice(0, 10);
+}
+
 export async function syncHousehold(db: Db, householdId: string, deadline: number): Promise<SchoolStatus> {
   const { school, needsMigration } = await loadHouseholdSchool(db, householdId);
   if (needsMigration) return { linked: false, needsMigration: true, boards: [], supported: false, lastCheckedAt: null };
   if (!school) return { linked: false, boards: [], supported: false, lastCheckedAt: null };
 
-  let boards = await ensureBoards(db, school);
-  const usable = boards.filter(
-    (b) => (SUPPORTED_FAMILIES as string[]).includes(b.family) && (b.kind !== "weekly" || forMyGrade(b.label, school.grade)),
-  );
+  const { boards, usable } = await refreshSchool(db, school);
+  const todo = await undeliveredPosts(db, school, usable, windowStart(school.linked_at));
 
-  const now = Date.now();
-  const due = usable.filter((b) => !b.last_checked_at || now - Date.parse(b.last_checked_at) > LIST_REFRESH_MS);
-  await Promise.all(due.map((b) => refreshList(db, b)));
-  if (due.length > 0) boards = await loadBoards(db, school.school_code);
-
-  const cutoff = new Date(Date.parse(school.linked_at) - FIRST_WINDOW_DAYS * 86400000).toISOString().slice(0, 10);
-  const boardById = new Map(boards.map((b) => [b.id, b]));
-  const { data: postData } = usable.length
-    ? await db
-        .from("school_posts")
-        .select("id, board_id, post_key, title, posted_on, url, body_text, ai_summary, ai_items, status")
-        .in(
-          "board_id",
-          usable.map((b) => b.id),
-        )
-        .gte("posted_on", cutoff)
-        .order("posted_on", { ascending: true })
-        .limit(80)
-    : { data: [] };
-  const posts = (postData ?? []) as PostRow[];
-
-  const { data: existing } = posts.length
-    ? await db
-        .from("notices")
-        .select("source_post_id")
-        .eq("household_id", householdId)
-        .in(
-          "source_post_id",
-          posts.map((p) => p.id),
-        )
-    : { data: [] };
-  const have = new Set((existing ?? []).map((n) => n.source_post_id as string));
-  const todo = posts.filter((p) => !have.has(p.id) && forMyGrade(p.title, school.grade));
-
+  // 1) 이미 준비된 글(매일 미리 모으기·같은 학교 다른 가정 덕분)은 바로 넣는다 — 빠르다.
   let delivered = 0;
-  for (const post of todo) {
-    if (delivered >= MAX_DELIVER_PER_CALL || Date.now() > deadline) break;
-    const board = boardById.get(post.board_id);
-    if (!board) continue;
-    const ready = await ensureReady(db, school, board, post);
-    if (ready && (await deliver(db, householdId, ready))) delivered += 1;
+  for (const post of todo.filter((p) => p.status === "ready")) {
+    if (await deliver(db, householdId, post)) delivered += 1;
   }
+  // 2) 아직 준비 안 된 글은 시간이 허락하는 만큼 3개씩 동시에.
+  delivered += await prepareAndDeliver(db, school, boards, todo.filter((p) => p.status !== "ready"), deadline, householdId);
 
   return { ...schoolStatus(school, boards), delivered, pending: Math.max(0, todo.length - delivered) };
+}
+
+/**
+ * 매일 미리 모으기(Vercel Cron): 앱을 열지 않아도 연결된 학교마다 새 글을 읽고 요약해 두고, 각 가정 알림으로 넣는다.
+ * 학교 게시판 글은 시간이 지나면 지워지기도 해서(REPORT §5.2) 늦게 모으면 영영 놓친다.
+ */
+export async function prepareAllSchools(db: Db, deadline: number): Promise<{ schools: number; delivered: number }> {
+  const { data, error } = await db.from("household_schools").select("*");
+  if (error || !data) return { schools: 0, delivered: 0 };
+  const bySchool = new Map<string, SchoolRow[]>();
+  for (const row of data as SchoolRow[]) bySchool.set(row.school_code, [...(bySchool.get(row.school_code) ?? []), row]);
+
+  let delivered = 0;
+  let schools = 0;
+  for (const group of bySchool.values()) {
+    if (Date.now() > deadline) break;
+    schools += 1;
+    const { boards, usable } = await refreshSchool(db, group[0]);
+    const since = windowStart(new Date().toISOString());
+    for (const hs of group) {
+      if (Date.now() > deadline) break;
+      const todo = await undeliveredPosts(db, hs, usable, since > windowStart(hs.linked_at) ? since : windowStart(hs.linked_at));
+      for (const post of todo.filter((p) => p.status === "ready")) {
+        if (await deliver(db, hs.household_id, post)) delivered += 1;
+      }
+      delivered += await prepareAndDeliver(db, hs, boards, todo.filter((p) => p.status !== "ready"), deadline, hs.household_id);
+    }
+  }
+  return { schools, delivered };
 }

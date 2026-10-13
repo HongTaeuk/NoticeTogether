@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import { resolveUser, AuthError } from "@/lib/auth/session";
 import { MIGRATION_REQUIRED_MESSAGE } from "@/lib/household/members";
-import { COLLECTIBLES, findShopItem } from "@/lib/room/catalog";
+import { COLLECTIBLES, DECOR, findShopItem } from "@/lib/room/catalog";
 import type { RoomState } from "@/lib/room/engine";
 import { loadRoomContext, saveRoomState } from "@/lib/room/load";
 import { isOwned, roomPayload } from "@/lib/room/payload";
@@ -70,7 +70,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (body.hidden !== undefined) {
-    const valid = new Set(COLLECTIBLES.map((c) => c.code));
+    const valid = new Set([...COLLECTIBLES.map((c) => c.code), ...DECOR.map((d) => d.code)]);
     next.hidden = [...new Set(body.hidden.filter((c) => valid.has(c)))];
   }
   if (typeof body.ceremonySeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.ceremonySeen)) {

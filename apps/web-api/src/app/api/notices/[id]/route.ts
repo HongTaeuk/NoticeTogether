@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "이 알림에 접근할 권한이 없습니다." }, { status: 403 });
   }
   const noticeChild = notice.children as unknown as { name: string } | null;
-  const sources = await loadNoticeSources(supabase, [id]);
+  const sources = await loadNoticeSources(supabase, [id], true);
   const noticeOut = { ...notice, children: undefined, childName: noticeChild?.name ?? null, source: sources.get(id) ?? null };
 
   const { data: items, error: itemsError } = await supabase

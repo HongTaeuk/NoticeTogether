@@ -23,7 +23,15 @@ export type SchoolStatus = {
   pending?: number;
 };
 
-export type NoticeSource = { title: string; url: string; postedOn: string | null; boardLabel: string | null };
+export type NoticeSource = {
+  title: string;
+  url: string;
+  postedOn: string | null;
+  boardLabel: string | null;
+  /** 본문 그림 주소(그림으로만 올린 안내를 앱에서 바로 보여 줌). 목록 응답에는 없고 상세에만 있다. */
+  images?: string[];
+  files?: { name: string; url: string }[];
+};
 
 export const OFFICES: Office[] = [
   { code: "B10", name: "서울" },

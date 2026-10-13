@@ -1,14 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ResolvedUser } from "@/lib/auth/session";
 import { isMissingMigrationError } from "@/lib/household/members";
-import { COLLECTIBLES } from "./catalog";
+import { COLLECTIBLES, DUPLICATE_STARS } from "./catalog";
 import { computeGrants, kstDate, normalizeState, type Grant, type RoomState } from "./engine";
 
 export type RoomContext = {
+  userId: string;
   keptDays: string[];
   checkedItems: number;
   stickersReceived: number;
   bonusStars: number;
+  /** 미리 산 물건이 마일스톤 선물로 다시 나와 별로 바꿔 준 것. */
+  duplicateStars: number;
   earned: number;
   state: RoomState;
   grants: Grant[];
@@ -73,13 +76,21 @@ export async function loadRoomContext(supabase: SupabaseClient, resolved: Resolv
   const lastGrantIndex = grants.length === COLLECTIBLES.length ? keptDays.indexOf(grants[grants.length - 1].date) : -1;
   const bonusStars = lastGrantIndex >= 0 ? keptDays.length - 1 - lastGrantIndex : 0;
 
+  const state = normalizeState(rawState);
+  const duplicateStars = grants
+    .filter((g) => state.owned.includes(g.code))
+    .reduce((sum, g) => sum + (DUPLICATE_STARS[COLLECTIBLES.find((c) => c.code === g.code)?.grade ?? "COMMON"] ?? 0), 0);
+
   return {
+    userId: resolved.userId,
     keptDays,
     checkedItems: firstCheck.size,
     stickersReceived,
     bonusStars,
-    earned: firstCheck.size + stickersReceived + bonusStars,
-    state: normalizeState(rawState),
+    duplicateStars,
+    // 별 = 챙긴 준비물 + 가족이 보낸 칭찬 스티커 + 선물 다 모은 뒤 보너스 + 매일 첫 접속 선물 + 겹친 선물 바꾼 별
+    earned: firstCheck.size + stickersReceived + bonusStars + state.dailyStars + duplicateStars,
+    state,
     grants,
     needsMigration,
   };

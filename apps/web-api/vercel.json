@@ -1,5 +1,15 @@
 {
   "git": {
     "deploymentEnabled": false
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/school-sync?slot=morning",
+      "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/cron/school-sync?slot=afternoon",
+      "schedule": "0 6 * * *"
+    }
+  ]
 }

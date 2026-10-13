@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import RoomScene from "../components/room/RoomScene";
-import { CeremonyModal, CollectionSheet, DecoSheet, ShopSheet } from "../components/RoomSheets";
+import { CeremonyModal, CollectionSheet, DailyGiftModal, DecoSheet, ShopSheet } from "../components/RoomSheets";
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
 import { parseYmd, toYmd } from "../lib/dateFormat";
 import { josa } from "../lib/josa";
-import type { RoomData } from "../types/room";
+import type { DailyGift, RoomData } from "../types/room";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 /** 방 물건을 누르면 나오는 한 줄 — 방을 "예쁜 그림"이 아니라 "알림을 준비해서 받은 선물"로 읽히게 한다. */
@@ -36,6 +36,9 @@ export default function MyRoomScreen({ session }: { session: Session }) {
   const [dexOpen, setDexOpen] = useState(false);
   const [pop, setPop] = useState<string | null>(null);
   const [ceremony, setCeremony] = useState<RoomData["ceremony"]>(null);
+  const [dailyOpen, setDailyOpen] = useState(false);
+  // 첫 방문 선물이 있으면 그걸 먼저 열고, 마일스톤 선물 도착 연출은 그다음에 보여 준다.
+  const pendingCeremony = useRef<RoomData["ceremony"]>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -43,8 +46,12 @@ export default function MyRoomScreen({ session }: { session: Session }) {
       const res = await authFetch("/api/room");
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "방을 불러오지 못했어요.");
-      setRoom(data as RoomData);
-      if ((data as RoomData).ceremony) setTimeout(() => setCeremony((data as RoomData).ceremony), 450);
+      const r = data as RoomData;
+      setRoom(r);
+      if (r.dailyGift) {
+        pendingCeremony.current = r.ceremony;
+        setTimeout(() => setDailyOpen(true), 400);
+      } else if (r.ceremony) setTimeout(() => setCeremony(r.ceremony), 450);
     } catch (err) {
       setError(err instanceof Error ? err.message : "방을 불러오지 못했어요.");
     } finally {
@@ -80,9 +87,25 @@ export default function MyRoomScreen({ session }: { session: Session }) {
   }
 
   const visible = useMemo(
-    () => new Set((room?.collectibles ?? []).filter((c) => c.owned && !c.hidden).map((c) => c.code)),
+    () =>
+      new Set([
+        ...(room?.collectibles ?? []).filter((c) => c.owned && !c.hidden).map((c) => c.code),
+        ...(room?.decor ?? []).filter((d) => d.owned && !d.hidden).map((d) => d.code),
+      ]),
     [room],
   );
+
+  async function openDaily(): Promise<DailyGift | null> {
+    const res = await authFetch("/api/room/daily", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) {
+      // 이미 받았으면(다른 기기 등) 조용히 닫는다.
+      if (res.status === 409) setDailyOpen(false);
+      return null;
+    }
+    setRoom(data as RoomData);
+    return (data as { received: DailyGift }).received;
+  }
 
   const week = useMemo(() => {
     if (!room) return [];
@@ -118,8 +141,9 @@ export default function MyRoomScreen({ session }: { session: Session }) {
   const info = (key: string) =>
     BASE_INFO[key] ??
     (() => {
-      const c = room.collectibles.find((x) => x.code === key);
-      return c ? `${c.name} — ${c.story}` : null;
+      const c = room.collectibles.find((x) => x.code === key) ?? room.decor?.find((x) => x.code === key);
+      const lv = room.levels?.[key];
+      return c ? `${c.name}${lv && lv > 1 ? ` (${lv}단계)` : ""} — ${c.story}` : null;
     })();
 
   return (
@@ -161,6 +185,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
             editing={editing}
             onPick={(k) => setPop(info(k))}
             onRugSlot={() => setEditing(true)}
+            levels={room.levels}
           />
           <Text style={styles.caption}>알림을 꾸준히 준비하면 이 방에 선물이 하나씩 놓여요</Text>
           {pop && (
@@ -246,6 +271,8 @@ export default function MyRoomScreen({ session }: { session: Session }) {
         <View style={styles.howCard}>
           <Text style={styles.howTitle}>별과 선물은 이렇게 받아요</Text>
           <Text style={styles.howLine}>🎒 알림장 준비물을 챙기고 "챙겼어요!"를 누르면 ⭐ 1개</Text>
+          <Text style={styles.howLine}>🌞 매일 처음 내 방에 들어오면 오늘의 선물(별이나 장난감)</Text>
+          <Text style={styles.howLine}>🛍️ 모은 별로 가구·장난감을 사고, 침대·창문·책상·책장을 업그레이드해요</Text>
           <Text style={styles.howLine}>🎁 알림을 준비한 날이 3·7·12일… 쌓일 때마다 선물이 와요</Text>
           <Text style={styles.howLine}>🔥 며칠 연속으로 준비하면 희귀·전설 선물이 잘 나와요</Text>
           <Text style={styles.howLine}>💌 가족이 칭찬 스티커를 보내 주면 ⭐ 1개</Text>
@@ -278,11 +305,25 @@ export default function MyRoomScreen({ session }: { session: Session }) {
           if (ok) {
             const item = room.shop.find((s) => s.code === code);
             setShopOpen(false);
-            setPop(`${josa(item?.name ?? "새 선물", "을/를")} 데려와서 방에 바로 적용했어요!`);
+            setPop(
+              item?.category === "upgrade"
+                ? `${item.name.split(" — ")[0]}로 올렸어요! 방에서 확인해 보세요`
+                : `${josa(item?.name ?? "새 선물", "을/를")} 데려와서 방에 바로 적용했어요!`,
+            );
           }
         }}
       />
       <CollectionSheet visible={dexOpen} room={room} onClose={() => setDexOpen(false)} />
+      <DailyGiftModal
+        visible={dailyOpen}
+        onOpen={openDaily}
+        onClose={() => {
+          setDailyOpen(false);
+          const next = pendingCeremony.current;
+          pendingCeremony.current = null;
+          if (next) setTimeout(() => setCeremony(next), 350);
+        }}
+      />
       <CeremonyModal
         ceremony={ceremony}
         today={room.today}

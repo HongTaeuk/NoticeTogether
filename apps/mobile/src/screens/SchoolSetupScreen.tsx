@@ -14,6 +14,8 @@ import { authFetch } from "../lib/apiClient";
 import { formatMessageTime } from "../lib/dateFormat";
 import { josa } from "../lib/josa";
 import { loadSchoolStatus } from "../lib/schoolFeed";
+import { schoolSituation } from "../lib/schoolMessages";
+import RunnerLoading from "../components/RunnerLoading";
 import { OFFICES, type SchoolHit, type SchoolStatus } from "../types/school";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
@@ -204,6 +206,7 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
               >
                 <Text style={styles.hitName}>{s.name}</Text>
                 <Text style={styles.hitAddress}>{s.address || s.atptName}</Text>
+                {!s.homepage && <Text style={styles.hitWarn}>교육청 정보에 홈페이지가 없어 자동으로 가져오기 어려워요</Text>}
               </TouchableOpacity>
             ))}
             {hits && total > hits.length && (
@@ -241,7 +244,12 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
                 <Text style={styles.primaryButtonText}>{josa(picked.name, "와/과")} 연결하기</Text>
               )}
             </TouchableOpacity>
-            {busy && <Text style={styles.hint}>학교 홈페이지에서 가정통신문 게시판을 찾고 있어요…</Text>}
+            {busy && (
+              <RunnerLoading
+                compact
+                steps={["학교 홈페이지로 달려가는 중!", "가정통신문 게시판을 찾는 중이에요", "거의 다 찾았어요"]}
+              />
+            )}
             <TouchableOpacity style={styles.linkButton} onPress={() => setStep("pick")} disabled={busy}>
               <Text style={styles.linkButtonText}>다른 학교 고르기</Text>
             </TouchableOpacity>
@@ -268,6 +276,7 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
 /** 연결된 학교 + 찾은 게시판 + 우리가 못 받는 것(담임 알림장)을 숨기지 않고 보여 준다(REPORT §8.3). */
 export function StatusCard({ status }: { status: SchoolStatus }) {
   const school = status.school;
+  const situation = schoolSituation(status);
   return (
     <View style={styles.statusCard}>
       {school && (
@@ -292,13 +301,14 @@ export function StatusCard({ status }: { status: SchoolStatus }) {
           </Text>
         </>
       ) : (
-        <Text style={styles.statusBody}>
-          {status.boards.length === 0
-            ? "이 학교 홈페이지에서 가정통신문 게시판을 아직 찾지 못했어요."
-            : "이 학교 홈페이지는 아직 자동으로 읽지 못하는 형식이에요."}{" "}
-          지금은 서울·경기 등 일부 지역 학교를 먼저 읽고 있고, 차츰 늘려 갈게요. 그동안은 받은 알림을 "새 알림"에 붙여넣어 주세요.
-        </Text>
+        situation && (
+          <>
+            <Text style={styles.situationTitle}>⚠️ {situation.title}</Text>
+            <Text style={styles.statusBody}>{situation.body}</Text>
+          </>
+        )
       )}
+      {status.supported && situation && <Text style={styles.statusBody}>ℹ️ {situation.title} — {situation.body}</Text>}
       <Text style={styles.statusNote}>
         ⚠️ 담임 선생님 알림장은 학교 홈페이지에 올라오지 않아요. 받으면 "새 알림"에 붙여넣어 주세요.
       </Text>
@@ -339,6 +349,8 @@ const styles = StyleSheet.create({
   hitCard: { backgroundColor: COLORS.white, borderRadius: 16, borderWidth: 2, borderColor: COLORS.line, padding: 14, marginTop: 10 },
   hitName: { fontFamily: FONT_DISPLAY, fontSize: 18, color: COLORS.ink },
   hitAddress: { fontSize: 12, color: COLORS.muted, marginTop: 3 },
+  hitWarn: { fontSize: 12, color: COLORS.orangeInk, marginTop: 4, fontWeight: "700" },
+  situationTitle: { fontSize: 15, fontWeight: "800", color: COLORS.orangeInk },
   hint: { fontSize: 13, lineHeight: 19, color: COLORS.muted, marginTop: 12, textAlign: "center" },
   errorText: { color: COLORS.red, fontSize: 13, marginTop: 10, textAlign: "center" },
   primaryButton: {

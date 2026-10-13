@@ -313,7 +313,229 @@ export const ITEM_ART: Record<string, ItemArt> = {
       </G>
     ),
   },
+
+  // ── 작은 장난감(매일 첫 접속 선물·별 상점) ──
+  teddy: {
+    w: 34,
+    h: 34,
+    draw: () => (
+      <G>
+        <Ellipse cx={0} cy={-10} rx={12} ry={10} fill="#C98A55" {...st} />
+        <Circle cx={-9} cy={-3} r={4} fill="#C98A55" {...st} />
+        <Circle cx={9} cy={-3} r={4} fill="#C98A55" {...st} />
+        <Circle cx={-10} cy={-29} r={4.2} fill="#C98A55" {...st} />
+        <Circle cx={10} cy={-29} r={4.2} fill="#C98A55" {...st} />
+        <Circle cx={0} cy={-23} r={10} fill="#D9A06A" {...st} />
+        <Ellipse cx={0} cy={-19.5} rx={4.6} ry={3.4} fill="#F3D3AE" {...thin} />
+        <Circle cx={0} cy={-21} r={1.3} fill={OUT} />
+        <Circle cx={-4} cy={-25} r={1.2} fill={OUT} />
+        <Circle cx={4} cy={-25} r={1.2} fill={OUT} />
+        <Polygon points="-6,-13 0,-11 -6,-8" fill={CORAL} {...thin} />
+        <Polygon points="6,-13 0,-11 6,-8" fill={CORAL} {...thin} />
+      </G>
+    ),
+  },
+  ball: {
+    w: 24,
+    h: 24,
+    draw: () => (
+      <G>
+        <Circle cx={0} cy={-11} r={10.5} fill={WHITE} {...st} />
+        <Path d="M-10.5 -11 A10.5 10.5 0 0 1 10.5 -11 Z" fill={CORAL} />
+        <Circle cx={0} cy={-11} r={10.5} fill="none" {...st} />
+        <Line x1={-10.5} y1={-11} x2={10.5} y2={-11} {...thin} />
+        <Path d="M-6 -16 Q-3 -19 1 -19" fill="none" stroke={WHITE} strokeWidth={1.6} strokeLinecap="round" />
+      </G>
+    ),
+  },
+  blocks: {
+    w: 32,
+    h: 40,
+    draw: () => (
+      <G>
+        <Rect x={-14} y={-14} width={14} height={14} rx={2} fill={SKY} {...st} />
+        <Rect x={0} y={-14} width={14} height={14} rx={2} fill={CORAL} {...st} />
+        <Rect x={-7} y={-27} width={14} height={13} rx={2} fill={SUN} {...st} />
+        <Polygon points="-7,-27 7,-27 0,-37" fill={GREEN} {...st} />
+        <Polygon points={star(-7, -7, 3.2)} fill={WHITE} />
+        <Circle cx={7} cy={-7} r={2.6} fill={WHITE} />
+        <Rect x={-2} y={-23} width={4} height={5} rx={1} fill={WHITE} />
+      </G>
+    ),
+  },
+  robot: {
+    w: 28,
+    h: 42,
+    draw: () => (
+      <G>
+        <Line x1={0} y1={-36} x2={0} y2={-41} {...st} />
+        <Circle cx={0} cy={-41} r={2.2} fill={CORAL} {...thin} />
+        <Rect x={-9} y={-36} width={18} height={13} rx={3} fill="#9AD3C0" {...st} />
+        <Circle cx={-4} cy={-29.5} r={2} fill={WHITE} {...thin} />
+        <Circle cx={4} cy={-29.5} r={2} fill={WHITE} {...thin} />
+        <Rect x={-11} y={-22} width={22} height={16} rx={3} fill="#7FC2AD" {...st} />
+        <Path d="M0 -10 Q-4 -13 -4 -15.5 Q-4 -18 -1.8 -18 Q0 -18 0 -16 Q0 -18 1.8 -18 Q4 -18 4 -15.5 Q4 -13 0 -10 Z" fill={PINK} />
+        <Rect x={-15} y={-21} width={4} height={10} rx={2} fill="#9AD3C0" {...thin} />
+        <Rect x={11} y={-21} width={4} height={10} rx={2} fill="#9AD3C0" {...thin} />
+        <Rect x={-8} y={-6} width={5} height={6} rx={1.5} fill="#5FA892" {...thin} />
+        <Rect x={3} y={-6} width={5} height={6} rx={1.5} fill="#5FA892" {...thin} />
+      </G>
+    ),
+  },
+  car: {
+    w: 38,
+    h: 22,
+    draw: () => (
+      <G>
+        <Path d="M-17 -6 L-17 -11 Q-16 -14 -12 -14 L-8 -14 L-4 -20 L7 -20 L11 -14 L15 -14 Q18 -14 18 -10 L18 -6 Z" fill={CORAL} {...st} />
+        <Polygon points="-3,-18.5 2,-18.5 2,-14 -6,-14" fill="#CDEBFB" {...thin} />
+        <Polygon points="4,-18.5 6.5,-18.5 9.5,-14 4,-14" fill="#CDEBFB" {...thin} />
+        <Circle cx={-9} cy={-5} r={4.4} fill={OUT} />
+        <Circle cx={10} cy={-5} r={4.4} fill={OUT} />
+        <Circle cx={-9} cy={-5} r={1.8} fill={WHITE} />
+        <Circle cx={10} cy={-5} r={1.8} fill={WHITE} />
+        <Circle cx={16} cy={-11} r={1.3} fill={SUN_L} />
+      </G>
+    ),
+  },
+  cushion: {
+    w: 40,
+    h: 20,
+    draw: () => (
+      <G>
+        <Ellipse cx={0} cy={-6} rx={18} ry={5.5} fill="#E8B23A" {...st} />
+        <Polygon points={squashedStar(0, -10, 17, 8)} fill={SUN} {...st} />
+        <Circle cx={-4} cy={-11} r={1} fill={OUT} />
+        <Circle cx={4} cy={-11} r={1} fill={OUT} />
+        <Path d="M-2 -8.5 Q0 -7 2 -8.5" fill="none" {...thin} />
+      </G>
+    ),
+  },
 };
+
+/** 바닥에 눕힌 별(쿠션) — 세로로 납작한 별. */
+function squashedStar(cx: number, cy: number, R: number, ry: number): string {
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rad = i % 2 === 0 ? 1 : 0.5;
+    pts.push(`${(cx + R * rad * Math.cos(a)).toFixed(1)},${(cy + ry * rad * Math.sin(a)).toFixed(1)}`);
+  }
+  return pts.join(" ");
+}
+
+/** 꼬마전구 줄 — 두 점 사이에 처진 줄과 알록달록 전구. */
+function FairyLights({ x0, y0, x1, y1, sag, n }: { x0: number; y0: number; x1: number; y1: number; sag: number; n: number }) {
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2 + sag * 2;
+  const at = (t: number): [number, number] => [
+    (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx + t * t * x1,
+    (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * cy + t * t * y1,
+  ];
+  const colors = [SUN, PINK, SKY, GREEN_L];
+  return (
+    <G>
+      <Path d={`M${x0} ${y0} Q${cx} ${cy} ${x1} ${y1}`} fill="none" stroke={OUT} strokeWidth={0.9} />
+      {Array.from({ length: n }, (_, i) => {
+        const [x, y] = at((i + 0.5) / n);
+        return <Circle key={i} cx={x} cy={y + 1.5} r={1.9} fill={colors[i % colors.length]} stroke={OUT} strokeWidth={0.6} />;
+      })}
+    </G>
+  );
+}
+
+/**
+ * 업그레이드 모습 — 기본 그림 위에 덧그린다(2단계는 2단계 것, 3단계는 2·3단계 것을 모두).
+ * 침대·창문·책상·책장만 단계가 있다.
+ */
+export function UpgradeOverlay({ code, level }: { code: string; level: number }) {
+  if (level < 2) return null;
+  const l3 = level >= 3;
+  if (code === "bed") {
+    return (
+      <G>
+        <Path d="M-14 -37 Q-14 -42 -9 -42 L37 -42 Q41 -42 41 -37 L41 -15 Q41 -12 38 -12 L-11 -12 Q-14 -12 -14 -15 Z" fill="#9DD5F5" {...st} />
+        <Line x1={-13} y1={-34} x2={40} y2={-34} stroke="#7CC4F2" strokeWidth={2.4} />
+        <Polygon points={star(2, -23, 4)} fill={SUN} />
+        <Polygon points={star(18, -19, 3.4)} fill={SUN} />
+        <Polygon points={star(31, -26, 3.6)} fill={SUN} />
+        <Path d="M-27 -32 Q-30 -35 -30 -37 Q-30 -39.5 -27.8 -39.5 Q-27 -39.5 -27 -38.4 Q-27 -39.5 -26.2 -39.5 Q-24 -39.5 -24 -37 Q-24 -35 -27 -32 Z" fill={PINK} />
+        {l3 && (
+          <G>
+            <Path d="M-50 -60 Q-42 -46 -36 -40 L-38 -58 Z" fill="#FBD3DD" {...thin} />
+            <FairyLights x0={-45} y0={-60} x1={45} y1={-36} sag={7} n={9} />
+          </G>
+        )}
+      </G>
+    );
+  }
+  if (code === "window") {
+    return (
+      <G>
+        <Rect x={-19} y={-15} width={38} height={8} rx={2} fill={CORAL} {...st} />
+        {[-12, -4, 4, 12].map((x, i) => (
+          <G key={x}>
+            <Line x1={x} y1={-15} x2={x} y2={-19} stroke={GREEN_D} strokeWidth={1.4} />
+            <Circle cx={x} cy={-20.5} r={2.8} fill={[PINK, SUN, SKY, PINK][i]} {...thin} />
+          </G>
+        ))}
+        {l3 && (
+          <G>
+            <Path d="M-27 -53 L-10 -53 Q-17 -40 -27 -33 Z" fill={SUN_L} {...st} />
+            <Path d="M27 -53 L10 -53 Q17 -40 27 -33 Z" fill={SUN_L} {...st} />
+            <Polygon points={star(-21, -45, 2.6)} fill={SUN} />
+            <Polygon points={star(21, -45, 2.6)} fill={SUN} />
+            <FairyLights x0={-26} y0={-54} x1={26} y1={-54} sag={3} n={7} />
+          </G>
+        )}
+      </G>
+    );
+  }
+  if (code === "desk") {
+    return (
+      <G>
+        <Rect x={-9} y={-56} width={24} height={12} fill={WOOD} />
+        <Line x1={3} y1={-44} x2={3} y2={-48} {...st} />
+        <Ellipse cx={3} cy={-44.5} rx={5} ry={1.6} fill={WOOD_D} {...thin} />
+        <Circle cx={3} cy={-55} r={7} fill={SKY} {...st} />
+        <Path d="M-1 -59 Q2 -57 0 -54 Q3 -52 6 -55 Q8 -58 5 -60 Z" fill={GREEN} />
+        <Rect x={-28} y={-22} width={22} height={5} rx={2} fill={CORAL} {...st} />
+        <Line x1={-25} y1={-17} x2={-25} y2={0} stroke={OUT} strokeWidth={2.2} strokeLinecap="round" />
+        <Line x1={-9} y1={-17} x2={-9} y2={0} stroke={OUT} strokeWidth={2.2} strokeLinecap="round" />
+        {l3 && (
+          <G>
+            <Rect x={19} y={-56} width={14} height={12} fill={WOOD} />
+            <Path d="M21 -58 L31 -58 Q31 -51 26 -50 Q21 -51 21 -58 Z" fill={SUN} {...st} />
+            <Line x1={26} y1={-50} x2={26} y2={-47} {...st} />
+            <Rect x={22} y={-47} width={8} height={3} rx={1} fill={WOOD_D} {...thin} />
+            <Polygon points={star(26, -55, 2)} fill={WHITE} />
+          </G>
+        )}
+      </G>
+    );
+  }
+  if (code === "shelf") {
+    return (
+      <G>
+        <Rect x={-18} y={-30} width={36} height={24} rx={2} fill="#C98A4E" />
+        <Rect x={-16} y={-27} width={6} height={21} fill={SKY} {...thin} />
+        <Rect x={-10} y={-25} width={5} height={19} fill={SUN} {...thin} />
+        <Rect x={-5} y={-28} width={6} height={22} fill={PINK} {...thin} />
+        <Rect x={1} y={-26} width={5} height={20} fill={GREEN} {...thin} />
+        <Polygon points="7,-26 12,-27 16,-8 11,-7" fill={CORAL} {...thin} />
+        {l3 && (
+          <G>
+            <Path d="M-6 -113 L6 -113 Q6 -105 0 -104 Q-6 -105 -6 -113 Z" fill={SUN} {...st} />
+            <Rect x={-4} y={-104} width={8} height={4} rx={1} fill={WOOD_D} {...thin} />
+            <FairyLights x0={-22} y0={-96} x1={22} y1={-96} sag={4} n={6} />
+            <FairyLights x0={-22} y0={-64} x1={22} y1={-64} sag={4} n={6} />
+          </G>
+        )}
+      </G>
+    );
+  }
+  return null;
+}
 
 const FLAG_COLORS = [CORAL, SUN, GREEN, SKY, PINK];
 
@@ -398,7 +620,7 @@ function ThumbClip({ id }: { id: string }) {
 }
 
 /** 썸네일 — 선물·러그는 그 그림, 벽지·바닥은 작은 견본. */
-export function ArtThumb({ glyph, size }: { glyph: string; size: number }) {
+export function ArtThumb({ glyph, size, level = 1 }: { glyph: string; size: number; level?: number }) {
   const art = ITEM_ART[glyph];
   if (art && art.w > art.h * 3) {
     // 러그처럼 납작한 그림은 작은 칸에서 실선처럼 보여서 위아래로 늘려 보여 준다.
@@ -414,6 +636,7 @@ export function ArtThumb({ glyph, size }: { glyph: string; size: number }) {
     return (
       <Svg width={size} height={size} viewBox={`${-s / 2} ${-art.h / 2 - s / 2} ${s} ${s}`}>
         {art.draw()}
+        <UpgradeOverlay code={glyph} level={level} />
       </Svg>
     );
   }
