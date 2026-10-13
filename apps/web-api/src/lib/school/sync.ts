@@ -321,7 +321,7 @@ async function undeliveredPosts(db: Db, school: SchoolRow, usable: BoardRow[], s
 }
 
 const PARALLEL = 3; // 학교 서버·AI에 한꺼번에 너무 많이 보내지 않을 만큼만 동시에
-const MAX_PREPARE_PER_CALL = 6;
+const MAX_PREPARE_PER_CALL = 9;
 
 /** 준비 안 된 글을 3개씩 동시에 준비하고(상세·첨부·AI 요약), deliverTo가 있으면 그 가정에 넣는다. */
 async function prepareAndDeliver(

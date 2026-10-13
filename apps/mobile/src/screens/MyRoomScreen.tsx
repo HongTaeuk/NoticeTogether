@@ -7,6 +7,7 @@ import type { Session } from "../lib/authStorage";
 import { parseYmd, toYmd } from "../lib/dateFormat";
 import { josa } from "../lib/josa";
 import type { DailyGift, RoomData } from "../types/room";
+import FunLoading from "../components/FunLoading";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 /** 방 물건을 누르면 나오는 한 줄 — 방을 "예쁜 그림"이 아니라 "알림을 준비해서 받은 선물"로 읽히게 한다. */
@@ -124,7 +125,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
   if (!room) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>{error ?? "방을 정리하는 중이에요…"}</Text>
+        {error ? <Text style={styles.loadingText}>{error}</Text> : <FunLoading scene="blocks" steps={["내 방 문을 여는 중이에요", "가구를 제자리에 놓는 중", "선물 상자를 확인하는 중"]} />}
         {error && (
           <TouchableOpacity style={styles.retry} onPress={load}>
             <Text style={styles.retryText}>다시 불러오기</Text>

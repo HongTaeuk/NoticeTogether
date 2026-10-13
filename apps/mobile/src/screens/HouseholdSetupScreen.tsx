@@ -13,6 +13,7 @@ import {
 import { authFetch } from "../lib/apiClient";
 import { josa } from "../lib/josa";
 import type { Role, Session } from "../lib/authStorage";
+import FunLoading from "../components/FunLoading";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 type Props = {
@@ -247,6 +248,7 @@ export default function HouseholdSetupScreen({ session, onJoined, onContinue }: 
             </Text>
           </TouchableOpacity>
         )}
+        {busy && <FunLoading scene="run" compact steps={["가족에게 달려가는 중이에요", "초대 코드를 확인하는 중", "한 가족으로 이어 주는 중"]} />}
 
         <TouchableOpacity style={styles.laterButton} onPress={onContinue}>
           <Text style={styles.laterButtonText}>나중에 하기</Text>

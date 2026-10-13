@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatKoreanDate } from "../lib/dateFormat";
 import { ArtThumb } from "./room/roomArt";
 import type { DailyGift, RoomData, RoomShopItem } from "../types/room";
+import FunLoading from "./FunLoading";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 const GRADE_LABEL: Record<string, string> = { COMMON: "일반", RARE: "희귀", EPIC: "전설" };
@@ -207,6 +208,7 @@ export function ShopSheet({
   const balance = room.stars.balance;
   return (
     <Sheet visible={visible} title={`별 상점 · ⭐ ${balance}`} onClose={onClose}>
+      {busy && <FunLoading scene="stars" compact steps={["별을 세는 중이에요", "포장을 뜯는 중", "방으로 옮기는 중"]} />}
       <ScrollView style={styles.listScroll}>
         {SHOP_SECTIONS.map((sec) => (
           <View key={sec.category}>
@@ -379,9 +381,13 @@ export function DailyGiftModal({
                 <Animated.Text style={[styles.giftBox, { transform: [{ rotate }] }]}>🎁</Animated.Text>
               </TouchableOpacity>
               <Text style={styles.ceremonyTitle}>오늘의 첫 방문 선물</Text>
-              <Text style={styles.ceremonyStory}>
-                {failed ? "선물을 열지 못했어요. 인터넷을 확인하고 다시 눌러 주세요." : opening ? "상자를 여는 중…" : "상자를 눌러 열어 보세요"}
-              </Text>
+              {opening ? (
+                <FunLoading scene="stars" compact steps={["리본을 푸는 중이에요", "상자 뚜껑을 여는 중", "두근두근…"]} />
+              ) : (
+                <Text style={styles.ceremonyStory}>
+                  {failed ? "선물을 열지 못했어요. 인터넷을 확인하고 다시 눌러 주세요." : "상자를 눌러 열어 보세요"}
+                </Text>
+              )}
             </>
           ) : (
             <>

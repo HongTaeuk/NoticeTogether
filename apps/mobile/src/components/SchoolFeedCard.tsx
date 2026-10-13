@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { formatMessageTime } from "../lib/dateFormat";
 import { syncSchoolFeed } from "../lib/schoolFeed";
 import { schoolSituation } from "../lib/schoolMessages";
 import type { SchoolStatus } from "../types/school";
 import { COLORS, FONT_DISPLAY } from "../theme";
 import RunnerLoading from "./RunnerLoading";
+import { BouncingDots, useLingeringLoading } from "./FunLoading";
 
 /**
  * "오늘 할 일" 맨 위의 학교 소식 줄. 화면이 열릴 때(그리고 당겨서 새로고침할 때) 학교 게시판 새 글을 가져오고,
@@ -24,7 +25,7 @@ export default function SchoolFeedCard({
   const [status, setStatus] = useState<SchoolStatus | null>(null);
   const [offline, setOffline] = useState(false);
   const [syncing, setSyncing] = useState(true);
-  const [progress, setProgress] = useState<{ delivered: number; pending: number } | null>(null);
+  const [rounds, setRounds] = useState(0);
   const [justDelivered, setJustDelivered] = useState(0);
   const onNewRef = useRef(onNewNotices);
   onNewRef.current = onNewNotices;
@@ -32,18 +33,24 @@ export default function SchoolFeedCard({
   useEffect(() => {
     let alive = true;
     setSyncing(true);
-    setProgress(null);
-    syncSchoolFeed((delivered, pending) => {
-      if (!alive) return;
-      setProgress({ delivered, pending });
-      if (delivered > 0) onNewRef.current();
-    })
+    setRounds(0);
+    let before = 0;
+    // 첫 판이 끝나면 화면을 보여 주고, 남은 글은 뒤에서 끝까지 이어서 정리한다(받을 때마다 목록 새로고침).
+    syncSchoolFeed(
+      (s, deliveredTotal) => {
+        if (!alive) return;
+        setStatus(s);
+        setRounds((r) => r + 1);
+        setJustDelivered(deliveredTotal);
+        if (deliveredTotal > before) onNewRef.current();
+        before = deliveredTotal;
+      },
+      () => !alive,
+    )
       .then(({ status: s, offline: off }) => {
         if (!alive) return;
         setOffline(off);
         if (s) setStatus(s);
-        const n = s?.delivered ?? 0;
-        if (n > 0) setJustDelivered((prev) => prev + n);
       })
       .finally(() => alive && setSyncing(false));
     return () => {
@@ -51,18 +58,18 @@ export default function SchoolFeedCard({
     };
   }, [syncKey]);
 
-  // 처음 가져오는 동안(아직 아무 상태도 모를 때, 또는 정리할 글이 남아 있을 때)은 달리기 화면.
-  const firstRun = syncing && (!status || (progress?.pending ?? 0) > 0);
-  if (firstRun) {
+  // 아직 아무 결과도 없는 첫 판 동안만 달리기 화면. 끝나면 잠깐 남겨 두어 학교에 "도착"하는 모습까지 보여 준다.
+  // (당겨서 새로고침처럼 이미 화면이 있을 때는 달리기 대신 카드 안의 작은 점으로 충분하다.)
+  const firstRound = syncing && rounds === 0 && status === null;
+  const showRunner = useLingeringLoading(firstRound);
+  if (showRunner) {
     return (
       <View style={styles.card}>
-        <RunnerLoading
-          compact
-          sub={progress && progress.delivered > 0 ? `벌써 ${progress.delivered}건 정리했어요` : "처음에는 1~2분 걸릴 수 있어요"}
-        />
+        <RunnerLoading compact done={!firstRound} expectedMs={35000} sub="학교 게시판을 처음 읽을 때는 조금 걸려요" />
       </View>
     );
   }
+  const backgroundLeft = syncing && rounds > 0 ? status?.pending ?? 0 : 0;
 
   const situation = schoolSituation(status, { offline });
   if (offline && !status) {
@@ -101,7 +108,7 @@ export default function SchoolFeedCard({
         <Text style={styles.title} numberOfLines={1}>
           {name} 가정통신문
         </Text>
-        {syncing && <ActivityIndicator size="small" color={COLORS.primary} />}
+        {syncing && <BouncingDots />}
       </View>
       {situation ? (
         <>
@@ -111,8 +118,14 @@ export default function SchoolFeedCard({
       ) : (
         <Text style={[styles.body, styles.lineGap]}>{line}</Text>
       )}
-      {!situation && (status.pending ?? 0) > 0 && !syncing && (
-        <Text style={styles.muted}>남은 {status.pending}건은 다음에 앱을 열 때 이어서 정리할게요.</Text>
+      {!situation && backgroundLeft > 0 && (
+        <View style={[styles.row, styles.lineGap]}>
+          <Text style={styles.muted}>남은 {backgroundLeft}건도 뒤에서 정리하는 중이에요</Text>
+          <BouncingDots />
+        </View>
+      )}
+      {!situation && !syncing && (status.pending ?? 0) > 0 && (
+        <Text style={styles.muted}>학교 서버가 바빠서 {status.pending}건은 조금 뒤 다시 정리할게요.</Text>
       )}
     </TouchableOpacity>
   );

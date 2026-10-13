@@ -27,6 +27,8 @@ export type SchoolHit = {
   atptName: string;
   schoolCode: string;
   name: string;
+  /** "초등학교" | "중학교" — 학년 고르기(1~6 / 1~3)에 쓴다. */
+  kind: string;
   address: string;
   homepage: string | null;
 };
@@ -63,16 +65,20 @@ function toHit(r: NeisRow): SchoolHit {
     atptName: r.ATPT_OFCDC_SC_NM ?? "",
     schoolCode: r.SD_SCHUL_CODE ?? "",
     name: r.SCHUL_NM ?? "",
+    kind: r.SCHUL_KND_SC_NM ?? "",
     address: [r.ORG_RDNMA, r.ORG_RDNDA].filter(Boolean).join(" ").trim(),
     homepage: normalizeHomepage(r.HMPG_ADRES),
   };
 }
 
+/** 초등학교를 먼저, 이어서 중학교(형제·남매가 함께 다니는 가정도 있어서) — 인증키 없이 각 5개까지. */
 export async function searchSchools(atptCode: string | null, query: string): Promise<{ schools: SchoolHit[]; total: number }> {
-  const params: Record<string, string> = { SCHUL_NM: query, SCHUL_KND_SC_NM: "초등학교" };
-  if (atptCode) params.ATPT_OFCDC_SC_CODE = atptCode;
-  const { rows, total } = await callSchoolInfo(params);
-  return { schools: rows.map(toHit), total };
+  const base: Record<string, string> = { SCHUL_NM: query };
+  if (atptCode) base.ATPT_OFCDC_SC_CODE = atptCode;
+  const [elem, mid] = await Promise.all(
+    ["초등학교", "중학교"].map((kind) => callSchoolInfo({ ...base, SCHUL_KND_SC_NM: kind }).catch(() => ({ rows: [], total: 0 }))),
+  );
+  return { schools: [...elem.rows, ...mid.rows].map(toHit), total: elem.total + mid.total };
 }
 
 /** 앱이 보낸 학교 코드를 믿지 않고 NEIS에서 다시 찾는다 — 홈페이지 주소는 서버가 직접 받은 것만 쓴다. */

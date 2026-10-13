@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/client";
 import { resolveUser, AuthError } from "@/lib/auth/session";
 import { forbidChild } from "@/lib/household/members";
 import { findSchool, OFFICES } from "@/lib/school/neis";
-import { ensureBoards, loadHouseholdSchool, schoolStatus, SCHOOL_MIGRATION_MESSAGE, type SchoolRow } from "@/lib/school/sync";
+import { ensureBoards, loadHouseholdSchool, schoolStatus, syncHousehold, SCHOOL_MIGRATION_MESSAGE, type SchoolRow } from "@/lib/school/sync";
 
 export const maxDuration = 60;
 
@@ -80,6 +80,10 @@ export async function PUT(req: NextRequest) {
   if (error || !saved) return NextResponse.json({ error: error?.message ?? "저장하지 못했어요." }, { status: 500 });
 
   const boards = await ensureBoards(db, saved as SchoolRow);
+  // 응답을 보낸 뒤에도 바로 글을 읽고 정리하기 시작한다 — 앱이 "오늘 할 일"로 돌아왔을 때 이미 몇 건은 준비돼 있게.
+  after(async () => {
+    await syncHousehold(db, resolved.householdId, Date.now() + 45_000).catch(() => {});
+  });
   return NextResponse.json(schoolStatus(saved as SchoolRow, boards));
 }
 

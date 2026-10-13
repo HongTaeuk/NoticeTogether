@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -43,6 +42,7 @@ import { requestNotificationPermission } from "../lib/notificationPermission";
 import FamilyTalkScreen from "./FamilyTalkScreen";
 import NoticeListScreen from "./NoticeListScreen";
 import SettingsScreen from "./SettingsScreen";
+import FunLoading, { BouncingDots } from "../components/FunLoading";
 import TodayScreen from "./TodayScreen";
 
 export default function NoticeInputScreen({
@@ -634,15 +634,18 @@ export default function NoticeInputScreen({
           >
             {loading ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color="#FFFFFF" />
+                <BouncingDots color="#FFFFFF" />
                 <Text style={styles.buttonText}>핵심만 골라내는 중이에요</Text>
               </View>
             ) : (
               <Text style={styles.buttonText}>핵심만 정리하기</Text>
             )}
           </TouchableOpacity>
+          {loading && <FunLoading scene="write" sub="보통 5~15초 걸려요" />}
         </>
       )}
+
+      {loading && noticeId && !notice && <FunLoading scene="mail" steps={["알림을 펼치는 중이에요", "가족이 체크한 내용을 모으는 중", "거의 다 됐어요"]} />}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 

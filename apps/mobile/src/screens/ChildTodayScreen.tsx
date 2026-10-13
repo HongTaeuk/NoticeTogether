@@ -6,6 +6,7 @@ import { parseYmd } from "../lib/dateFormat";
 import { josa } from "../lib/josa";
 import { cancelReminderForItem, resyncAllReminders } from "../lib/reminderSync";
 import { CATEGORY_EMOJI, type ChecklistCategory } from "../types/notice";
+import FunLoading from "../components/FunLoading";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 type TodayItem = {
@@ -164,6 +165,8 @@ export default function ChildTodayScreen({
       ))}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
+
+      {loading && <FunLoading scene="mail" steps={["오늘 챙길 걸 찾는 중이에요", "가방에 넣을 걸 고르는 중", "거의 다 찾았어요"]} />}
 
       {!loading && todo.length === 0 && (
         <View style={styles.emptyCard}>

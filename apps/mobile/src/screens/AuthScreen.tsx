@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 import { GOOGLE_WEB_CLIENT_ID } from "../config/api";
 import { authFetch } from "../lib/apiClient";
+import { BouncingDots } from "../components/FunLoading";
 import type { Session } from "../lib/authStorage";
 
 type Mode = "login" | "signup";
@@ -200,7 +200,7 @@ export default function AuthScreen({
       >
         {loading ? (
           <View style={styles.loadingRow}>
-            <ActivityIndicator color="#FFFFFF" />
+            <BouncingDots color="#FFFFFF" />
             <Text style={styles.buttonText}>
               {mode === "signup" ? "가정을 만드는 중이에요" : "로그인하는 중이에요"}
             </Text>

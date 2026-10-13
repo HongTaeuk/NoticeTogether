@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,10 +15,16 @@ import { josa } from "../lib/josa";
 import { loadSchoolStatus } from "../lib/schoolFeed";
 import { schoolSituation } from "../lib/schoolMessages";
 import RunnerLoading from "../components/RunnerLoading";
+import FunLoading, { BouncingDots, useLingeringLoading } from "../components/FunLoading";
 import { OFFICES, type SchoolHit, type SchoolStatus } from "../types/school";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 type Step = "ask" | "loading" | "current" | "pick" | "grade" | "result";
+
+/** 중학교는 1~3학년, 초등학교는 1~6학년. */
+function isMiddle(s: SchoolHit): boolean {
+  return s.kind === "중학교" || /중학교$/.test(s.name);
+}
 
 const KIND_LABEL: Record<string, string> = { notice: "가정통신문", office_notice: "교육청 가정통신문", weekly: "주간학습안내" };
 
@@ -39,6 +44,7 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
   const [picked, setPicked] = useState<SchoolHit | null>(null);
   const [grade, setGrade] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const linkingShown = useLingeringLoading(busy && step === "grade");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,7 +90,8 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "연결하지 못했어요.");
       setStatus(data as SchoolStatus);
-      setStep("result");
+      // 달리던 아이가 학교에 도착하는 모습을 잠깐 보여 준 뒤 결과로 넘어간다.
+      setTimeout(() => setStep("result"), 650);
     } catch (err) {
       setError(err instanceof Error ? err.message : "연결하지 못했어요.");
     } finally {
@@ -127,7 +134,7 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
 
         {step === "loading" && (
           <View style={styles.center}>
-            <ActivityIndicator color={COLORS.primary} />
+            <FunLoading scene="search" steps={["우리 학교 정보를 불러오는 중이에요", "게시판 상태를 확인하는 중"]} />
           </View>
         )}
 
@@ -188,11 +195,12 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
                 maxLength={30}
               />
               <TouchableOpacity style={styles.searchButton} onPress={search} disabled={busy}>
-                {busy ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.searchButtonText}>찾기</Text>}
+                {busy ? <BouncingDots color={COLORS.white} /> : <Text style={styles.searchButtonText}>찾기</Text>}
               </TouchableOpacity>
             </View>
+            {busy && <FunLoading scene="search" />}
             {error && <Text style={styles.errorText}>{error}</Text>}
-            {hits && hits.length === 0 && (
+            {!busy && hits && hits.length === 0 && (
               <Text style={styles.hint}>찾는 학교가 없어요. 교육청과 학교 이름을 확인해 주세요.</Text>
             )}
             {hits?.map((s) => (
@@ -201,6 +209,7 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
                 style={styles.hitCard}
                 onPress={() => {
                   setPicked(s);
+                  if (grade && isMiddle(s) && grade > 3) setGrade(null);
                   setStep("grade");
                 }}
               >
@@ -224,10 +233,10 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
           <>
             <Text style={styles.heading}>{picked.name}</Text>
             <Text style={styles.subtitleLeft}>
-              아이가 몇 학년인가요? 제목에 학년이 적힌 안내(예: "6학년 졸업앨범")는 우리 아이 학년 것만 가져와요.
+              아이가 몇 학년인가요? 제목에 학년이 적힌 안내(예: {isMiddle(picked) ? "\"3학년 진로 체험\"" : "\"6학년 졸업앨범\""})는 우리 아이 학년 것만 가져와요.
             </Text>
             <View style={styles.chipWrap}>
-              {[1, 2, 3, 4, 5, 6].map((g) => (
+              {(isMiddle(picked) ? [1, 2, 3] : [1, 2, 3, 4, 5, 6]).map((g) => (
                 <TouchableOpacity key={g} style={[styles.chip, styles.gradeChip, grade === g && styles.chipOn]} onPress={() => setGrade(g)}>
                   <Text style={[styles.chipText, grade === g && styles.chipTextOn]}>{g}학년</Text>
                 </TouchableOpacity>
@@ -239,14 +248,16 @@ export default function SchoolSetupScreen({ mode, onDone }: { mode: "onboarding"
             {error && <Text style={styles.errorText}>{error}</Text>}
             <TouchableOpacity style={styles.primaryButton} onPress={link} disabled={busy}>
               {busy ? (
-                <ActivityIndicator color={COLORS.white} />
+                <BouncingDots color={COLORS.white} />
               ) : (
                 <Text style={styles.primaryButtonText}>{josa(picked.name, "와/과")} 연결하기</Text>
               )}
             </TouchableOpacity>
-            {busy && (
+            {linkingShown && (
               <RunnerLoading
                 compact
+                done={!busy}
+                expectedMs={10000}
                 steps={["학교 홈페이지로 달려가는 중!", "가정통신문 게시판을 찾는 중이에요", "거의 다 찾았어요"]}
               />
             )}

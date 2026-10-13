@@ -6,6 +6,7 @@ export type SchoolHit = {
   atptName: string;
   schoolCode: string;
   name: string;
+  kind?: string;
   address: string;
   homepage: string | null;
 };

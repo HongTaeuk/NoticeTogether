@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
@@ -15,6 +14,7 @@ import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
 import { formatMessageTime } from "../lib/dateFormat";
 import { josa } from "../lib/josa";
+import FunLoading from "../components/FunLoading";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 type MessageKind = "message" | "share" | "sticker";
@@ -153,7 +153,7 @@ export default function FamilyTalkScreen({
             }
           >
             {loading ? (
-              <ActivityIndicator color={COLORS.primary} style={styles.loader} />
+              <FunLoading scene="mail" steps={["가족 이야기를 모으는 중이에요", "스티커를 꺼내는 중", "말풍선을 펼치는 중"]} />
             ) : messages.length === 0 ? (
               <View style={styles.centerBox}>
                 <Text style={styles.bigEmoji}>💬</Text>

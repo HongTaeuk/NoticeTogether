@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 } from "react-native";
 import { authFetch } from "../lib/apiClient";
 import { formatKoreanDate } from "../lib/dateFormat";
+import FunLoading from "../components/FunLoading";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
 type NoticeSummary = {
@@ -114,12 +114,10 @@ export default function NoticeListScreen({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {loading ? (
-        <View style={styles.loadingBox}>
-          <ActivityIndicator color="#13854A" />
-          <Text style={styles.loadingText}>
-            {mode === "unread" ? "새로 온 알림을 불러오는 중이에요" : "지난 알림을 불러오는 중이에요"}
-          </Text>
-        </View>
+        <FunLoading
+          scene="mail"
+          steps={mode === "unread" ? ["새로 온 알림을 배달하는 중이에요", "아직 안 본 알림을 고르는 중"] : ["지난 알림을 꺼내 오는 중이에요", "날짜 순서로 정리하는 중"]}
+        />
       ) : visibleNotices.length === 0 ? (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>

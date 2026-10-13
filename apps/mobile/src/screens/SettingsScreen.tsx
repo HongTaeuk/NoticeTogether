@@ -22,6 +22,7 @@ import {
 import { memberName, ROLE_LABEL, type Role } from "../types/notice";
 import { loadSchoolStatus } from "../lib/schoolFeed";
 import type { SchoolStatus } from "../types/school";
+import { BouncingDots } from "../components/FunLoading";
 import ChildConsentSection from "./ChildConsentSection";
 
 type ReminderInfo = {
@@ -158,11 +159,11 @@ export default function SettingsScreen({
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>마감 알림</Text>
-            <Text style={styles.rowValue}>
-              {reminder
-                ? `${formatDays(reminder.daysBeforeDue)} · ${formatHour(reminder.hour)}`
-                : "불러오는 중…"}
-            </Text>
+            {reminder ? (
+              <Text style={styles.rowValue}>{`${formatDays(reminder.daysBeforeDue)} · ${formatHour(reminder.hour)}`}</Text>
+            ) : (
+              <BouncingDots />
+            )}
           </View>
         </View>
         {reminder && (
@@ -197,7 +198,10 @@ export default function SettingsScreen({
         <Text style={styles.sectionTitle}>우리 가족</Text>
         <View style={styles.card}>
           {members.length === 0 ? (
-            <Text style={styles.cardBody}>가족 정보를 불러오는 중이에요…</Text>
+            <View style={styles.row}>
+              <Text style={styles.cardBody}>가족을 모으는 중이에요</Text>
+              <BouncingDots />
+            </View>
           ) : (
             members.map((m) => (
               <View key={m.id} style={styles.memberRow}>
