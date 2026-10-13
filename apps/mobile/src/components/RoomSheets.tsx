@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatKoreanDate } from "../lib/dateFormat";
-import { GRADE_EMOJI, GRADE_LABEL, ROOM_IMAGES, swatchColors } from "../lib/roomAssets";
+import { ArtThumb } from "./room/roomArt";
 import type { RoomData, RoomShopItem } from "../types/room";
 import { COLORS, FONT_DISPLAY } from "../theme";
 
+const GRADE_LABEL: Record<string, string> = { COMMON: "일반", RARE: "희귀", EPIC: "전설" };
+const GRADE_EMOJI: Record<string, string> = { COMMON: "🍀", RARE: "💎", EPIC: "👑" };
 const GRADE_TINT: Record<string, string> = { COMMON: COLORS.tint, RARE: COLORS.sky, EPIC: COLORS.sunSoft };
 const GRADE_INK: Record<string, string> = { COMMON: COLORS.primary, RARE: COLORS.skyInk, EPIC: COLORS.sunInk };
 
@@ -22,7 +24,7 @@ function GradeBadge({ grade, label, bg, style }: { grade: string; label: string;
   );
 }
 
-/** 물건 그림 한 칸 — PNG가 있으면 그림, 벽지·바닥이면 색 견본, 아직 없으면 자물쇠. */
+/** 물건 그림 한 칸 — 선물·러그는 그 그림, 벽지·바닥은 견본, 아직 없으면 자물쇠. */
 export function ItemThumb({ glyph, size, locked }: { glyph: string; size: number; locked?: boolean }) {
   if (locked) {
     return (
@@ -31,19 +33,9 @@ export function ItemThumb({ glyph, size, locked }: { glyph: string; size: number
       </View>
     );
   }
-  const swatch = swatchColors(glyph);
-  if (swatch) {
-    return (
-      <View style={[styles.swatch, { width: size * 0.8, height: size * 0.8 }]}>
-        <View style={[styles.swatchHalf, { backgroundColor: swatch[0] }]} />
-        <View style={[styles.swatchHalf, { backgroundColor: swatch[1] }]} />
-      </View>
-    );
-  }
-  const src = ROOM_IMAGES[glyph];
   return (
     <View style={[styles.thumbBox, { width: size, height: size }]}>
-      {src ? <Image source={src} style={{ width: size * 0.86, height: size * 0.86 }} resizeMode="contain" /> : null}
+      <ArtThumb glyph={glyph} size={size * 0.9} />
     </View>
   );
 }
@@ -73,13 +65,13 @@ const DECO_TABS: { key: DecoTab; label: string }[] = [
   { key: "prop", label: "소품" },
   { key: "bg", label: "배경" },
 ];
-const FURN_CODES = ["sofa", "table", "shelf"];
-const PROP_CODES = ["lamp", "frame", "plant", "bowl", "yarn", "mood"];
+const FURN_CODES = ["shelf", "desk", "easel", "tent"];
+const PROP_CODES = ["plant", "clock", "board", "bag", "garland"];
 
 type DecoCell = { key: string; name: string; glyph: string; owned: boolean; on: boolean; onPress: () => void; hint?: string };
 
 /**
- * 꾸미기 — moa `DecoSheet`를 바탕으로 했다. 가구·소품은 **켜고 끄기**(여러 개를 함께 둔다), 러그·배경은 **하나 고르기**.
+ * 꾸미기. 가구·소품은 **켜고 끄기**(여러 개를 함께 둔다), 러그·배경은 **하나 고르기**.
  * 잠긴 칸을 숨기지 않는다: 무엇이 남았는지 보여야 모을 마음이 생긴다.
  */
 export function DecoSheet({
@@ -263,7 +255,7 @@ export function CollectionSheet({ visible, room, onClose }: { visible: boolean; 
 }
 
 /**
- * 도착 세리머니 — moa처럼 방에 들어왔을 때 띄운다. 받은 그 물건을 크게 보여 줘야 "무엇이 왔는지"가 남는다.
+ * 도착 연출 — 방에 들어왔을 때 띄운다. 받은 그 물건을 크게 보여 줘야 "무엇이 왔는지"가 남는다.
  */
 export function CeremonyModal({
   ceremony,
@@ -355,8 +347,6 @@ const styles = StyleSheet.create({
   cellName: { fontSize: 12, fontWeight: "700", color: COLORS.ink, marginTop: 4, paddingHorizontal: 4 },
   cellHint: { fontSize: 11, color: COLORS.muted, marginTop: 1 },
   thumbBox: { alignItems: "center", justifyContent: "center" },
-  swatch: { flexDirection: "row", borderRadius: 10, overflow: "hidden", margin: 5 },
-  swatchHalf: { flex: 1 },
   listScroll: { flexGrow: 0 },
   shopSection: { fontFamily: FONT_DISPLAY, fontSize: 16, color: COLORS.muted, marginTop: 10, marginBottom: 6 },
   shopRow: {

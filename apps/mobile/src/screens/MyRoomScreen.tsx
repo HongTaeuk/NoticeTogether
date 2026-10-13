@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import IsoRoom from "../components/IsoRoom";
+import RoomScene from "../components/room/RoomScene";
 import { CeremonyModal, CollectionSheet, DecoSheet, ShopSheet } from "../components/RoomSheets";
 import { authFetch } from "../lib/apiClient";
 import type { Session } from "../lib/authStorage";
@@ -12,14 +12,15 @@ import { COLORS, FONT_DISPLAY } from "../theme";
 /** 방 물건을 누르면 나오는 한 줄 — 방을 "예쁜 그림"이 아니라 "알림을 준비해서 받은 선물"로 읽히게 한다. */
 const BASE_INFO: Record<string, string> = {
   bed: "포근한 침대 — 내일 준비를 마치고 푹 자는 곳이에요",
-  rug: "핑크 러그 — 가족이 둘러앉는 방 가운데예요",
-  rug2: "민트 러그 — 방 가운데를 산뜻하게 바꿔 줘요",
+  window: "햇살 창문 — 아침 햇살이 들어와 학교 갈 시간을 알려 줘요",
+  rug: "해님 러그 — 가족이 둘러앉는 방 가운데예요",
+  rug2: "새싹 러그 — 방 가운데를 산뜻하게 바꿔 줘요",
 };
 
 const DOW = ["월", "화", "수", "목", "금", "토", "일"];
 
 /**
- * 아이의 "내 방" — moa 마이룸을 옮겼다. 알림 준비물을 챙긴 날마다 선물이 도착해 아이소메트릭 방이 채워지고,
+ * 아이의 "내 방" — 초록 지붕 인형의 집. 알림 준비물을 챙긴 날이 쌓이면 선물이 도착해 방이 채워지고,
  * 별로 러그·벽지·바닥을 바꾼다. 선물·별 계산은 서버가 하고(같은 날은 같은 결과),
  * 이 화면은 보여 주고 고르기만 한다.
  */
@@ -151,7 +152,7 @@ export default function MyRoomScreen({ session }: { session: Session }) {
               <Text style={[styles.editText, editing && styles.editTextOn]}>✏️ 꾸미기</Text>
             </TouchableOpacity>
           </View>
-          <IsoRoom
+          <RoomScene
             width={sceneWidth}
             visible={visible}
             rug={room.selection.rug}
